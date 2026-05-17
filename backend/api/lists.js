@@ -7,6 +7,26 @@ const Offer = require('../models/Offer');
 
 const router = express.Router();
 const toObjectId = (value) => new mongoose.Types.ObjectId(value);
+const sanitizeListUpdatePayload = (payload) => {
+  const update = {};
+
+  if (typeof payload.title === 'string') {
+    update.title = payload.title;
+  }
+
+  if (Array.isArray(payload.storePreference)) {
+    update.storePreference = payload.storePreference
+      .filter((entry) => typeof entry === 'string')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  if (payload.owner && mongoose.isValidObjectId(payload.owner)) {
+    update.owner = payload.owner;
+  }
+
+  return update;
+};
 
 router.param('id', (req, res, next, id) => {
   if (!mongoose.isValidObjectId(id)) {
@@ -56,7 +76,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    const list = await List.findOneAndUpdate({ _id: toObjectId(req.params.id) }, req.body, {
+    const list = await List.findOneAndUpdate({ _id: toObjectId(req.params.id) }, sanitizeListUpdatePayload(req.body), {
       new: true,
       runValidators: true,
     });
