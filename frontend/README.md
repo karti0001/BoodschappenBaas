@@ -1,3 +1,17 @@
-# Frontend
+# BoodschappenBaas Frontend Prototype
 
-This folder contains all client-side code, including components, styles, and frontend assets.
+React + Tailwind prototype met pagina's voor:
+- Boodschappenlijst beheren
+- Volgorde aanpassen op basis van winkelvoorkeur
+- Gedeelde lijst bekijken
+- Aanbiedingen tonen (mock)
+
+## Starten
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend draait standaard op `http://localhost:5173`.
