@@ -1,10 +1,25 @@
 const crypto = require('crypto');
 const express = require('express');
+const mongoose = require('mongoose');
 const List = require('../models/List');
 const Product = require('../models/Product');
 const Offer = require('../models/Offer');
 
 const router = express.Router();
+
+router.param('id', (req, res, next, id) => {
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid list id' });
+  }
+  return next();
+});
+
+router.param('itemId', (req, res, next, itemId) => {
+  if (!mongoose.isValidObjectId(itemId)) {
+    return res.status(400).json({ message: 'Invalid item id' });
+  }
+  return next();
+});
 
 router.get('/', async (_req, res, next) => {
   try {
@@ -78,6 +93,10 @@ router.post('/:id/items', async (req, res, next) => {
     }
 
     const itemInput = { ...req.body };
+
+    if (itemInput.product && !mongoose.isValidObjectId(itemInput.product)) {
+      return res.status(400).json({ message: 'Invalid product id' });
+    }
 
     if (itemInput.product && !itemInput.name) {
       const product = await Product.findById(itemInput.product);
