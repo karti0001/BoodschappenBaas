@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const Offer = require('../models/Offer');
 
 const router = express.Router();
+const toObjectId = (value) => new mongoose.Types.ObjectId(value);
 
 router.param('id', (req, res, next, id) => {
   if (!mongoose.isValidObjectId(id)) {
@@ -55,7 +56,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    const list = await List.findByIdAndUpdate(req.params.id, req.body, {
+    const list = await List.findOneAndUpdate({ _id: toObjectId(req.params.id) }, req.body, {
       new: true,
       runValidators: true,
     });
@@ -99,7 +100,7 @@ router.post('/:id/items', async (req, res, next) => {
     }
 
     if (itemInput.product && !itemInput.name) {
-      const product = await Product.findById(itemInput.product);
+      const product = await Product.findOne({ _id: toObjectId(itemInput.product) });
       if (product) {
         itemInput.name = product.name;
         itemInput.category = itemInput.category || product.category;
