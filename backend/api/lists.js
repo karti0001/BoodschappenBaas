@@ -27,6 +27,30 @@ const sanitizeListUpdatePayload = (payload) => {
 
   return update;
 };
+const sanitizeItemUpdatePayload = (payload) => {
+  const update = {};
+
+  if (typeof payload.name === 'string') {
+    update.name = payload.name;
+  }
+
+  if (payload.quantity !== undefined) {
+    const parsedQuantity = Number(payload.quantity);
+    if (!Number.isNaN(parsedQuantity) && parsedQuantity > 0) {
+      update.quantity = parsedQuantity;
+    }
+  }
+
+  if (typeof payload.category === 'string') {
+    update.category = payload.category;
+  }
+
+  if (typeof payload.notes === 'string') {
+    update.notes = payload.notes;
+  }
+
+  return update;
+};
 
 router.param('id', (req, res, next, id) => {
   if (!mongoose.isValidObjectId(id)) {
@@ -151,7 +175,7 @@ router.put('/:id/items/:itemId', async (req, res, next) => {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    Object.assign(item, req.body);
+    Object.assign(item, sanitizeItemUpdatePayload(req.body));
     await list.save();
 
     return res.json(list);
