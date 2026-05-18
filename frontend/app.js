@@ -274,6 +274,9 @@ const BoodschappenBaas = (() => {
     let routeConcept = [...route];
     let laatstAfgevinktId = null;
     let versleepteCategorie = null;
+    let versleepteLijstCategorie = null;
+    let touchCategorie = null;
+    let touchDoelCategorie = null;
 
     function status(bericht) {
       elementen.status.textContent = bericht;
@@ -326,15 +329,56 @@ const BoodschappenBaas = (() => {
       elementen.supermarktAantal.textContent = String(supermarkten.length);
     }
 
+    function routesZijnGelijk(eerste, tweede) {
+      return eerste.length === tweede.length && eerste.every((categorie, index) => categorie === tweede[index]);
+    }
+
     function verplaatsCategorie(vanIndex, naarIndex) {
       const categorie = routeConcept[vanIndex];
       const nieuweRoute = verplaatsInRoute(routeConcept, vanIndex, naarIndex);
-      if (!categorie || nieuweRoute.join("\n") === routeConcept.join("\n")) return;
+      if (!categorie || routesZijnGelijk(nieuweRoute, routeConcept)) return;
       routeConcept = nieuweRoute;
       renderRouteEditor();
       [...elementen.routeVolgorde.children]
         .find((item) => item.dataset.categorie === categorie)
         ?.focus();
+    }
+
+    function bewaarNieuweRoute(nieuweRoute, bericht) {
+      route = bewaarRoute(localStorage, nieuweRoute);
+      routeConcept = [...route];
+      items = [...items].sort(maakRouteSorteerder(route));
+      render();
+      if (!elementen.routeEditor.hidden) renderRouteEditor();
+      status(bericht);
+    }
+
+    function verplaatsZichtbareCategorie(bronCategorie, doelCategorie) {
+      const vanIndex = route.indexOf(bronCategorie);
+      const naarIndex = route.indexOf(doelCategorie);
+      const nieuweRoute = verplaatsInRoute(route, vanIndex, naarIndex);
+      if (!bronCategorie || !doelCategorie || routesZijnGelijk(nieuweRoute, route)) return;
+      bewaarNieuweRoute(nieuweRoute, `${bronCategorie} is verplaatst.`);
+    }
+
+    function schoonLijstVerslepenOp() {
+      document.querySelectorAll(".categorie.is-versleept, .categorie.is-dropdoel").forEach((element) => {
+        element.classList.remove("is-versleept", "is-dropdoel");
+      });
+      versleepteLijstCategorie = null;
+      touchCategorie = null;
+      touchDoelCategorie = null;
+    }
+
+    function markeerTouchDoel(event) {
+      const doel = document.elementFromPoint(event.clientX, event.clientY)?.closest(".categorie[data-categorie]");
+      const doelCategorie = doel && doel.dataset.categorie !== touchCategorie ? doel.dataset.categorie : null;
+      if (doelCategorie === touchDoelCategorie) return;
+      document.querySelector(".categorie.is-dropdoel")?.classList.remove("is-dropdoel");
+      touchDoelCategorie = doelCategorie;
+      if (doelCategorie) {
+        doel.classList.add("is-dropdoel");
+      }
     }
 
     function renderRouteEditor() {
@@ -424,9 +468,84 @@ const BoodschappenBaas = (() => {
       categorieNamen.forEach((categorie) => {
         const section = document.createElement("section");
         section.className = "categorie";
+        section.dataset.categorie = categorie;
+        const kop = document.createElement("div");
+        kop.className = "categorie__kop";
         const heading = document.createElement("h3");
         heading.textContent = categorie;
+        const greep = document.createElement("button");
+        greep.type = "button";
+        greep.className = "categorie__greep";
+        greep.draggable = true;
+        greep.setAttribute("aria-label", `Versleep ${categorie}`);
+        greep.title = "Categorie verslepen";
+        const greepIcoon = document.createElement("span");
+        greepIcoon.textContent = "↕";
+        greepIcoon.setAttribute("aria-hidden", "true");
+        greep.append(greepIcoon);
         const list = document.createElement("ul");
+
+        greep.addEventListener("dragstart", (event) => {
+          versleepteLijstCategorie = categorie;
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", categorie);
+          }
+          section.classList.add("is-versleept");
+        });
+        greep.addEventListener("dragend", schoonLijstVerslepenOp);
+        greep.addEventListener("pointerdown", (event) => {
+          if (event.pointerType === "mouse") return;
+          event.preventDefault();
+          touchCategorie = categorie;
+          section.classList.add("is-versleept");
+          try {
+            greep.setPointerCapture?.(event.pointerId);
+          } catch (fout) {
+            schoonLijstVerslepenOp();
+            console.warn("Kon aanwijzer niet vastleggen voor slepen.", fout);
+          }
+        });
+        greep.addEventListener("pointermove", (event) => {
+          if (touchCategorie !== categorie) return;
+          event.preventDefault();
+          markeerTouchDoel(event);
+        });
+        greep.addEventListener("pointerup", (event) => {
+          if (touchCategorie !== categorie) return;
+          event.preventDefault();
+          const doelCategorie = touchDoelCategorie;
+          schoonLijstVerslepenOp();
+          if (doelCategorie) verplaatsZichtbareCategorie(categorie, doelCategorie);
+        });
+        greep.addEventListener("pointercancel", schoonLijstVerslepenOp);
+        greep.addEventListener("keydown", (event) => {
+          const huidigeIndex = categorieNamen.indexOf(categorie);
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            const vorigeCategorie = categorieNamen[huidigeIndex - 1];
+            if (vorigeCategorie) verplaatsZichtbareCategorie(categorie, vorigeCategorie);
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            const volgendeCategorie = categorieNamen[huidigeIndex + 1];
+            if (volgendeCategorie) verplaatsZichtbareCategorie(categorie, volgendeCategorie);
+          }
+        });
+
+        section.addEventListener("dragover", (event) => {
+          if (!versleepteLijstCategorie || versleepteLijstCategorie === categorie) return;
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+          document.querySelector(".categorie.is-dropdoel")?.classList.remove("is-dropdoel");
+          section.classList.add("is-dropdoel");
+        });
+        section.addEventListener("drop", (event) => {
+          event.preventDefault();
+          const bron = versleepteLijstCategorie || event.dataTransfer?.getData("text/plain");
+          schoonLijstVerslepenOp();
+          verplaatsZichtbareCategorie(bron, categorie);
+        });
 
         groepen[categorie].forEach((item) => {
           const row = document.createElement("li");
@@ -473,7 +592,8 @@ const BoodschappenBaas = (() => {
           list.append(row);
         });
 
-        section.append(heading, list);
+        kop.append(heading, greep);
+        section.append(kop, list);
         elementen.lijst.append(section);
       });
 
