@@ -233,14 +233,14 @@ const BoodschappenBaas = (() => {
       elementen.status.textContent = bericht;
     }
 
-    function zelfdeRoute(eerste, tweede) {
+    function routesZijnGelijk(eerste, tweede) {
       return eerste.length === tweede.length && eerste.every((categorie, index) => categorie === tweede[index]);
     }
 
     function verplaatsCategorie(vanIndex, naarIndex) {
       const categorie = routeConcept[vanIndex];
       const nieuweRoute = verplaatsInRoute(routeConcept, vanIndex, naarIndex);
-      if (!categorie || zelfdeRoute(nieuweRoute, routeConcept)) return;
+      if (!categorie || routesZijnGelijk(nieuweRoute, routeConcept)) return;
       routeConcept = nieuweRoute;
       renderRouteEditor();
       [...elementen.routeVolgorde.children]
@@ -261,7 +261,7 @@ const BoodschappenBaas = (() => {
       const vanIndex = route.indexOf(bronCategorie);
       const naarIndex = route.indexOf(doelCategorie);
       const nieuweRoute = verplaatsInRoute(route, vanIndex, naarIndex);
-      if (!bronCategorie || !doelCategorie || zelfdeRoute(nieuweRoute, route)) return;
+      if (!bronCategorie || !doelCategorie || routesZijnGelijk(nieuweRoute, route)) return;
       bewaarNieuweRoute(nieuweRoute, `${bronCategorie} is verplaatst.`);
     }
 
@@ -404,9 +404,10 @@ const BoodschappenBaas = (() => {
           section.classList.add("is-versleept");
           try {
             greep.setPointerCapture?.(event.pointerId);
-          } catch {
+          } catch (fout) {
             schoonLijstVerslepenOp();
-            status("Kon aanwijzer niet vastleggen voor slepen.");
+            console.warn("Kon aanwijzer niet vastleggen voor slepen.", fout);
+            status("Kon sleepactie niet starten.");
           }
         });
         greep.addEventListener("pointermove", (event) => {
