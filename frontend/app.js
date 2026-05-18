@@ -230,7 +230,7 @@ const BoodschappenBaas = (() => {
 
   function normaliseerZoektekst(value) {
     return String(value || "")
-      .toLocaleLowerCase("nl-NL")
+      .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, " en ")
@@ -280,6 +280,10 @@ const BoodschappenBaas = (() => {
       url: aanbieding.url || "",
       bijgewerktOp: aanbieding.bijgewerktOp || ""
     };
+  }
+
+  function formatteerDatumTijd(value) {
+    return value ? new Date(value).toLocaleString("nl-NL") : "";
   }
 
   function matchAanbiedingen(zoekterm, aanbiedingen, opties = {}) {
@@ -603,6 +607,7 @@ const BoodschappenBaas = (() => {
       const filter = elementen.filter.value;
       const groepen = groepeerVoorRoute(items, filter, route);
       const categorieNamen = Object.keys(groepen);
+      const aanbiedingenCache = new Map();
 
       if (!categorieNamen.length) {
         const leeg = document.createElement("p");
@@ -739,7 +744,11 @@ const BoodschappenBaas = (() => {
           meta.className = "boodschap__meta";
           meta.textContent = formatteerSupermarkten(item);
           tekst.append(naam, meta);
-          const itemAanbiedingen = matchAanbiedingen(item.naam, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: 3 });
+          const cacheKey = `${item.naam}|${item.supermarkten.join(",")}`;
+          if (!aanbiedingenCache.has(cacheKey)) {
+            aanbiedingenCache.set(cacheKey, matchAanbiedingen(item.naam, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: 3 }));
+          }
+          const itemAanbiedingen = aanbiedingenCache.get(cacheKey);
           const aanbiedingenBlok = document.createElement("div");
           aanbiedingenBlok.className = `aanbiedingen${itemAanbiedingen.length ? "" : " aanbiedingen--leeg"}`;
           const aanbiedingenTitel = document.createElement("strong");
@@ -761,7 +770,7 @@ const BoodschappenBaas = (() => {
                 aanbieding.oudePrijsTekst || (aanbieding.oudePrijs ? `was ${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(aanbieding.oudePrijs)}` : ""),
                 aanbieding.korting,
                 aanbieding.eenheidsprijs,
-                aanbieding.bijgewerktOp ? `update ${new Date(aanbieding.bijgewerktOp).toLocaleString("nl-NL")}` : ""
+                aanbieding.bijgewerktOp ? `update ${formatteerDatumTijd(aanbieding.bijgewerktOp)}` : ""
               ].filter(Boolean).join(" · ");
               if (aanbieding.url) {
                 const link = document.createElement("a");

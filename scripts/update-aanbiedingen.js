@@ -57,7 +57,7 @@ function isAanbieding(node, prijs, oudePrijs) {
     aanbieding: node.aanbieding,
     offer: node.offer,
     deal: node.deal
-  }).toLocaleLowerCase("nl-NL");
+  }).toLowerCase();
   return /korting|aanbieding|actie|bonus|deal|%|gratis|voor/.test(tekst);
 }
 
