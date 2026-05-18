@@ -261,6 +261,9 @@ const BoodschappenBaas = (() => {
 
     const opgeslagenThema = localStorage.getItem(THEME_KEY) || "auto";
     elementen.thema.value = setTheme(opgeslagenThema);
+    renderSupermarktOpties();
+    renderSupermarktKeuzes();
+    renderSupermarktBeheer();
 
     const response = await fetch("data/boodschappen.yml");
     const seedItems = parseYamlItems(await response.text());
