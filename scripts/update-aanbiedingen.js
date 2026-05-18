@@ -4,6 +4,7 @@ const path = require("node:path");
 const BRON = "https://allesupers.nl/catalog/all";
 const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
+const collator = new Intl.Collator("nl", { sensitivity: "base" });
 
 function vindEersteVeldWaarde(object, velden) {
   for (const veld of velden) {
@@ -110,7 +111,7 @@ async function main() {
   const aanbiedingen = vindObjecten(catalogus)
     .map(normaliseer)
     .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
-    .sort((a, b) => a.productnaam.localeCompare(b.productnaam, "nl", { sensitivity: "base" }) || a.supermarkt.localeCompare(b.supermarkt, "nl", { sensitivity: "base" }));
+    .sort((a, b) => collator.compare(a.productnaam, b.productnaam) || collator.compare(a.supermarkt, b.supermarkt));
 
   if (zelfdeAanbiedingen(aanbiedingen)) {
     console.log("Aanbiedingen zijn ongewijzigd; JSON-bestand blijft gelijk.");

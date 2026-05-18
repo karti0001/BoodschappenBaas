@@ -27,9 +27,10 @@ const BoodschappenBaas = (() => {
   const MINIMALE_MATCH_SCORE = 0.66;
   const MIN_EN_MEERVOUD_LENGTE = 5;
   const MIN_S_MEERVOUD_LENGTE = 4;
+  const CACHE_SCHEIDINGSTEKEN = "\u0000";
+  const EURO_FORMATTER = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
   const SUPERMARKT_ALIASSEN = {
-    ah: "albert heijn",
-    "albert heijn": "albert heijn"
+    ah: "albert heijn"
   };
 
   function slugify(value) {
@@ -274,7 +275,7 @@ const BoodschappenBaas = (() => {
       productnaam: String(aanbieding.productnaam || aanbieding.naam || "").trim(),
       supermarkt: String(aanbieding.supermarkt || "").trim(),
       prijs,
-      prijsTekst: aanbieding.prijsTekst || (prijs === null ? "" : new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(prijs)),
+      prijsTekst: aanbieding.prijsTekst || (prijs === null ? "" : EURO_FORMATTER.format(prijs)),
       oudePrijs: parsePrijs(aanbieding.oudePrijs),
       oudePrijsTekst: aanbieding.oudePrijsTekst || "",
       korting: aanbieding.korting || "",
@@ -750,7 +751,7 @@ const BoodschappenBaas = (() => {
           meta.className = "boodschap__meta";
           meta.textContent = formatteerSupermarkten(item);
           tekst.append(naam, meta);
-          const cacheKey = JSON.stringify([item.naam, item.supermarkten]);
+          const cacheKey = [item.naam, ...item.supermarkten].join(CACHE_SCHEIDINGSTEKEN);
           if (!aanbiedingenCache.has(cacheKey)) {
             aanbiedingenCache.set(cacheKey, matchAanbiedingen(item.naam, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: 3 }));
           }
@@ -773,7 +774,7 @@ const BoodschappenBaas = (() => {
               const detail = document.createElement("span");
               detail.textContent = [
                 aanbieding.productnaam,
-                aanbieding.oudePrijsTekst || (aanbieding.oudePrijs ? `was ${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(aanbieding.oudePrijs)}` : ""),
+                aanbieding.oudePrijsTekst || (aanbieding.oudePrijs ? `was ${EURO_FORMATTER.format(aanbieding.oudePrijs)}` : ""),
                 aanbieding.korting,
                 aanbieding.eenheidsprijs,
                 aanbieding.bijgewerktOp ? `update ${formatteerDatumTijd(aanbieding.bijgewerktOp)}` : ""

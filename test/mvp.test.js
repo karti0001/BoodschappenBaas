@@ -112,7 +112,9 @@ test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
 test("zoektokens vangen eenvoudige meervouden op zonder vaste woorden te beschadigen", () => {
   assert.deepEqual(app.maakZoekTokens("blauwe bessen"), ["blauwe", "bes"]);
   assert.deepEqual(app.maakZoekTokens("mannen"), ["man"]);
+  assert.deepEqual(app.maakZoekTokens("kussen"), ["kus"]);
   assert.deepEqual(app.maakZoekTokens("mais"), ["mais"]);
+  assert.deepEqual(app.maakZoekTokens("tennis"), ["tennis"]);
 });
 
 test("categorie verslepen bewaart volgorde en behoudt itemgroepen", () => {
