@@ -30,3 +30,11 @@ De repository-seed staat in [`frontend/data/boodschappen.yml`](frontend/data/boo
 ## Deployment
 
 De GitHub Pages workflow bouwt de statische bestanden op elke push naar `main` en op pull requests. Tijdens de build wordt de commit-SHA in de service worker gezet, waardoor de PWA bij elke commit een nieuwe cacheversie krijgt.
+
+## Post-MVP ideeën
+
+- Meerdere winkelsessies of vaste lijsttemplates, zoals weekboodschappen, feestje of meal prep.
+- Drag-and-drop om de categorievolgorde per supermarkt handmatig te finetunen.
+- Export/import van lokale data als YAML of JSON voor back-ups.
+- Optionele hoeveelheden en notities per item.
+- Snelle herhaal-knop voor recent gekochte items.
