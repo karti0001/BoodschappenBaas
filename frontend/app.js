@@ -276,10 +276,11 @@ const BoodschappenBaas = (() => {
 
     function markeerTouchDoel(event) {
       const doel = document.elementFromPoint(event.clientX, event.clientY)?.closest(".categorie[data-categorie]");
+      const doelCategorie = doel && doel.dataset.categorie !== touchCategorie ? doel.dataset.categorie : null;
+      if (doelCategorie === touchDoelCategorie) return;
       document.querySelector(".categorie.is-dropdoel")?.classList.remove("is-dropdoel");
-      touchDoelCategorie = null;
-      if (doel && doel.dataset.categorie !== touchCategorie) {
-        touchDoelCategorie = doel.dataset.categorie;
+      touchDoelCategorie = doelCategorie;
+      if (doelCategorie) {
         doel.classList.add("is-dropdoel");
       }
     }
@@ -407,7 +408,6 @@ const BoodschappenBaas = (() => {
           } catch (fout) {
             schoonLijstVerslepenOp();
             console.warn("Kon aanwijzer niet vastleggen voor slepen.", fout);
-            status("Kon sleepactie niet starten.");
           }
         });
         greep.addEventListener("pointermove", (event) => {
@@ -441,11 +441,8 @@ const BoodschappenBaas = (() => {
           if (!versleepteLijstCategorie || versleepteLijstCategorie === categorie) return;
           event.preventDefault();
           if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+          document.querySelector(".categorie.is-dropdoel")?.classList.remove("is-dropdoel");
           section.classList.add("is-dropdoel");
-        });
-        section.addEventListener("dragleave", (event) => {
-          if (!event.relatedTarget || section.contains(event.relatedTarget)) return;
-          section.classList.remove("is-dropdoel");
         });
         section.addEventListener("drop", (event) => {
           event.preventDefault();
