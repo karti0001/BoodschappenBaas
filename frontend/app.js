@@ -15,6 +15,7 @@ const BoodschappenBaas = (() => {
   ];
   const STORAGE_KEY = "boodschappenbaas-items-v1";
   const THEME_KEY = "boodschappenbaas-theme";
+  const ANIMATION_DURATION_MS = 700;
 
   function slugify(value) {
     return value
@@ -179,7 +180,7 @@ const BoodschappenBaas = (() => {
     const opgeslagenThema = localStorage.getItem(THEME_KEY) || "auto";
     elementen.thema.value = setTheme(opgeslagenThema);
 
-    const response = await fetch("data/boodschappen.yml", { cache: "no-cache" });
+    const response = await fetch("data/boodschappen.yml");
     const seedItems = parseYamlItems(await response.text());
     let items = combineerItems(seedItems, laadOpgeslagenItems(localStorage));
     let laatstAfgevinktId = null;
@@ -225,7 +226,7 @@ const BoodschappenBaas = (() => {
             window.setTimeout(() => {
               laatstAfgevinktId = null;
               render();
-            }, 750);
+            }, ANIMATION_DURATION_MS);
           });
 
           const tekst = document.createElement("label");
