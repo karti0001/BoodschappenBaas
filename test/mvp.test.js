@@ -27,6 +27,33 @@ test("items worden per categorie als route gegroepeerd en lokaal te combineren",
   assert.equal(groepen.Groente[0].naam, "komkommer");
 });
 
+test("verwijderde boodschappen blijven uit de gecombineerde lijst", () => {
+  const seed = app.parseYamlItems(read("frontend/data/boodschappen.yml"));
+  const zonderKwark = app.combineerItems(seed, [{ ...seed[1], afgevinkt: true }], [seed[0].id]);
+
+  assert.equal(zonderKwark.some((item) => item.naam === "Kwark"), false);
+  assert.equal(zonderKwark.find((item) => item.naam === "Sprite Zero").afgevinkt, true);
+});
+
+test("supermarkten kunnen onafhankelijk van items worden beheerd", () => {
+  const storage = {
+    waarde: null,
+    getItem() { return this.waarde; },
+    setItem(_key, value) { this.waarde = value; }
+  };
+  const supermarkten = app.bewaarSupermarkten(storage, ["AH", "Plus", "AH", ""]);
+  const items = [
+    app.normaliseerItem({ naam: "melk", categorie: "Zuivel", supermarkten: ["AH", "Plus"] }),
+    app.normaliseerItem({ naam: "chips", categorie: "Snacks", supermarkten: ["Plus"] })
+  ];
+  const zonderPlus = app.verwijderSupermarktUitItems(items, "Plus");
+
+  assert.deepEqual(supermarkten, ["AH", "Plus"]);
+  assert.deepEqual(app.laadSupermarkten(storage), ["AH", "Plus"]);
+  assert.deepEqual(zonderPlus.map((item) => item.supermarkten), [["AH"], []]);
+  assert.deepEqual(zonderPlus.map((item) => item.naam), ["melk", "chips"]);
+});
+
 test("aangepaste categorievolgorde stuurt de supermarkt-route", () => {
   const route = app.bewaarRoute({
     waarde: "",
@@ -61,6 +88,8 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
+  assert.match(html, /<form id="supermarkt-formulier" class="supermarkt-formulier">/);
+  assert.match(html, /<ul id="supermarkt-beheer"><\/ul>/);
   assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
   assert.match(html, /<button id="route-opslaan" type="button">Opslaan<\/button>/);
   assert.match(html, /<button id="route-reset" type="button">Reset route<\/button>/);

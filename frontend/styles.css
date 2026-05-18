@@ -87,6 +87,12 @@ button:hover {
   box-shadow: 0 18px 34px rgba(15, 118, 110, 0.28);
 }
 
+button.secundair {
+  color: var(--accent);
+  background: rgba(15, 118, 110, 0.1);
+  box-shadow: none;
+}
+
 button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
   outline: 3px solid var(--accent-3);
   outline-offset: 3px;
@@ -230,7 +236,7 @@ main {
   gap: 1rem;
 }
 
-.veld, .supermarkten, .instellingen {
+.veld, .supermarkten, .instellingen, .supermarkt-formulier {
   display: grid;
   gap: 0.5rem;
 }
@@ -298,6 +304,35 @@ main {
 .route-editor[hidden] { display: none; }
 
 .route-editor p { margin: 0; }
+
+.supermarkt-beheer {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.supermarkt-beheer ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.supermarkt-beheer li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem;
+  border: 1px solid var(--rand);
+  border-radius: 0.85rem;
+  background: var(--oppervlak);
+}
+
+.supermarkt-beheer button, .boodschap button {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.86rem;
+}
 
 .route-volgorde {
   display: grid;
@@ -371,7 +406,7 @@ main {
 
 .boodschap {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   gap: 0.75rem;
   align-items: start;
   padding: 0.85rem;
@@ -427,6 +462,8 @@ main {
 }
 
 @media (max-width: 520px) {
+  .boodschap { grid-template-columns: auto 1fr; }
+  .boodschap button { grid-column: 1 / -1; }
   .route-volgorde__item { grid-template-columns: auto 1fr; }
   .route-volgorde__knoppen { grid-column: 1 / -1; }
 }

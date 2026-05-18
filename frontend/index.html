@@ -27,7 +27,7 @@
         </div>
         <div class="held__paneel" aria-label="App kenmerken">
           <div>
-            <strong>5</strong>
+            <strong id="supermarkt-aantal">5</strong>
             <span>supermarkten</span>
           </div>
           <div>
@@ -71,6 +71,15 @@
           <h2 id="route-titel">Optimale route</h2>
           <label for="supermarkt-filter">Kies supermarkt</label>
           <select id="supermarkt-filter" name="supermarkt-filter"></select>
+          <form id="supermarkt-formulier" class="supermarkt-formulier">
+            <label for="nieuwe-supermarkt">Supermarkt toevoegen</label>
+            <input id="nieuwe-supermarkt" name="nieuwe-supermarkt" type="text" autocomplete="off" placeholder="Bijv. Plus">
+            <button type="submit">Toevoegen</button>
+          </form>
+          <div class="supermarkt-beheer" aria-labelledby="supermarkt-beheer-titel">
+            <h3 id="supermarkt-beheer-titel">Supermarkten beheren</h3>
+            <ul id="supermarkt-beheer"></ul>
+          </div>
           <button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen</button>
           <div id="route-editor" class="route-editor" hidden>
             <p>Versleep de categorieën naar jouw supermarkt-looproute.</p>
