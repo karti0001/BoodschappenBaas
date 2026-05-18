@@ -7,7 +7,7 @@ BoodschappenBaas is een dependency-vrije static web app. De MVP blijft klein zod
 ## Onderdelen
 
 - `frontend/index.html` bevat de Nederlandse, toegankelijke UI.
-- `frontend/styles.css` bevat de zachte, kleurrijke light/dark thema's met `prefers-color-scheme` als automatische standaard.
+- `frontend/styles.css` bevat het professionele dashboard-thema met light/dark thema's en `prefers-color-scheme` als automatische standaard.
 - `frontend/app.js` bevat parsing van YAML-seeddata, localStorage-synchronisatie, routegroepering en interactie.
 - `frontend/data/boodschappen.yml` is de repository-bron voor de standaardboodschappen.
 - `frontend/manifest.webmanifest` en `frontend/service-worker.js` maken de app installeerbaar en offline beschikbaar.
