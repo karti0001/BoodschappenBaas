@@ -1,14 +1,31 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const BRON = "https://allesupers.nl/catalog/all";
+const BRONNEN = [
+  "https://allesupers.nl/catalog/all",
+  "https://www.reclamefolder.nl/aanbiedingen/"
+];
+const BRON = BRONNEN[0];
 const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
 const collator = new Intl.Collator("nl", { sensitivity: "base" });
 
+function vindVeldWaarde(object, delen) {
+  if (object === undefined || object === null) return "";
+  if (!delen.length) return object;
+  if (Array.isArray(object)) {
+    for (const item of object) {
+      const waarde = vindVeldWaarde(item, delen);
+      if (waarde !== undefined && waarde !== null && waarde !== "") return waarde;
+    }
+    return "";
+  }
+  return vindVeldWaarde(object[delen[0]], delen.slice(1));
+}
+
 function vindEersteVeldWaarde(object, velden) {
   for (const veld of velden) {
-    const waarde = veld.split(".").reduce((huidig, deel) => huidig && huidig[deel], object);
+    const waarde = vindVeldWaarde(object, veld.split("."));
     if (waarde !== undefined && waarde !== null && waarde !== "") return waarde;
   }
   return "";
@@ -24,10 +41,10 @@ function formatPrijs(value) {
   return value === null ? "" : new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(value);
 }
 
-function absoluteUrl(url) {
+function absoluteUrl(url, bron = BRON) {
   if (!url) return "";
   try {
-    return new URL(String(url), BRON).toString();
+    return new URL(String(url), bron).toString();
   } catch {
     return "";
   }
@@ -41,8 +58,8 @@ function vindObjecten(node, gevonden = []) {
   }
 
   const naam = vindEersteVeldWaarde(node, ["productnaam", "productName", "name", "naam", "title", "description"]);
-  const supermarkt = vindEersteVeldWaarde(node, ["supermarkt", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name"]);
-  const prijs = vindEersteVeldWaarde(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice"]);
+  const supermarkt = vindEersteVeldWaarde(node, ["supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name", "offers.seller.name"]);
+  const prijs = vindEersteVeldWaarde(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice", "offers.price", "offers.lowPrice"]);
   if (naam && supermarkt && prijs) gevonden.push(node);
 
   Object.values(node).forEach((waarde) => vindObjecten(waarde, gevonden));
@@ -51,24 +68,17 @@ function vindObjecten(node, gevonden = []) {
 
 function isAanbieding(node, prijs, oudePrijs) {
   if (oudePrijs && prijs && oudePrijs > prijs) return true;
-  const tekst = JSON.stringify({
-    discount: node.discount,
-    korting: node.korting,
-    promotion: node.promotion,
-    aanbieding: node.aanbieding,
-    offer: node.offer,
-    deal: node.deal
-  }).toLowerCase();
+  const tekst = JSON.stringify(node).toLowerCase();
   return /korting|aanbieding|actie|bonus|deal|%|gratis|voor/.test(tekst);
 }
 
-function normaliseer(node) {
-  const prijs = parsePrijs(vindEersteVeldWaarde(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice"]));
-  const oudePrijs = parsePrijs(vindEersteVeldWaarde(node, ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "listPrice", "wasPrice"]));
+function normaliseer(node, bron = BRON) {
+  const prijs = parsePrijs(vindEersteVeldWaarde(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice", "offers.price", "offers.lowPrice"]));
+  const oudePrijs = parsePrijs(vindEersteVeldWaarde(node, ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "listPrice", "wasPrice", "offers.highPrice"]));
   if (!isAanbieding(node, prijs, oudePrijs)) return null;
   return {
     productnaam: String(vindEersteVeldWaarde(node, ["productnaam", "productName", "name", "naam", "title", "description"])).trim(),
-    supermarkt: String(vindEersteVeldWaarde(node, ["supermarkt", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name"])).trim(),
+    supermarkt: String(vindEersteVeldWaarde(node, ["supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name", "offers.seller.name"])).trim(),
     prijs,
     prijsTekst: String(vindEersteVeldWaarde(node, ["prijsTekst", "priceText", "price.text"])).trim() || formatPrijs(prijs),
     oudePrijs,
@@ -76,7 +86,7 @@ function normaliseer(node) {
     korting: String(vindEersteVeldWaarde(node, ["korting", "discount", "promotion", "offerText", "dealText"])).trim(),
     eenheidsprijs: String(vindEersteVeldWaarde(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])).trim(),
     bijgewerktOp: String(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt"])).trim(),
-    url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path"]))
+    url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path", "offers.url"]), bron)
   };
 }
 
@@ -85,6 +95,15 @@ function parseCatalogus(tekst, contentType = "") {
   // Allesupers draait als Next.js-site; bij HTML-responses staat de catalogusdata in __NEXT_DATA__.
   const nextData = tekst.match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
   if (nextData) return JSON.parse(nextData[1]);
+  const jsonLd = [...tekst.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
+    .flatMap((match) => {
+      try {
+        return [JSON.parse(match[1])];
+      } catch {
+        return [];
+      }
+    });
+  if (jsonLd.length) return jsonLd;
   return JSON.parse(tekst);
 }
 
@@ -99,19 +118,32 @@ function zelfdeAanbiedingen(aanbiedingen) {
 }
 
 async function main() {
-  const response = await fetch(BRON, {
-    headers: {
-      "accept": "application/json,text/html;q=0.9",
-      "user-agent": "BoodschappenBaas GitHub Action (+https://github.com/karti0001/BoodschappenBaas)"
-    }
-  });
-  if (!response.ok) throw new Error(`Allesupers gaf status ${response.status}`);
+  const gevonden = [];
+  const fouten = [];
+  for (const bron of BRONNEN) {
+    try {
+      const response = await fetch(bron, {
+        headers: {
+          "accept": "application/json,text/html;q=0.9",
+          "user-agent": "BoodschappenBaas GitHub Action (+https://github.com/karti0001/BoodschappenBaas)"
+        }
+      });
+      if (!response.ok) throw new Error(`${bron} gaf status ${response.status}`);
 
-  const catalogus = parseCatalogus(await response.text(), response.headers.get("content-type") || "");
-  const aanbiedingen = vindObjecten(catalogus)
-    .map(normaliseer)
+      const catalogus = parseCatalogus(await response.text(), response.headers.get("content-type") || "");
+      gevonden.push(...vindObjecten(catalogus).map((node) => normaliseer(node, bron)));
+    } catch (fout) {
+      fouten.push(`${bron}: ${fout.message}`);
+    }
+  }
+
+  const aanbiedingen = gevonden
     .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
     .sort((a, b) => collator.compare(a.productnaam, b.productnaam) || collator.compare(a.supermarkt, b.supermarkt));
+
+  if (!aanbiedingen.length) {
+    throw new Error(`Geen aanbiedingen gevonden; bestaand aanbiedingenbestand blijft behouden. ${fouten.join(" ")}`.trim());
+  }
 
   if (zelfdeAanbiedingen(aanbiedingen)) {
     console.log("Aanbiedingen zijn ongewijzigd; JSON-bestand blijft gelijk.");
@@ -120,6 +152,7 @@ async function main() {
 
   const inhoud = `${JSON.stringify({
     bron: BRON,
+    bronnen: BRONNEN,
     bijgewerktOp: new Date().toISOString(),
     aanbiedingen
   }, null, 2)}\n`;
@@ -128,7 +161,17 @@ async function main() {
   console.log(`${aanbiedingen.length} aanbiedingen opgeslagen in ${path.relative(root, doel)}.`);
 }
 
-main().catch((fout) => {
-  console.error(`Kon aanbiedingen niet bijwerken vanaf ${BRON}: ${fout.message}`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((fout) => {
+    console.error(`Kon aanbiedingen niet bijwerken vanaf ${BRONNEN.join(", ")}: ${fout.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  BRON,
+  BRONNEN,
+  parseCatalogus,
+  vindObjecten,
+  normaliseer
+};

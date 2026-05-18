@@ -1,5 +1,58 @@
 {
   "bron": "https://allesupers.nl/catalog/all",
-  "bijgewerktOp": "",
-  "aanbiedingen": []
+  "bronnen": [
+    "https://allesupers.nl/catalog/all",
+    "https://www.reclamefolder.nl/aanbiedingen/"
+  ],
+  "bijgewerktOp": "2026-05-18T20:51:53.884Z",
+  "aanbiedingen": [
+    {
+      "productnaam": "Magere kwark naturel 500 g",
+      "supermarkt": "Albert Heijn",
+      "prijs": 0.99,
+      "prijsTekst": "€ 0,99",
+      "oudePrijs": 1.39,
+      "oudePrijsTekst": "€ 1,39",
+      "korting": "Bonus",
+      "eenheidsprijs": "€ 1,98/kg",
+      "bijgewerktOp": "2026-05-18T20:51:53.884Z",
+      "url": "https://allesupers.nl/catalog/all"
+    },
+    {
+      "productnaam": "Sprite Zero 1,5 liter",
+      "supermarkt": "Jumbo",
+      "prijs": 1.49,
+      "prijsTekst": "€ 1,49",
+      "oudePrijs": 2.39,
+      "oudePrijsTekst": "€ 2,39",
+      "korting": "Actieprijs",
+      "eenheidsprijs": "€ 0,99/l",
+      "bijgewerktOp": "2026-05-18T20:51:53.884Z",
+      "url": "https://allesupers.nl/catalog/all"
+    },
+    {
+      "productnaam": "Aardbeien bak 400 g",
+      "supermarkt": "Lidl",
+      "prijs": 2.49,
+      "prijsTekst": "€ 2,49",
+      "oudePrijs": 3.29,
+      "oudePrijsTekst": "€ 3,29",
+      "korting": "Weekactie",
+      "eenheidsprijs": "€ 6,23/kg",
+      "bijgewerktOp": "2026-05-18T20:51:53.884Z",
+      "url": "https://allesupers.nl/catalog/all"
+    },
+    {
+      "productnaam": "Blauwe bessen 300 g",
+      "supermarkt": "Dirk",
+      "prijs": 1.99,
+      "prijsTekst": "€ 1,99",
+      "oudePrijs": 2.79,
+      "oudePrijsTekst": "€ 2,79",
+      "korting": "Aanbieding",
+      "eenheidsprijs": "€ 6,63/kg",
+      "bijgewerktOp": "2026-05-18T20:51:53.884Z",
+      "url": "https://allesupers.nl/catalog/all"
+    }
+  ]
 }
