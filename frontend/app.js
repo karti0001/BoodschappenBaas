@@ -223,6 +223,9 @@ const BoodschappenBaas = (() => {
       const [categorie] = routeConcept.splice(van, 1);
       routeConcept.splice(naar, 0, categorie);
       renderRouteEditor();
+      [...elementen.routeVolgorde.children]
+        .find((item) => item.dataset.categorie === categorie)
+        ?.focus();
     }
 
     function renderRouteEditor() {
@@ -231,7 +234,10 @@ const BoodschappenBaas = (() => {
         const item = document.createElement("li");
         item.className = "route-volgorde__item";
         item.draggable = true;
+        item.tabIndex = 0;
         item.dataset.categorie = categorie;
+        item.setAttribute("aria-label", `${categorie}. Versleep of gebruik de knoppen om deze categorie te verplaatsen.`);
+        item.setAttribute("aria-roledescription", "versleepbare categorie");
 
         const greep = document.createElement("span");
         greep.className = "route-volgorde__greep";
@@ -247,11 +253,13 @@ const BoodschappenBaas = (() => {
         omhoog.type = "button";
         omhoog.textContent = "Omhoog";
         omhoog.disabled = index === 0;
+        omhoog.setAttribute("aria-label", `Verplaats ${categorie} omhoog`);
         omhoog.addEventListener("click", () => verplaatsCategorie(index, index - 1));
         const omlaag = document.createElement("button");
         omlaag.type = "button";
         omlaag.textContent = "Omlaag";
         omlaag.disabled = index === routeConcept.length - 1;
+        omlaag.setAttribute("aria-label", `Verplaats ${categorie} omlaag`);
         omlaag.addEventListener("click", () => verplaatsCategorie(index, index + 1));
         acties.append(omhoog, omlaag);
 
@@ -273,6 +281,16 @@ const BoodschappenBaas = (() => {
           event.preventDefault();
           const bron = versleepteCategorie || event.dataTransfer.getData("text/plain");
           verplaatsCategorie(routeConcept.indexOf(bron), routeConcept.indexOf(categorie));
+        });
+        item.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            verplaatsCategorie(index, index - 1);
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            verplaatsCategorie(index, index + 1);
+          }
         });
 
         item.append(greep, naam, acties);
