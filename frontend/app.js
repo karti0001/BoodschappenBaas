@@ -120,20 +120,26 @@ const BoodschappenBaas = (() => {
     opgeslagenItems.map(normaliseerItem).forEach((item) => {
       perId.set(item.id, { ...(perId.get(item.id) || {}), ...item });
     });
-    return [...perId.values()].sort((a, b) => sorteerVoorRoute(a, b));
+    return [...perId.values()].sort(sorteerMetRoute());
+  }
+
+  function sorteerMetRoute(route = CATEGORIEEN) {
+    const routeVolgorde = normaliseerRoute(route);
+    return (a, b) => {
+      const categorieVerschil = routeVolgorde.indexOf(a.categorie) - routeVolgorde.indexOf(b.categorie);
+      if (categorieVerschil !== 0) return categorieVerschil;
+      return a.naam.localeCompare(b.naam, "nl", { sensitivity: "base" });
+    };
   }
 
   function sorteerVoorRoute(a, b, route = CATEGORIEEN) {
-    const routeVolgorde = normaliseerRoute(route);
-    const categorieVerschil = routeVolgorde.indexOf(a.categorie) - routeVolgorde.indexOf(b.categorie);
-    if (categorieVerschil !== 0) return categorieVerschil;
-    return a.naam.localeCompare(b.naam, "nl", { sensitivity: "base" });
+    return sorteerMetRoute(route)(a, b);
   }
 
   function groepeerVoorRoute(items, supermarkt = "alle", route = CATEGORIEEN) {
     return [...items]
       .filter((item) => supermarkt === "alle" || item.supermarkten.includes(supermarkt))
-      .sort((a, b) => sorteerVoorRoute(a, b, route))
+      .sort(sorteerMetRoute(route))
       .reduce((groepen, item) => {
         if (!groepen[item.categorie]) groepen[item.categorie] = [];
         groepen[item.categorie].push(item);
@@ -236,7 +242,7 @@ const BoodschappenBaas = (() => {
         item.draggable = true;
         item.tabIndex = 0;
         item.dataset.categorie = categorie;
-        item.setAttribute("aria-label", `${categorie}. Versleep of gebruik de knoppen om deze categorie te verplaatsen.`);
+        item.setAttribute("aria-label", `${categorie}. versleep of gebruik de knoppen om deze categorie te verplaatsen.`);
         item.setAttribute("aria-roledescription", "versleepbare categorie");
 
         const greep = document.createElement("span");
@@ -356,7 +362,7 @@ const BoodschappenBaas = (() => {
         elementen.lijst.append(section);
       });
 
-      const afgevinkt = items.filter((item) => item.afgevinkt).sort((a, b) => sorteerVoorRoute(a, b, route));
+      const afgevinkt = items.filter((item) => item.afgevinkt).sort(sorteerMetRoute(route));
       if (!afgevinkt.length) {
         const leeg = document.createElement("li");
         leeg.className = "leeg";
@@ -401,7 +407,7 @@ const BoodschappenBaas = (() => {
     });
     elementen.routeOpslaan.addEventListener("click", () => {
       route = bewaarRoute(localStorage, routeConcept);
-      items = [...items].sort((a, b) => sorteerVoorRoute(a, b, route));
+      items = [...items].sort(sorteerMetRoute(route));
       render();
       renderRouteEditor();
       status("Supermarkt-route opgeslagen.");
@@ -409,7 +415,7 @@ const BoodschappenBaas = (() => {
     elementen.routeReset.addEventListener("click", () => {
       route = bewaarRoute(localStorage, CATEGORIEEN);
       routeConcept = [...route];
-      items = [...items].sort((a, b) => sorteerVoorRoute(a, b, route));
+      items = [...items].sort(sorteerMetRoute(route));
       render();
       renderRouteEditor();
       status("Supermarkt-route teruggezet.");
