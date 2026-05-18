@@ -46,3 +46,11 @@ test("PWA bestanden bieden offline en commit-versie update ondersteuning", () =>
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /caches\.open\(CACHE_NAME\)/);
 });
+
+test("GitHub Pages workflow schakelt Pages automatisch in voor deploys", () => {
+  const workflow = read(".github/workflows/pages.yml");
+
+  assert.match(workflow, /- name: Setup Pages/);
+  assert.match(workflow, /uses: actions\/configure-pages@v5/);
+  assert.match(workflow, /enablement: true/);
+});
