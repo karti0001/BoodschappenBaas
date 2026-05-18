@@ -225,6 +225,9 @@ const BoodschappenBaas = (() => {
     let routeConcept = [...route];
     let laatstAfgevinktId = null;
     let versleepteCategorie = null;
+    let versleepteLijstCategorie = null;
+    let touchCategorie = null;
+    let touchDoelCategorie = null;
 
     function status(bericht) {
       elementen.status.textContent = bericht;
@@ -239,6 +242,42 @@ const BoodschappenBaas = (() => {
       [...elementen.routeVolgorde.children]
         .find((item) => item.dataset.categorie === categorie)
         ?.focus();
+    }
+
+    function bewaarNieuweRoute(nieuweRoute, bericht) {
+      route = bewaarRoute(localStorage, nieuweRoute);
+      routeConcept = [...route];
+      items = [...items].sort(maakRouteSorteerder(route));
+      render();
+      if (!elementen.routeEditor.hidden) renderRouteEditor();
+      status(bericht);
+    }
+
+    function verplaatsZichtbareCategorie(bronCategorie, doelCategorie) {
+      const vanIndex = route.indexOf(bronCategorie);
+      const naarIndex = route.indexOf(doelCategorie);
+      const nieuweRoute = verplaatsInRoute(route, vanIndex, naarIndex);
+      if (!bronCategorie || !doelCategorie || nieuweRoute.join("\n") === route.join("\n")) return;
+      bewaarNieuweRoute(nieuweRoute, `${bronCategorie} is verplaatst.`);
+    }
+
+    function schoonLijstVerslepenOp() {
+      document.querySelectorAll(".categorie.is-versleept, .categorie.is-dropdoel").forEach((element) => {
+        element.classList.remove("is-versleept", "is-dropdoel");
+      });
+      versleepteLijstCategorie = null;
+      touchCategorie = null;
+      touchDoelCategorie = null;
+    }
+
+    function markeerTouchDoel(event) {
+      const doel = document.elementFromPoint(event.clientX, event.clientY)?.closest(".categorie[data-categorie]");
+      document.querySelector(".categorie.is-dropdoel")?.classList.remove("is-dropdoel");
+      touchDoelCategorie = null;
+      if (doel && doel.dataset.categorie !== touchCategorie) {
+        touchDoelCategorie = doel.dataset.categorie;
+        doel.classList.add("is-dropdoel");
+      }
     }
 
     function renderRouteEditor() {
@@ -328,9 +367,78 @@ const BoodschappenBaas = (() => {
       categorieNamen.forEach((categorie) => {
         const section = document.createElement("section");
         section.className = "categorie";
+        section.dataset.categorie = categorie;
+        section.setAttribute("aria-label", `${categorie}. Sleep deze categorie omhoog of omlaag om de volgorde te wijzigen.`);
+        const kop = document.createElement("div");
+        kop.className = "categorie__kop";
         const heading = document.createElement("h3");
         heading.textContent = categorie;
+        const greep = document.createElement("button");
+        greep.type = "button";
+        greep.className = "categorie__greep";
+        greep.draggable = true;
+        greep.textContent = "↕";
+        greep.setAttribute("aria-label", `Versleep ${categorie}`);
+        greep.title = "Categorie verslepen";
         const list = document.createElement("ul");
+
+        greep.addEventListener("dragstart", (event) => {
+          versleepteLijstCategorie = categorie;
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", categorie);
+          }
+          section.classList.add("is-versleept");
+        });
+        greep.addEventListener("dragend", schoonLijstVerslepenOp);
+        greep.addEventListener("pointerdown", (event) => {
+          if (event.pointerType === "mouse") return;
+          event.preventDefault();
+          touchCategorie = categorie;
+          section.classList.add("is-versleept");
+          greep.setPointerCapture?.(event.pointerId);
+        });
+        greep.addEventListener("pointermove", (event) => {
+          if (touchCategorie !== categorie) return;
+          event.preventDefault();
+          markeerTouchDoel(event);
+        });
+        greep.addEventListener("pointerup", (event) => {
+          if (touchCategorie !== categorie) return;
+          event.preventDefault();
+          const doelCategorie = touchDoelCategorie;
+          schoonLijstVerslepenOp();
+          if (doelCategorie) verplaatsZichtbareCategorie(categorie, doelCategorie);
+        });
+        greep.addEventListener("pointercancel", schoonLijstVerslepenOp);
+        greep.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            const vorigeCategorie = Object.keys(groepen)[Object.keys(groepen).indexOf(categorie) - 1];
+            if (vorigeCategorie) verplaatsZichtbareCategorie(categorie, vorigeCategorie);
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            const volgendeCategorie = Object.keys(groepen)[Object.keys(groepen).indexOf(categorie) + 1];
+            if (volgendeCategorie) verplaatsZichtbareCategorie(categorie, volgendeCategorie);
+          }
+        });
+
+        section.addEventListener("dragover", (event) => {
+          if (!versleepteLijstCategorie || versleepteLijstCategorie === categorie) return;
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+          section.classList.add("is-dropdoel");
+        });
+        section.addEventListener("dragleave", (event) => {
+          if (!section.contains(event.relatedTarget)) section.classList.remove("is-dropdoel");
+        });
+        section.addEventListener("drop", (event) => {
+          event.preventDefault();
+          const bron = versleepteLijstCategorie || event.dataTransfer?.getData("text/plain");
+          schoonLijstVerslepenOp();
+          verplaatsZichtbareCategorie(bron, categorie);
+        });
 
         groepen[categorie].forEach((item) => {
           const row = document.createElement("li");
@@ -365,7 +473,8 @@ const BoodschappenBaas = (() => {
           list.append(row);
         });
 
-        section.append(heading, list);
+        kop.append(heading, greep);
+        section.append(kop, list);
         elementen.lijst.append(section);
       });
 

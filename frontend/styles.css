@@ -357,8 +357,31 @@ main {
   background: rgba(255, 255, 255, 0.44);
 }
 
+.categorie.is-versleept {
+  opacity: 0.6;
+}
+
+.categorie.is-dropdoel {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--rand-sterk);
+}
+
+.categorie__kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .categorie h3 {
   color: var(--accent);
+}
+
+.categorie__greep {
+  min-width: 2.75rem;
+  padding: 0.55rem 0.7rem;
+  cursor: grab;
+  touch-action: none;
 }
 
 .categorie ul, .mandje ul {

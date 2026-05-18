@@ -55,6 +55,24 @@ test("routevolgorde wordt lokaal geladen en verplaatst", () => {
   assert.deepEqual(app.verplaatsInRoute(app.laadRoute(storage), 2, 0).slice(0, 3), ["Zuivel", "Groente", "Brood"]);
 });
 
+test("categorie verslepen bewaart volgorde en behoudt itemgroepen", () => {
+  const storage = {
+    waarde: "",
+    getItem() { return this.waarde; },
+    setItem(_key, value) { this.waarde = value; }
+  };
+  const items = [
+    app.normaliseerItem({ naam: "melk", categorie: "Zuivel", supermarkten: ["AH"] }),
+    app.normaliseerItem({ naam: "water", categorie: "Dranken", supermarkten: ["AH"] })
+  ];
+  const route = app.bewaarRoute(storage, app.verplaatsInRoute(app.laadRoute(storage), 3, 0));
+  const groepen = app.groepeerVoorRoute(items, "AH", route);
+
+  assert.equal(JSON.parse(storage.waarde)[0], "Dranken");
+  assert.deepEqual(Object.keys(groepen), ["Dranken", "Zuivel"]);
+  assert.equal(groepen.Zuivel[0].naam, "melk");
+});
+
 test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   const html = read("frontend/index.html");
   assert.match(html, /<html lang="nl">/);
