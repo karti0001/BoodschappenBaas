@@ -71,6 +71,15 @@
           <h2 id="route-titel">Optimale route</h2>
           <label for="supermarkt-filter">Kies supermarkt</label>
           <select id="supermarkt-filter" name="supermarkt-filter"></select>
+          <button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen</button>
+          <div id="route-editor" class="route-editor" hidden>
+            <p>Versleep de categorieën naar jouw supermarkt-looproute.</p>
+            <ol id="route-volgorde" class="route-volgorde" aria-label="Categorievolgorde"></ol>
+            <div class="route-acties">
+              <button id="route-opslaan" type="button">Opslaan</button>
+              <button id="route-reset" type="button">Reset route</button>
+            </div>
+          </div>
           <button id="alles-uitvinken" type="button">Alles uitvinken</button>
           <p id="status" class="status" role="status" aria-live="polite"></p>
           <div class="mandje" aria-labelledby="mandje-titel">

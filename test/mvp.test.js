@@ -27,12 +27,43 @@ test("items worden per categorie als route gegroepeerd en lokaal te combineren",
   assert.equal(groepen.Groente[0].naam, "komkommer");
 });
 
+test("aangepaste categorievolgorde stuurt de supermarkt-route", () => {
+  const route = app.bewaarRoute({
+    waarde: "",
+    setItem(_key, value) { this.waarde = value; }
+  }, ["Groente", "Brood", "Zuivel"]);
+  const items = [
+    app.normaliseerItem({ naam: "melk", categorie: "Zuivel", supermarkten: ["AH"] }),
+    app.normaliseerItem({ naam: "sla", categorie: "Groente", supermarkten: ["AH"] }),
+    app.normaliseerItem({ naam: "stokbrood", categorie: "Brood", supermarkten: ["AH"] })
+  ];
+  const groepen = app.groepeerVoorRoute(items, "AH", route);
+
+  assert.deepEqual(route.slice(0, 3), ["Groente", "Brood", "Zuivel"]);
+  assert.deepEqual(Object.keys(groepen), ["Groente", "Brood", "Zuivel"]);
+});
+
+test("routevolgorde wordt lokaal geladen en verplaatst", () => {
+  const storage = {
+    waarde: "",
+    getItem() { return this.waarde; },
+    setItem(_key, value) { this.waarde = value; }
+  };
+
+  app.bewaarRoute(storage, ["Groente", "Brood", "Zuivel"]);
+  assert.deepEqual(app.laadRoute(storage).slice(0, 3), ["Groente", "Brood", "Zuivel"]);
+  assert.deepEqual(app.verplaatsInRoute(app.laadRoute(storage), 2, 0).slice(0, 3), ["Zuivel", "Groente", "Brood"]);
+});
+
 test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   const html = read("frontend/index.html");
   assert.match(html, /<html lang="nl">/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
+  assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
+  assert.match(html, /<button id="route-opslaan" type="button">Opslaan<\/button>/);
+  assert.match(html, /<button id="route-reset" type="button">Reset route<\/button>/);
   assert.match(html, /<select id="thema"/);
 });
 
