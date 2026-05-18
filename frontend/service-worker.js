@@ -7,6 +7,7 @@ const APP_SHELL = [
   "./app.js",
   "./manifest.webmanifest",
   "./data/boodschappen.yml",
+  "./data/aanbiedingen.json",
   "./icons/icon.svg"
 ];
 

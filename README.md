@@ -11,6 +11,7 @@ BoodschappenBaas is een kleine Nederlandse PWA om boodschappen per supermarkt en
 - Zelf boodschappen toevoegen; wijzigingen worden lokaal in de browser opgeslagen.
 - Items individueel afvinken of alles tegelijk uitvinken.
 - Afgevinkte items bewegen visueel richting het winkelmandje.
+- Aanbiedingen scannen tegen een lokaal JSON-bestand met Allesupers-data.
 - Licht, donker en automatisch thema op basis van het apparaatprofiel.
 - PWA met offline cache en automatische verversing wanneer een nieuwe service worker per commit wordt uitgerold.
 
@@ -27,6 +28,8 @@ De gebouwde site staat na `npm run build` in `dist/`.
 ## Data aanpassen
 
 De repository-seed staat in [`frontend/data/boodschappen.yml`](frontend/data/boodschappen.yml). Nieuwe browser-items worden niet naar de repository geschreven, maar in `localStorage` bewaard zodat de app offline en privacyvriendelijk blijft.
+
+Aanbiedingen komen uit [`frontend/data/aanbiedingen.json`](frontend/data/aanbiedingen.json). De frontend leest alleen dit statische bestand, zodat GitHub Pages zonder server-side backend blijft werken. De workflow **Aanbiedingen bijwerken** haalt dagelijks en handmatig via `workflow_dispatch` data op uit `https://allesupers.nl/catalog/all` en commit alleen dit JSON-bestand wanneer de inhoud wijzigt. Als de bron tijdelijk niet bereikbaar is, blijft de app werken en toont zij subtiel dat er geen actuele aanbieding is gevonden.
 
 ## Deployment
 
