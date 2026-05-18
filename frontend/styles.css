@@ -286,6 +286,64 @@ main {
   font-weight: 800;
 }
 
+.route-editor {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--rand-sterk);
+  border-radius: 1.2rem;
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.route-editor[hidden] { display: none; }
+
+.route-editor p { margin: 0; }
+
+.route-volgorde {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-volgorde__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.65rem;
+  border: 1px solid var(--rand);
+  border-radius: 0.85rem;
+  background: var(--oppervlak);
+  cursor: grab;
+}
+
+.route-volgorde__item.is-versleept {
+  opacity: 0.55;
+}
+
+.route-volgorde__greep {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.route-volgorde__knoppen, .route-acties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.route-volgorde__knoppen button, .route-acties button {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.86rem;
+}
+
+.route-volgorde__knoppen button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .lijst {
   display: grid;
   gap: 1rem;
@@ -366,4 +424,9 @@ main {
   .formulier-kaart, .formulier, .route-grid, .held__layout { grid-template-columns: 1fr; }
   .held__layout { margin-top: 2rem; }
   .instellingen { position: static; }
+}
+
+@media (max-width: 520px) {
+  .route-volgorde__item { grid-template-columns: auto 1fr; }
+  .route-volgorde__knoppen { grid-column: 1 / -1; }
 }

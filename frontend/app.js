@@ -14,6 +14,7 @@ const BoodschappenBaas = (() => {
     "Snacks"
   ];
   const STORAGE_KEY = "boodschappenbaas-items-v1";
+  const ROUTE_KEY = "boodschappenbaas-route-v1";
   const THEME_KEY = "boodschappenbaas-theme";
   const ANIMATION_DURATION_MS = 700;
 
@@ -94,25 +95,45 @@ const BoodschappenBaas = (() => {
     }
   }
 
+  function normaliseerRoute(route) {
+    const opgeslagen = Array.isArray(route) ? route.filter((categorie) => CATEGORIEEN.includes(categorie)) : [];
+    return [...opgeslagen, ...CATEGORIEEN.filter((categorie) => !opgeslagen.includes(categorie))];
+  }
+
+  function laadRoute(storage) {
+    try {
+      return normaliseerRoute(JSON.parse(storage.getItem(ROUTE_KEY) || "[]"));
+    } catch {
+      return [...CATEGORIEEN];
+    }
+  }
+
+  function bewaarRoute(storage, route) {
+    const volgorde = normaliseerRoute(route);
+    storage.setItem(ROUTE_KEY, JSON.stringify(volgorde));
+    return volgorde;
+  }
+
   function combineerItems(seedItems, opgeslagenItems) {
     const perId = new Map();
     seedItems.map(normaliseerItem).forEach((item) => perId.set(item.id, item));
     opgeslagenItems.map(normaliseerItem).forEach((item) => {
       perId.set(item.id, { ...(perId.get(item.id) || {}), ...item });
     });
-    return [...perId.values()].sort(sorteerVoorRoute);
+    return [...perId.values()].sort((a, b) => sorteerVoorRoute(a, b));
   }
 
-  function sorteerVoorRoute(a, b) {
-    const categorieVerschil = CATEGORIEEN.indexOf(a.categorie) - CATEGORIEEN.indexOf(b.categorie);
+  function sorteerVoorRoute(a, b, route = CATEGORIEEN) {
+    const routeVolgorde = normaliseerRoute(route);
+    const categorieVerschil = routeVolgorde.indexOf(a.categorie) - routeVolgorde.indexOf(b.categorie);
     if (categorieVerschil !== 0) return categorieVerschil;
     return a.naam.localeCompare(b.naam, "nl", { sensitivity: "base" });
   }
 
-  function groepeerVoorRoute(items, supermarkt = "alle") {
+  function groepeerVoorRoute(items, supermarkt = "alle", route = CATEGORIEEN) {
     return [...items]
       .filter((item) => supermarkt === "alle" || item.supermarkten.includes(supermarkt))
-      .sort(sorteerVoorRoute)
+      .sort((a, b) => sorteerVoorRoute(a, b, route))
       .reduce((groepen, item) => {
         if (!groepen[item.categorie]) groepen[item.categorie] = [];
         groepen[item.categorie].push(item);
@@ -159,6 +180,11 @@ const BoodschappenBaas = (() => {
       mandje: document.querySelector("#mandje-lijst"),
       status: document.querySelector("#status"),
       allesUitvinken: document.querySelector("#alles-uitvinken"),
+      routeAanpassen: document.querySelector("#route-aanpassen"),
+      routeEditor: document.querySelector("#route-editor"),
+      routeVolgorde: document.querySelector("#route-volgorde"),
+      routeOpslaan: document.querySelector("#route-opslaan"),
+      routeReset: document.querySelector("#route-reset"),
       thema: document.querySelector("#thema")
     };
 
@@ -183,17 +209,82 @@ const BoodschappenBaas = (() => {
     const response = await fetch("data/boodschappen.yml");
     const seedItems = parseYamlItems(await response.text());
     let items = combineerItems(seedItems, laadOpgeslagenItems(localStorage));
+    let route = laadRoute(localStorage);
+    let routeConcept = [...route];
     let laatstAfgevinktId = null;
+    let versleepteCategorie = null;
 
     function status(bericht) {
       elementen.status.textContent = bericht;
+    }
+
+    function verplaatsCategorie(van, naar) {
+      if (van === naar || naar < 0 || naar >= routeConcept.length) return;
+      const [categorie] = routeConcept.splice(van, 1);
+      routeConcept.splice(naar, 0, categorie);
+      renderRouteEditor();
+    }
+
+    function renderRouteEditor() {
+      elementen.routeVolgorde.replaceChildren();
+      routeConcept.forEach((categorie, index) => {
+        const item = document.createElement("li");
+        item.className = "route-volgorde__item";
+        item.draggable = true;
+        item.dataset.categorie = categorie;
+
+        const greep = document.createElement("span");
+        greep.className = "route-volgorde__greep";
+        greep.textContent = "↕";
+        greep.setAttribute("aria-hidden", "true");
+
+        const naam = document.createElement("span");
+        naam.textContent = categorie;
+
+        const acties = document.createElement("span");
+        acties.className = "route-volgorde__knoppen";
+        const omhoog = document.createElement("button");
+        omhoog.type = "button";
+        omhoog.textContent = "Omhoog";
+        omhoog.disabled = index === 0;
+        omhoog.addEventListener("click", () => verplaatsCategorie(index, index - 1));
+        const omlaag = document.createElement("button");
+        omlaag.type = "button";
+        omlaag.textContent = "Omlaag";
+        omlaag.disabled = index === routeConcept.length - 1;
+        omlaag.addEventListener("click", () => verplaatsCategorie(index, index + 1));
+        acties.append(omhoog, omlaag);
+
+        item.addEventListener("dragstart", (event) => {
+          versleepteCategorie = categorie;
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", categorie);
+          item.classList.add("is-versleept");
+        });
+        item.addEventListener("dragend", () => {
+          versleepteCategorie = null;
+          item.classList.remove("is-versleept");
+        });
+        item.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+        });
+        item.addEventListener("drop", (event) => {
+          event.preventDefault();
+          const bron = versleepteCategorie || event.dataTransfer.getData("text/plain");
+          verplaatsCategorie(routeConcept.indexOf(bron), routeConcept.indexOf(categorie));
+        });
+
+        item.append(greep, naam, acties);
+        elementen.routeVolgorde.append(item);
+      });
     }
 
     function render() {
       elementen.lijst.replaceChildren();
       elementen.mandje.replaceChildren();
       const filter = elementen.filter.value;
-      const groepen = groepeerVoorRoute(items, filter);
+      const groepen = groepeerVoorRoute(items, filter, route);
       const categorieNamen = Object.keys(groepen);
 
       if (!categorieNamen.length) {
@@ -247,7 +338,7 @@ const BoodschappenBaas = (() => {
         elementen.lijst.append(section);
       });
 
-      const afgevinkt = items.filter((item) => item.afgevinkt).sort(sorteerVoorRoute);
+      const afgevinkt = items.filter((item) => item.afgevinkt).sort((a, b) => sorteerVoorRoute(a, b, route));
       if (!afgevinkt.length) {
         const leeg = document.createElement("li");
         leeg.className = "leeg";
@@ -281,6 +372,30 @@ const BoodschappenBaas = (() => {
 
     elementen.filter.addEventListener("change", render);
     elementen.thema.addEventListener("change", () => setTheme(elementen.thema.value));
+    elementen.routeAanpassen.addEventListener("click", () => {
+      const wordtZichtbaar = elementen.routeEditor.hidden;
+      elementen.routeEditor.hidden = !wordtZichtbaar;
+      elementen.routeAanpassen.setAttribute("aria-expanded", String(wordtZichtbaar));
+      if (wordtZichtbaar) {
+        routeConcept = [...route];
+        renderRouteEditor();
+      }
+    });
+    elementen.routeOpslaan.addEventListener("click", () => {
+      route = bewaarRoute(localStorage, routeConcept);
+      items = [...items].sort((a, b) => sorteerVoorRoute(a, b, route));
+      render();
+      renderRouteEditor();
+      status("Supermarkt-route opgeslagen.");
+    });
+    elementen.routeReset.addEventListener("click", () => {
+      route = bewaarRoute(localStorage, CATEGORIEEN);
+      routeConcept = [...route];
+      items = [...items].sort((a, b) => sorteerVoorRoute(a, b, route));
+      render();
+      renderRouteEditor();
+      status("Supermarkt-route teruggezet.");
+    });
     elementen.allesUitvinken.addEventListener("click", () => {
       items = items.map((item) => ({ ...item, afgevinkt: false }));
       bewaarItems(localStorage, items);
@@ -288,6 +403,7 @@ const BoodschappenBaas = (() => {
       status("Alle boodschappen zijn weer uitgevinkt.");
     });
 
+    renderRouteEditor();
     render();
     registreerServiceWorker();
   }
@@ -308,6 +424,9 @@ const BoodschappenBaas = (() => {
     CATEGORIEEN,
     parseYamlItems,
     normaliseerItem,
+    normaliseerRoute,
+    laadRoute,
+    bewaarRoute,
     combineerItems,
     groepeerVoorRoute,
     nieuwEigenItem,

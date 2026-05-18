@@ -7,6 +7,7 @@ BoodschappenBaas is een kleine Nederlandse PWA om boodschappen per supermarkt en
 - Startlijst uit YAML met Kwark, Sprite Zero, aardbeien en blauwe bessen.
 - Supermarkten: AH, Jumbo, Aldi, Lidl en Dirk.
 - Categorieën zoals Zuivel, Groente, Fruit, Dranken en meer voor een logische winkelroute.
+- Supermarkt-route aanpassen door categorieën te verslepen; de volgorde blijft lokaal bewaard.
 - Zelf boodschappen toevoegen; wijzigingen worden lokaal in de browser opgeslagen.
 - Items individueel afvinken of alles tegelijk uitvinken.
 - Afgevinkte items bewegen visueel richting het winkelmandje.
@@ -34,7 +35,6 @@ De GitHub Pages workflow bouwt de statische bestanden op elke push naar `main` e
 ## Post-MVP ideeën
 
 - Meerdere winkelsessies of vaste lijsttemplates, zoals weekboodschappen, feestje of meal prep.
-- Drag-and-drop om de categorievolgorde per supermarkt handmatig te finetunen.
 - Export/import van lokale data als YAML of JSON voor back-ups.
 - Optionele hoeveelheden en notities per item.
 - Snelle herhaal-knop voor recent gekochte items.
