@@ -128,7 +128,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 .held__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.75fr);
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.55fr);
   gap: clamp(1.5rem, 4vw, 3rem);
   align-items: center;
   max-width: 1180px;
@@ -186,7 +186,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 h1 {
   margin: 0;
-  font-size: clamp(2.8rem, 8vw, 5.8rem);
+  font-size: clamp(2.8rem, 5.8vw, 4.4rem);
   letter-spacing: -0.07em;
   line-height: 0.95;
 }
@@ -362,7 +362,7 @@ main {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .formulier-kaart, .formulier, .route-grid, .held__layout { grid-template-columns: 1fr; }
   .held__layout { margin-top: 2rem; }
   .instellingen { position: static; }
