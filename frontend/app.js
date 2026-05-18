@@ -406,7 +406,7 @@ const BoodschappenBaas = (() => {
             greep.setPointerCapture?.(event.pointerId);
           } catch {
             schoonLijstVerslepenOp();
-            status("Slepen wordt niet volledig ondersteund in deze browser.");
+            status("Kon aanwijzer niet vastleggen voor slepen.");
           }
         });
         greep.addEventListener("pointermove", (event) => {
@@ -443,7 +443,8 @@ const BoodschappenBaas = (() => {
           section.classList.add("is-dropdoel");
         });
         section.addEventListener("dragleave", (event) => {
-          if (!section.contains(event.relatedTarget)) section.classList.remove("is-dropdoel");
+          if (!event.relatedTarget || section.contains(event.relatedTarget)) return;
+          section.classList.remove("is-dropdoel");
         });
         section.addEventListener("drop", (event) => {
           event.preventDefault();
