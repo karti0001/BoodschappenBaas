@@ -23,6 +23,9 @@ const BoodschappenBaas = (() => {
   const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = ".boodschap, input, select, textarea, label, button:not(.categorie__greep)";
   const AANBIEDINGEN_PAD = "data/aanbiedingen.json";
   const STOPWOORDEN = new Set(["de", "het", "een", "en", "of", "met", "voor", "bij", "van", "per", "stuk", "stuks"]);
+  const EXACTE_SUBSTRING_BONUS = 0.3;
+  const MINIMALE_MATCH_SCORE = 0.66;
+  const ENKEL_TOKEN_MATCH_SCORE = 1;
   const SUPERMARKT_ALIASSEN = {
     ah: "albert heijn",
     "albert heijn": "albert heijn"
@@ -228,7 +231,7 @@ const BoodschappenBaas = (() => {
 
   function normaliseerZoektekst(value) {
     return String(value || "")
-      .toLocaleLowerCase("nl")
+      .toLocaleLowerCase("nl-NL")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/&/g, " en ")
@@ -292,10 +295,10 @@ const BoodschappenBaas = (() => {
         const tokens = new Set(maakZoekTokens(tekst));
         const treffers = queryTokens.filter((token) => tokens.has(token) || tekst.includes(token));
         const dekking = treffers.length / queryTokens.length;
-        const extraScore = normaliseerZoektekst(aanbieding.productnaam).includes(normaliseerZoektekst(zoekterm)) ? 0.3 : 0;
+        const extraScore = normaliseerZoektekst(aanbieding.productnaam).includes(normaliseerZoektekst(zoekterm)) ? EXACTE_SUBSTRING_BONUS : 0;
         return { ...aanbieding, score: dekking + extraScore };
       })
-      .filter((aanbieding) => aanbieding.score >= 0.66 || (queryTokens.length === 1 && aanbieding.score >= 1))
+      .filter((aanbieding) => aanbieding.score >= MINIMALE_MATCH_SCORE || (queryTokens.length === 1 && aanbieding.score >= ENKEL_TOKEN_MATCH_SCORE))
       .sort((a, b) => {
         const prijsVerschil = (a.prijs ?? Number.MAX_SAFE_INTEGER) - (b.prijs ?? Number.MAX_SAFE_INTEGER);
         if (prijsVerschil !== 0) return prijsVerschil;
