@@ -36,6 +36,14 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<select id="thema"/);
 });
 
+test("HTML bevat professionele dashboard-elementen", () => {
+  const html = read("frontend/index.html");
+  assert.match(html, /Professionele winkelplanning/);
+  assert.match(html, /class="held__paneel" aria-label="App kenmerken"/);
+  assert.match(html, /<span>supermarkten<\/span>/);
+  assert.match(html, /<span>PWA gereed<\/span>/);
+});
+
 test("PWA bestanden bieden offline en commit-versie update ondersteuning", () => {
   const sw = read("frontend/service-worker.js");
   const manifest = JSON.parse(read("frontend/manifest.webmanifest"));
