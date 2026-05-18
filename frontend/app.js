@@ -521,7 +521,10 @@ const BoodschappenBaas = (() => {
           }
           section.classList.add("is-versleept");
         });
-        section.addEventListener("dragend", schoonLijstVerslepenOp);
+        section.addEventListener("dragend", () => {
+          section.draggable = true;
+          schoonLijstVerslepenOp();
+        });
         section.addEventListener("pointerdown", (event) => {
           const magSlepen = magCategorieblokSlepenVanaf(event.target);
           section.draggable = magSlepen;
@@ -542,13 +545,17 @@ const BoodschappenBaas = (() => {
           markeerTouchDoel(event);
         });
         section.addEventListener("pointerup", (event) => {
+          section.draggable = true;
           if (touchCategorie !== categorie) return;
           event.preventDefault();
           const doelCategorie = touchDoelCategorie;
           schoonLijstVerslepenOp();
           if (doelCategorie) verplaatsZichtbareCategorie(categorie, doelCategorie);
         });
-        section.addEventListener("pointercancel", schoonLijstVerslepenOp);
+        section.addEventListener("pointercancel", () => {
+          section.draggable = true;
+          schoonLijstVerslepenOp();
+        });
         greep.addEventListener("keydown", (event) => {
           const huidigeIndex = categorieNamen.indexOf(categorie);
           if (event.key === "ArrowUp") {
