@@ -120,6 +120,7 @@ test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkere
 
   assert.match(js, /section\.draggable = true/);
   assert.match(js, /section\.draggable = magSlepen/);
+  assert.match(js, /dragend[\s\S]*section\.draggable = true/);
   assert.match(js, /pointerup[\s\S]*section\.draggable = true/);
   assert.match(js, /pointercancel[\s\S]*section\.draggable = true/);
   assert.match(js, /magCategorieblokSlepenVanaf\(event\.target\)/);
