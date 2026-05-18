@@ -399,6 +399,10 @@ const BoodschappenBaas = (() => {
       }
     }
 
+    function magCategorieblokSlepenVanaf(target) {
+      return !target.closest(".boodschap, input, select, textarea, label, button:not(.categorie__greep)");
+    }
+
     function renderRouteEditor() {
       elementen.routeVolgorde.replaceChildren();
       routeConcept.forEach((categorie, index) => {
@@ -486,6 +490,7 @@ const BoodschappenBaas = (() => {
       categorieNamen.forEach((categorie) => {
         const section = document.createElement("section");
         section.className = "categorie";
+        section.draggable = true;
         section.dataset.categorie = categorie;
         const kop = document.createElement("div");
         kop.className = "categorie__kop";
@@ -503,7 +508,11 @@ const BoodschappenBaas = (() => {
         greep.append(greepIcoon);
         const list = document.createElement("ul");
 
-        greep.addEventListener("dragstart", (event) => {
+        section.addEventListener("dragstart", (event) => {
+          if (!magCategorieblokSlepenVanaf(event.target)) {
+            event.preventDefault();
+            return;
+          }
           versleepteLijstCategorie = categorie;
           if (event.dataTransfer) {
             event.dataTransfer.effectAllowed = "move";
@@ -511,32 +520,32 @@ const BoodschappenBaas = (() => {
           }
           section.classList.add("is-versleept");
         });
-        greep.addEventListener("dragend", schoonLijstVerslepenOp);
-        greep.addEventListener("pointerdown", (event) => {
-          if (event.pointerType === "mouse") return;
+        section.addEventListener("dragend", schoonLijstVerslepenOp);
+        section.addEventListener("pointerdown", (event) => {
+          if (event.pointerType === "mouse" || !magCategorieblokSlepenVanaf(event.target)) return;
           event.preventDefault();
           touchCategorie = categorie;
           section.classList.add("is-versleept");
           try {
-            greep.setPointerCapture?.(event.pointerId);
+            section.setPointerCapture?.(event.pointerId);
           } catch (fout) {
             schoonLijstVerslepenOp();
             console.warn("Kon aanwijzer niet vastleggen voor slepen.", fout);
           }
         });
-        greep.addEventListener("pointermove", (event) => {
+        section.addEventListener("pointermove", (event) => {
           if (touchCategorie !== categorie) return;
           event.preventDefault();
           markeerTouchDoel(event);
         });
-        greep.addEventListener("pointerup", (event) => {
+        section.addEventListener("pointerup", (event) => {
           if (touchCategorie !== categorie) return;
           event.preventDefault();
           const doelCategorie = touchDoelCategorie;
           schoonLijstVerslepenOp();
           if (doelCategorie) verplaatsZichtbareCategorie(categorie, doelCategorie);
         });
-        greep.addEventListener("pointercancel", schoonLijstVerslepenOp);
+        section.addEventListener("pointercancel", schoonLijstVerslepenOp);
         greep.addEventListener("keydown", (event) => {
           const huidigeIndex = categorieNamen.indexOf(categorie);
           if (event.key === "ArrowUp") {

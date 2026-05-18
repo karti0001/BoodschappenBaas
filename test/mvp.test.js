@@ -114,6 +114,17 @@ test("categorie verslepen bewaart volgorde en behoudt itemgroepen", () => {
   assert.equal(groepen.Zuivel[0].naam, "melk");
 });
 
+test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkeren", () => {
+  const js = read("frontend/app.js");
+  const css = read("frontend/styles.css");
+
+  assert.match(js, /section\.draggable = true/);
+  assert.match(js, /magCategorieblokSlepenVanaf\(event\.target\)/);
+  assert.match(js, /\.boodschap, input, select, textarea, label, button:not\(\.categorie__greep\)/);
+  assert.match(css, /\.categorie \{[\s\S]*cursor: grab;/);
+  assert.match(css, /\.categorie__kop \{[\s\S]*touch-action: none;/);
+});
+
 test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   const html = read("frontend/index.html");
   assert.match(html, /<html lang="nl">/);
