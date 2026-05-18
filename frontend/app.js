@@ -242,8 +242,8 @@ const BoodschappenBaas = (() => {
         item.draggable = true;
         item.tabIndex = 0;
         item.dataset.categorie = categorie;
-        item.setAttribute("aria-label", `${categorie}. versleep of gebruik de knoppen om deze categorie te verplaatsen.`);
-        item.setAttribute("aria-roledescription", "versleepbare categorie");
+        item.setAttribute("aria-label", `${categorie}. Versleep of gebruik de knoppen om deze categorie te verplaatsen.`);
+        item.setAttribute("aria-roledescription", "Versleepbare categorie");
 
         const greep = document.createElement("span");
         greep.className = "route-volgorde__greep";
