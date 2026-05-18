@@ -458,6 +458,51 @@ main {
 .boodschap.is-afgevinkt .boodschap__naam { text-decoration: line-through; }
 .boodschap.naar-mandje { animation: naarMandje 700ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 
+.aanbiedingen {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid var(--rand-sterk);
+  border-radius: 0.85rem;
+  background: rgba(15, 118, 110, 0.08);
+  font-size: 0.9rem;
+}
+
+.aanbiedingen--leeg {
+  border-style: dashed;
+  background: transparent;
+  color: var(--zacht);
+}
+
+.aanbiedingen ul {
+  gap: 0.45rem;
+}
+
+.aanbiedingen li {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.aanbiedingen__badge {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+}
+
+.aanbiedingen__prijs {
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.aanbiedingen a {
+  color: var(--accent-2);
+  font-weight: 800;
+}
+
 .mandje {
   margin-top: 1rem;
   padding: 1rem;
@@ -499,4 +544,5 @@ main {
   .route-volgorde__item { grid-template-columns: auto 1fr; }
   .route-volgorde__knoppen { grid-column: 1 / -1; }
   .supermarkt-formulier__rij, .boodschap { grid-template-columns: 1fr; }
+  .aanbiedingen { grid-column: 1 / -1; }
 }

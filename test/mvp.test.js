@@ -96,6 +96,19 @@ test("routevolgorde wordt lokaal geladen en verplaatst", () => {
   assert.deepEqual(app.verplaatsInRoute(app.laadRoute(storage), 2, 0).slice(0, 3), ["Zuivel", "Groente", "Brood"]);
 });
 
+test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
+  const aanbiedingen = [
+    { productnaam: "Coca-Cola Zero Sugar 1,5L", supermarkt: "Albert Heijn", prijs: 1.49, oudePrijs: 2.19, url: "https://allesupers.nl/product/cola-zero" },
+    { productnaam: "Coca Cola Zero blikjes", supermarkt: "Jumbo", prijs: 1.29, korting: "2e halve prijs" },
+    { productnaam: "Pepsi Max", supermarkt: "Dirk", prijs: 0.99 }
+  ];
+
+  const matches = app.matchAanbiedingen("Cola Zero", aanbiedingen, { supermarkten: ["AH", "Jumbo"] });
+
+  assert.deepEqual(matches.map((aanbieding) => aanbieding.supermarkt), ["Jumbo", "Albert Heijn"]);
+  assert.ok(matches.every((aanbieding) => aanbieding.productnaam.includes("Cola")));
+});
+
 test("categorie verslepen bewaart volgorde en behoudt itemgroepen", () => {
   const storage = {
     waarde: "",
@@ -146,6 +159,7 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<label for="naam">Naam<\/label>/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
   assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
+  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>/);
   assert.match(html, /<button id="route-opslaan" type="button">Opslaan<\/button>/);
   assert.match(html, /<button id="route-reset" type="button">Reset route<\/button>/);
   assert.match(html, /<select id="thema"/);
@@ -170,4 +184,16 @@ test("PWA bestanden bieden offline en commit-versie update ondersteuning", () =>
   assert.match(sw, /__COMMIT_SHA__/);
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /caches\.open\(CACHE_NAME\)/);
+  assert.match(sw, /\.\/data\/aanbiedingen\.json/);
+});
+
+test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
+  const workflow = read(".github/workflows/aanbiedingen.yml");
+  const data = JSON.parse(read("frontend/data/aanbiedingen.json"));
+
+  assert.equal(data.bron, "https://allesupers.nl/catalog/all");
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /schedule:/);
+  assert.match(workflow, /node scripts\/update-aanbiedingen\.js/);
+  assert.match(workflow, /git diff --quiet -- frontend\/data\/aanbiedingen\.json/);
 });
