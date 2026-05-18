@@ -20,6 +20,7 @@ const BoodschappenBaas = (() => {
   const THEME_KEY = "boodschappenbaas-theme";
   const GEEN_SUPERMARKT_FILTER = "__geen_supermarkt__";
   const ANIMATION_DURATION_MS = 700;
+  const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = ".boodschap, input, select, textarea, label, button:not(.categorie__greep)";
 
   function slugify(value) {
     return value
@@ -400,7 +401,7 @@ const BoodschappenBaas = (() => {
     }
 
     function magCategorieblokSlepenVanaf(target) {
-      return !target.closest(".boodschap, input, select, textarea, label, button:not(.categorie__greep)");
+      return !target.closest(NIET_SLEEPBARE_CATEGORIE_ELEMENTEN);
     }
 
     function renderRouteEditor() {
