@@ -71,6 +71,17 @@
           <h2 id="route-titel">Optimale route</h2>
           <label for="supermarkt-filter">Kies supermarkt</label>
           <select id="supermarkt-filter" name="supermarkt-filter"></select>
+          <div class="supermarkt-beheer" aria-labelledby="supermarkt-beheer-titel">
+            <h3 id="supermarkt-beheer-titel">Supermarkten beheren</h3>
+            <form id="supermarkt-formulier" class="supermarkt-formulier">
+              <label for="supermarkt-naam">Nieuwe supermarkt</label>
+              <div class="supermarkt-formulier__rij">
+                <input id="supermarkt-naam" name="supermarkt-naam" type="text" autocomplete="off" placeholder="Bijv. Plus">
+                <button type="submit">Toevoegen</button>
+              </div>
+            </form>
+            <ul id="supermarkt-lijst" class="supermarkt-lijst" aria-label="Beschikbare supermarkten"></ul>
+          </div>
           <button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen</button>
           <div id="route-editor" class="route-editor" hidden>
             <p>Versleep de categorieën naar jouw supermarkt-looproute.</p>

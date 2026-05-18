@@ -27,6 +27,47 @@ test("items worden per categorie als route gegroepeerd en lokaal te combineren",
   assert.equal(groepen.Groente[0].naam, "komkommer");
 });
 
+test("boodschappenitems kunnen los van supermarkten worden verwijderd", () => {
+  const items = [
+    app.normaliseerItem({ id: "melk", naam: "melk", categorie: "Zuivel", supermarkten: ["AH"] }),
+    app.normaliseerItem({ id: "brood", naam: "brood", categorie: "Brood", supermarkten: ["Lidl"] })
+  ];
+
+  const bijgewerkt = app.verwijderItem(items, "melk");
+
+  assert.deepEqual(bijgewerkt.map((item) => item.id), ["brood"]);
+  assert.deepEqual(app.normaliseerSupermarkten(["AH", "Lidl"]), ["AH", "Lidl"]);
+});
+
+test("supermarkt verwijderen behoudt items en koppelt die supermarkt los", () => {
+  const items = [
+    app.normaliseerItem({ id: "melk", naam: "melk", categorie: "Zuivel", supermarkten: ["AH", "Lidl"] }),
+    app.normaliseerItem({ id: "brood", naam: "brood", categorie: "Brood", supermarkten: ["AH"] })
+  ];
+
+  const bijgewerkt = app.ontkoppelSupermarkt(items, "AH", ["Lidl"]);
+  const groepenZonderSupermarkt = app.groepeerVoorRoute(bijgewerkt, app.GEEN_SUPERMARKT_FILTER);
+
+  assert.equal(bijgewerkt.length, 2);
+  assert.deepEqual(bijgewerkt.find((item) => item.id === "melk").supermarkten, ["Lidl"]);
+  assert.deepEqual(bijgewerkt.find((item) => item.id === "brood").supermarkten, []);
+  assert.equal(app.formatteerSupermarkten(bijgewerkt.find((item) => item.id === "brood")), "Geen supermarkt");
+  assert.deepEqual(Object.keys(groepenZonderSupermarkt), ["Brood"]);
+});
+
+test("supermarkten worden uniek opgeslagen en geladen", () => {
+  const storage = {
+    waarde: "",
+    getItem() { return this.waarde; },
+    setItem(_key, value) { this.waarde = value; }
+  };
+
+  const opgeslagen = app.bewaarSupermarkten(storage, ["AH", "Plus", "AH", ""]);
+
+  assert.deepEqual(opgeslagen, ["AH", "Plus"]);
+  assert.deepEqual(app.laadSupermarkten(storage), ["AH", "Plus"]);
+});
+
 test("aangepaste categorievolgorde stuurt de supermarkt-route", () => {
   const route = app.bewaarRoute({
     waarde: "",
@@ -83,6 +124,8 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<button id="route-opslaan" type="button">Opslaan<\/button>/);
   assert.match(html, /<button id="route-reset" type="button">Reset route<\/button>/);
   assert.match(html, /<select id="thema"/);
+  assert.match(html, /<form id="supermarkt-formulier"/);
+  assert.match(html, /<ul id="supermarkt-lijst"/);
 });
 
 test("HTML bevat professionele dashboard-elementen", () => {
