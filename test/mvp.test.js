@@ -156,7 +156,10 @@ test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () =
     .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
     .find(Boolean);
 
-  assert.ok(aanbiedingenUpdater.BRONNEN.includes("https://www.reclamefolder.nl/aanbiedingen/"));
+  assert.deepEqual(aanbiedingenUpdater.BRONNEN, [
+    "https://allesupers.nl/catalog/all",
+    "https://www.reclamefolder.nl/aanbiedingen/"
+  ]);
   assert.equal(aanbieding.productnaam, "Kwark voordeelpak");
   assert.equal(aanbieding.supermarkt, "Lidl");
   assert.equal(aanbieding.prijs, 0.99);
@@ -256,7 +259,10 @@ test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
   const data = JSON.parse(read("frontend/data/aanbiedingen.json"));
 
   assert.equal(data.bron, "https://allesupers.nl/catalog/all");
-  assert.ok(data.bronnen.includes("https://www.reclamefolder.nl/aanbiedingen/"));
+  assert.deepEqual(data.bronnen, [
+    "https://allesupers.nl/catalog/all",
+    "https://www.reclamefolder.nl/aanbiedingen/"
+  ]);
   assert.ok(data.aanbiedingen.length > 0);
   assert.ok(data.aanbiedingen.some((aanbieding) => aanbieding.productnaam.toLowerCase().includes("kwark")));
   assert.match(workflow, /workflow_dispatch:/);
