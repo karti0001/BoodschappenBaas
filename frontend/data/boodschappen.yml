@@ -1,0 +1,13 @@
+items:
+  - naam: Kwark
+    categorie: Zuivel
+    supermarkten: [AH, Jumbo, Aldi, Lidl, Dirk]
+  - naam: Sprite Zero
+    categorie: Dranken
+    supermarkten: [AH, Jumbo, Aldi, Lidl, Dirk]
+  - naam: aardbeien
+    categorie: Fruit
+    supermarkten: [AH, Jumbo, Aldi, Lidl, Dirk]
+  - naam: blauwe bessen
+    categorie: Fruit
+    supermarkten: [AH, Jumbo, Aldi, Lidl, Dirk]

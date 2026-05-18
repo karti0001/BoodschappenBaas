@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BoodschappenBaas icoon">
+  <rect width="512" height="512" rx="116" fill="#7c3aed"/>
+  <circle cx="382" cy="142" r="84" fill="#14b8a6" opacity=".9"/>
+  <path fill="#fff7ed" d="M144 184h224l-24 192a48 48 0 0 1-48 42h-80a48 48 0 0 1-48-42l-24-192Z"/>
+  <path fill="none" stroke="#271b3d" stroke-linecap="round" stroke-width="30" d="M190 184c8-58 42-90 66-90s58 32 66 90"/>
+  <circle cx="214" cy="282" r="22" fill="#f59e0b"/>
+  <circle cx="292" cy="282" r="22" fill="#14b8a6"/>
+</svg>

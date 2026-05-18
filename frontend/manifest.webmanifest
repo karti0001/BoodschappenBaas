@@ -1,0 +1,19 @@
+{
+  "name": "BoodschappenBaas",
+  "short_name": "Baas",
+  "description": "Nederlandse boodschappenlijst met supermarkt- en categorieroutes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff7ed",
+  "theme_color": "#7c3aed",
+  "lang": "nl",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

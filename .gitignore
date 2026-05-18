@@ -13,3 +13,5 @@ __pycache__/
 .vscode/
 .idea/
 *.swp
+# Build output
+dist/
