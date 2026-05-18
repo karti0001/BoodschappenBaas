@@ -380,9 +380,12 @@ const BoodschappenBaas = (() => {
         greep.type = "button";
         greep.className = "categorie__greep";
         greep.draggable = true;
-        greep.textContent = "↕";
         greep.setAttribute("aria-label", `Versleep ${categorie}`);
         greep.title = "Categorie verslepen";
+        const greepIcoon = document.createElement("span");
+        greepIcoon.textContent = "↕";
+        greepIcoon.setAttribute("aria-hidden", "true");
+        greep.append(greepIcoon);
         const list = document.createElement("ul");
 
         greep.addEventListener("dragstart", (event) => {
@@ -403,6 +406,7 @@ const BoodschappenBaas = (() => {
             greep.setPointerCapture?.(event.pointerId);
           } catch {
             schoonLijstVerslepenOp();
+            status("Slepen wordt niet volledig ondersteund in deze browser.");
           }
         });
         greep.addEventListener("pointermove", (event) => {
@@ -419,14 +423,15 @@ const BoodschappenBaas = (() => {
         });
         greep.addEventListener("pointercancel", schoonLijstVerslepenOp);
         greep.addEventListener("keydown", (event) => {
+          const huidigeIndex = categorieNamen.indexOf(categorie);
           if (event.key === "ArrowUp") {
             event.preventDefault();
-            const vorigeCategorie = Object.keys(groepen)[Object.keys(groepen).indexOf(categorie) - 1];
+            const vorigeCategorie = categorieNamen[huidigeIndex - 1];
             if (vorigeCategorie) verplaatsZichtbareCategorie(categorie, vorigeCategorie);
           }
           if (event.key === "ArrowDown") {
             event.preventDefault();
-            const volgendeCategorie = Object.keys(groepen)[Object.keys(groepen).indexOf(categorie) + 1];
+            const volgendeCategorie = categorieNamen[huidigeIndex + 1];
             if (volgendeCategorie) verplaatsZichtbareCategorie(categorie, volgendeCategorie);
           }
         });
