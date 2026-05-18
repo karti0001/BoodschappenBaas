@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#7c3aed">
+    <title>BoodschappenBaas</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="held">
+      <nav aria-label="App instellingen" class="werkbalk">
+        <a class="skip-link" href="#lijst">Direct naar boodschappenlijst</a>
+        <label for="thema">Thema</label>
+        <select id="thema" name="thema">
+          <option value="auto">Automatisch</option>
+          <option value="light">Licht</option>
+          <option value="dark">Donker</option>
+        </select>
+      </nav>
+      <div class="held__tekst">
+        <p class="eyebrow">MVP</p>
+        <h1>BoodschappenBaas</h1>
+        <p>Maak een rustige route per supermarkt en categorie. Alles blijft lokaal op je apparaat bewaard.</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="kaart formulier-kaart" aria-labelledby="toevoegen-titel">
+        <div>
+          <p class="eyebrow">Nieuwe entry</p>
+          <h2 id="toevoegen-titel">Boodschap toevoegen</h2>
+        </div>
+        <form id="toevoeg-formulier" class="formulier">
+          <div class="veld">
+            <label for="naam">Naam</label>
+            <input id="naam" name="naam" type="text" autocomplete="off" required placeholder="Bijv. havermout">
+          </div>
+          <div class="veld">
+            <label for="categorie">Categorie</label>
+            <select id="categorie" name="categorie" required></select>
+          </div>
+          <fieldset class="supermarkten">
+            <legend>Supermarkten</legend>
+            <div id="supermarkt-keuzes" class="chips"></div>
+          </fieldset>
+          <button type="submit">Toevoegen</button>
+        </form>
+      </section>
+
+      <section class="route-grid">
+        <aside class="kaart instellingen" aria-labelledby="route-titel">
+          <p class="eyebrow">Voorbereiding</p>
+          <h2 id="route-titel">Optimale route</h2>
+          <label for="supermarkt-filter">Kies supermarkt</label>
+          <select id="supermarkt-filter" name="supermarkt-filter"></select>
+          <button id="alles-uitvinken" type="button">Alles uitvinken</button>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+          <div class="mandje" aria-labelledby="mandje-titel">
+            <div class="mandje__icoon" aria-hidden="true">🧺</div>
+            <h3 id="mandje-titel">Winkelmandje</h3>
+            <ul id="mandje-lijst"></ul>
+          </div>
+        </aside>
+
+        <section id="lijst" class="kaart lijst-kaart" aria-labelledby="lijst-titel">
+          <p class="eyebrow">Boodschappenlijst</p>
+          <h2 id="lijst-titel">Items per categorie</h2>
+          <div id="boodschappenlijst" class="lijst"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
