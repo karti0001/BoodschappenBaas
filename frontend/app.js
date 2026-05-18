@@ -233,10 +233,14 @@ const BoodschappenBaas = (() => {
       elementen.status.textContent = bericht;
     }
 
+    function zelfdeRoute(eerste, tweede) {
+      return eerste.length === tweede.length && eerste.every((categorie, index) => categorie === tweede[index]);
+    }
+
     function verplaatsCategorie(vanIndex, naarIndex) {
       const categorie = routeConcept[vanIndex];
       const nieuweRoute = verplaatsInRoute(routeConcept, vanIndex, naarIndex);
-      if (!categorie || nieuweRoute.join("\n") === routeConcept.join("\n")) return;
+      if (!categorie || zelfdeRoute(nieuweRoute, routeConcept)) return;
       routeConcept = nieuweRoute;
       renderRouteEditor();
       [...elementen.routeVolgorde.children]
@@ -257,7 +261,7 @@ const BoodschappenBaas = (() => {
       const vanIndex = route.indexOf(bronCategorie);
       const naarIndex = route.indexOf(doelCategorie);
       const nieuweRoute = verplaatsInRoute(route, vanIndex, naarIndex);
-      if (!bronCategorie || !doelCategorie || nieuweRoute.join("\n") === route.join("\n")) return;
+      if (!bronCategorie || !doelCategorie || zelfdeRoute(nieuweRoute, route)) return;
       bewaarNieuweRoute(nieuweRoute, `${bronCategorie} is verplaatst.`);
     }
 
@@ -368,7 +372,6 @@ const BoodschappenBaas = (() => {
         const section = document.createElement("section");
         section.className = "categorie";
         section.dataset.categorie = categorie;
-        section.setAttribute("aria-label", `${categorie}. Sleep deze categorie omhoog of omlaag om de volgorde te wijzigen.`);
         const kop = document.createElement("div");
         kop.className = "categorie__kop";
         const heading = document.createElement("h3");
@@ -396,7 +399,11 @@ const BoodschappenBaas = (() => {
           event.preventDefault();
           touchCategorie = categorie;
           section.classList.add("is-versleept");
-          greep.setPointerCapture?.(event.pointerId);
+          try {
+            greep.setPointerCapture?.(event.pointerId);
+          } catch {
+            schoonLijstVerslepenOp();
+          }
         });
         greep.addEventListener("pointermove", (event) => {
           if (touchCategorie !== categorie) return;
