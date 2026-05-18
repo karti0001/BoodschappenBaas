@@ -395,6 +395,7 @@ main {
   border-left: 0.35rem solid var(--accent);
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.44);
+  cursor: grab;
 }
 
 .categorie.is-versleept {
@@ -411,6 +412,7 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  touch-action: none;
 }
 
 .categorie h3 {
@@ -430,6 +432,10 @@ main {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.categorie ul {
+  cursor: default;
 }
 
 .boodschap {
