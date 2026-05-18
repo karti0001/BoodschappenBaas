@@ -118,9 +118,8 @@ function renderLijst() {
 
   // Sorteer categorieën op volgorde uit de data
   const catOrder = state.categorieen.map((c) => c.id);
-  const sortedCats = Object.keys(byCategorie).sort(
-    (a, b) => (catOrder.indexOf(a) ?? 99) - (catOrder.indexOf(b) ?? 99)
-  );
+  const catIndex = (id) => { const i = catOrder.indexOf(id); return i === -1 ? 99 : i; };
+  const sortedCats = Object.keys(byCategorie).sort((a, b) => catIndex(a) - catIndex(b));
 
   container.innerHTML = sortedCats
     .map((catId) => {
