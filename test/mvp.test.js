@@ -127,6 +127,16 @@ test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () 
   assert.equal(resultaat.fout, "");
 });
 
+test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
+  const resultaat = await app.laadAanbiedingenBestand(async () => ({
+    ok: false,
+    status: 503
+  }));
+
+  assert.equal(resultaat.aanbiedingen.length, 0);
+  assert.match(resultaat.fout, /status 503/);
+});
+
 test("zoektokens vangen eenvoudige meervouden op zonder vaste woorden te beschadigen", () => {
   assert.deepEqual(app.maakZoekTokens("blauwe bessen"), ["blauwe", "bes"]);
   assert.deepEqual(app.maakZoekTokens("mannen"), ["man"]);

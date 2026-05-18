@@ -37,7 +37,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match(aanbiedingenRequest)))
+        .catch(() => caches.match(event.request, { ignoreSearch: true }))
     );
     return;
   }
