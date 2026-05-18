@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="BoodschappenBaas – Slimme boodschappenlijst voor AH, Jumbo, Aldi, Lidl en Dirk." />
+  <meta name="theme-color" content="#6c63ff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#8b7cf8" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="BoodschappenBaas" />
+
+  <title>BoodschappenBaas</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <header class="app-header" role="banner">
+    <div class="header-inner">
+      <h1 class="app-logo">
+        <em class="logo-icon" aria-hidden="true">🛒</em>
+        BoodschappenBaas
+      </h1>
+      <div class="header-actions">
+        <button
+          id="theme-toggle"
+          class="icon-btn"
+          aria-label="Thema: automatisch"
+          title="Thema wisselen"
+        >🌗</button>
+        <button
+          id="mandje-toggle"
+          class="icon-btn"
+          aria-label="Winkelmandje openen"
+          title="Winkelmandje"
+        >
+          🧺
+          <span id="mandje-badge" class="mandje-badge" aria-label="items in mandje" hidden>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Hoofd inhoud ────────────────────────────────────── -->
+  <main class="app-main" id="main-inhoud" role="main">
+
+    <!-- Supermarkt filter -->
+    <section class="filter-sectie" aria-label="Supermarkt filter">
+      <p class="filter-label" id="filter-label">Supermarkt</p>
+      <div
+        id="supermarkt-filter"
+        role="group"
+        aria-labelledby="filter-label"
+      >
+        <!-- Dynamisch gevuld door app.js -->
+        <button class="markt-pill active" data-markt="alle" aria-pressed="true" aria-label="Filter op Alle">Alle</button>
+      </div>
+    </section>
+
+    <!-- Boodschappenlijst -->
+    <section aria-label="Boodschappenlijst" aria-live="polite">
+      <div id="boodschappenlijst" role="region" aria-label="Te kopen items">
+        <!-- Dynamisch gevuld door app.js -->
+        <p class="leeg-melding" role="status">Laden…</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Winkelmandje panel ──────────────────────────────── -->
+  <div id="mandje-overlay" class="overlay" aria-hidden="true"></div>
+
+  <aside
+    id="mandje-panel"
+    class="mandje-panel"
+    role="complementary"
+    aria-label="Winkelmandje"
+    aria-hidden="true"
+  >
+    <div class="mandje-header">
+      <h2 class="mandje-titel">🧺 Mandje (<span id="mandje-count">0</span>)</h2>
+      <button
+        id="mandje-sluiten"
+        class="mandje-panel-sluit"
+        aria-label="Mandje sluiten"
+      >✕</button>
+    </div>
+    <div class="mandje-acties">
+      <button
+        id="alles-uitvinken"
+        class="uitvinken-btn"
+        aria-label="Alle items uitvinken"
+      >↩ Alles terugplaatsen</button>
+    </div>
+    <ul id="mandje-lijst" aria-label="Afgevinkte items" aria-live="polite">
+      <li>
+        <p class="leeg-melding" role="status">Je mandje is leeg.</p>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- ── Item toevoegen modal ────────────────────────────── -->
+  <div id="form-overlay" class="overlay" aria-hidden="true"></div>
+
+  <div
+    id="toevoegen-modal"
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-titel"
+    aria-hidden="true"
+  >
+    <div class="modal-header">
+      <h2 class="modal-titel" id="modal-titel">✏️ Item toevoegen</h2>
+      <button id="form-sluiten" class="modal-sluit" aria-label="Formulier sluiten">✕</button>
+    </div>
+    <form id="item-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="form-naam">Naam *</label>
+        <input
+          type="text"
+          id="form-naam"
+          class="form-input"
+          placeholder="bijv. Hagelslag"
+          required
+          maxlength="80"
+          autocomplete="off"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="form-categorie">Categorie</label>
+        <select id="form-categorie" class="form-select">
+          <!-- Dynamisch gevuld door app.js -->
+        </select>
+      </div>
+      <div class="form-group">
+        <p class="form-label" id="supermarkten-label">Supermarkten *</p>
+        <div
+          id="form-supermarkten"
+          class="markt-checkboxen"
+          role="group"
+          aria-labelledby="supermarkten-label"
+        >
+          <!-- Dynamisch gevuld door app.js -->
+        </div>
+        <p id="form-error" class="form-fout" role="alert" hidden></p>
+      </div>
+      <button type="submit" class="submit-btn">✅ Toevoegen aan lijst</button>
+    </form>
+  </div>
+
+  <!-- ── FAB ────────────────────────────────────────────── -->
+  <button
+    id="toevoegen-fab"
+    class="fab"
+    aria-label="Nieuw item toevoegen"
+    title="Item toevoegen"
+  >+</button>
+
+  <!-- ── Toast melding ──────────────────────────────────── -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────── -->
+  <script>
+    // Registreer service worker (buiten module scope voor brede ondersteuning)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('./sw.js')
+          .then((reg) => console.log('SW geregistreerd:', reg.scope))
+          .catch((err) => console.warn('SW registratie mislukt:', err));
+      });
+      // Automatisch herladen wanneer nieuwe SW actief is
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+  </script>
+  <script type="module">
+    import { init } from './js/app.js';
+
+    // Sync aria-hidden state for panels
+    function syncAria() {
+      const mandje = document.getElementById('mandje-panel');
+      const modal = document.getElementById('toevoegen-modal');
+      const mandjeOverlay = document.getElementById('mandje-overlay');
+      const formOverlay = document.getElementById('form-overlay');
+
+      const observer = new MutationObserver(() => {
+        mandje.setAttribute('aria-hidden', !mandje.classList.contains('open'));
+        modal.setAttribute('aria-hidden', !modal.classList.contains('open'));
+        mandjeOverlay.setAttribute('aria-hidden', !mandjeOverlay.classList.contains('visible'));
+        formOverlay.setAttribute('aria-hidden', !formOverlay.classList.contains('visible'));
+      });
+
+      observer.observe(mandje, { attributes: true, attributeFilter: ['class'] });
+      observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    syncAria();
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "boodschappenbaas",
+  "version": "1.0.0",
+  "description": "BoodschappenBaas – Slimme boodschappenlijst PWA",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "test:unit": "node --test tests/unit.test.js",
+    "test:accessibility": "node --test tests/accessibility.test.js",
+    "test:integration": "node --test tests/integration.test.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

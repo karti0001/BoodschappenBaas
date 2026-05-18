@@ -1,0 +1,849 @@
+/* ============================================================
+   BoodschappenBaas – Stijlen
+   Soft, modern en kleurrijk ontwerp met donker/licht thema
+   ============================================================ */
+
+/* ── CSS Variabelen ──────────────────────────────────────── */
+:root {
+  /* Kleuren – licht modus */
+  --bg: #f0f2ff;
+  --surface: #ffffff;
+  --surface-2: #f7f8fe;
+  --border: #e4e6f0;
+  --text: #2d3436;
+  --text-muted: #636e72;
+  --primary: #6c63ff;
+  --primary-light: #e8e6ff;
+  --primary-dark: #4834d4;
+  --accent: #ff6584;
+  --success: #00b894;
+  --shadow: rgba(108, 99, 255, 0.12);
+  --shadow-lg: rgba(108, 99, 255, 0.22);
+
+  /* Typografie */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 16px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+
+  /* Transitie */
+  --transition: 0.2s ease;
+}
+
+/* Automatische donkere modus */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface-2: #16213e;
+    --border: #2d2d44;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --primary: #8b7cf8;
+    --primary-light: #2d2b4e;
+    --primary-dark: #a78bfa;
+    --shadow: rgba(0, 0, 0, 0.3);
+    --shadow-lg: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Expliciete donkere modus */
+[data-theme="dark"] {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --surface-2: #16213e;
+  --border: #2d2d44;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --primary: #8b7cf8;
+  --primary-light: #2d2b4e;
+  --primary-dark: #a78bfa;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-lg: rgba(0, 0, 0, 0.5);
+}
+
+/* Expliciete lichte modus */
+[data-theme="light"] {
+  --bg: #f0f2ff;
+  --surface: #ffffff;
+  --surface-2: #f7f8fe;
+  --border: #e4e6f0;
+  --text: #2d3436;
+  --text-muted: #636e72;
+  --primary: #6c63ff;
+  --primary-light: #e8e6ff;
+  --primary-dark: #4834d4;
+  --shadow: rgba(108, 99, 255, 0.12);
+  --shadow-lg: rgba(108, 99, 255, 0.22);
+}
+
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  line-height: 1.6;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 12px var(--shadow);
+  padding: 12px 16px;
+}
+
+.header-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.app-logo .logo-icon {
+  -webkit-text-fill-color: initial;
+  font-style: normal;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+.mandje-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--surface);
+  transition: transform var(--transition);
+}
+
+.mandje-bounce {
+  animation: bounce 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.35); }
+  60% { transform: scale(0.9); }
+  80% { transform: scale(1.1); }
+}
+
+/* ── Hoofd inhoud ─────────────────────────────────────────── */
+.app-main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ── Supermarkt filter ────────────────────────────────────── */
+.filter-sectie {
+  margin-bottom: 20px;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+#supermarkt-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.markt-pill {
+  padding: 6px 14px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.markt-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.markt-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px var(--shadow-lg);
+}
+
+/* ── Categorie groepen ────────────────────────────────────── */
+.categorie-groep {
+  margin-bottom: 24px;
+}
+
+.categorie-titel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cat-kleur, var(--primary));
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--cat-kleur, var(--border));
+  opacity: 0.9;
+}
+
+.categorie-emoji {
+  font-size: 1.1rem;
+}
+
+/* ── Item kaarten ─────────────────────────────────────────── */
+.item-lijst {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-kaart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all var(--transition);
+  will-change: transform;
+}
+
+.item-kaart:hover {
+  box-shadow: 0 4px 16px var(--shadow-lg);
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
+.item-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Verberg native checkbox */
+.item-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Aangepaste checkmark */
+.checkmark {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.item-checkbox:focus-visible + .checkmark {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.checkmark::after {
+  content: '✓';
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.item-checkbox:checked + .checkmark {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.item-checkbox:checked + .checkmark::after {
+  opacity: 1;
+}
+
+.item-naam {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  truncate: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cat-badge {
+  font-size: 1.1rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--cat-kleur, #B2BEC3) 20%, transparent);
+  border-radius: var(--radius-xs);
+}
+
+.markt-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.markt-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--markt-kleur, #B2BEC3) 15%, var(--surface));
+  color: color-mix(in srgb, var(--markt-kleur, #636e72) 80%, var(--text));
+  border: 1px solid color-mix(in srgb, var(--markt-kleur, #B2BEC3) 40%, transparent);
+  white-space: nowrap;
+}
+
+/* ── Lege melding ─────────────────────────────────────────── */
+.leeg-melding {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 20px;
+  font-size: 1rem;
+}
+
+/* ── Mandje panel ─────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.mandje-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(400px, 90vw);
+  background: var(--surface);
+  z-index: 300;
+  box-shadow: -4px 0 32px var(--shadow-lg);
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mandje-panel.open {
+  transform: translateX(0);
+}
+
+.mandje-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+}
+
+.mandje-titel {
+  flex: 1;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.mandje-panel-sluit {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+}
+
+.mandje-panel-sluit:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.mandje-acties {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.uitvinken-btn {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.uitvinken-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+#mandje-lijst {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mandje-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.mandje-emoji {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.mandje-naam {
+  flex: 1;
+  font-weight: 500;
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.uncheck-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px 6px;
+  border-radius: var(--radius-xs);
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.uncheck-btn:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* ── Toevoegen modal ──────────────────────────────────────── */
+.modal {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: min(520px, 100vw);
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  z-index: 300;
+  box-shadow: 0 -8px 40px var(--shadow-lg);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 20px;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+.modal.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-titel {
+  flex: 1;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modal-sluit {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.modal-sluit:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+  transition: border-color var(--transition);
+  -webkit-appearance: none;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.markt-checkboxen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.markt-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition);
+  background: var(--surface);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.markt-checkbox-label:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.markt-checkbox-label input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+.form-fout {
+  color: #e17055;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-top: 8px;
+}
+
+.submit-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--shadow-lg);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+/* ── FAB (Floating Action Button) ─────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 24px var(--shadow-lg);
+  z-index: 150;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fab:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 8px 32px var(--shadow-lg);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* ── Toast ────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: var(--surface);
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  z-index: 400;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Toegankelijkheid ─────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* body vergrendeling bij open panel/modal */
+body.panel-open,
+body.modal-open {
+  overflow: hidden;
+}
+
+/* ── Responsief ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .app-logo {
+    font-size: 1.2rem;
+  }
+
+  .item-kaart {
+    padding: 10px 12px;
+  }
+
+  .markt-badges {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .modal {
+    bottom: 50%;
+    transform: translateX(-50%) translateY(50%) scale(0.95);
+    border-radius: var(--radius);
+    max-height: 80vh;
+  }
+
+  .modal.open {
+    transform: translateX(-50%) translateY(50%) scale(1);
+  }
+}
+
+/* ── Animaties ────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

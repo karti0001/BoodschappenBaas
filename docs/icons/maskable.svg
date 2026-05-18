@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="mbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6c63ff"/>
+      <stop offset="100%" style="stop-color:#ff6584"/>
+    </linearGradient>
+  </defs>
+  <!-- Full bleed background (safe zone is 40% centered) -->
+  <rect width="512" height="512" fill="url(#mbg)"/>
+  <!-- Basket body (centered in safe zone: 102..410) -->
+  <path d="M150 240 Q140 365 256 375 Q372 365 362 240 Z" fill="white" opacity="0.95"/>
+  <line x1="256" y1="240" x2="256" y2="375" stroke="#6c63ff" stroke-width="6" opacity="0.3"/>
+  <line x1="200" y1="242" x2="213" y2="373" stroke="#6c63ff" stroke-width="6" opacity="0.3"/>
+  <line x1="312" y1="242" x2="299" y2="373" stroke="#6c63ff" stroke-width="6" opacity="0.3"/>
+  <line x1="148" y1="285" x2="364" y2="285" stroke="#6c63ff" stroke-width="6" opacity="0.3"/>
+  <line x1="145" y1="325" x2="363" y2="325" stroke="#6c63ff" stroke-width="6" opacity="0.3"/>
+  <path d="M138 240 Q138 230 150 230 L362 230 Q374 230 374 240" fill="none" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <path d="M196 230 Q175 148 226 128" fill="none" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <path d="M316 230 Q337 148 286 128" fill="none" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="206" cy="305" r="18" fill="#fdcb6e" opacity="0.9"/>
+  <circle cx="256" cy="295" r="20" fill="#55efc4" opacity="0.9"/>
+  <circle cx="306" cy="305" r="18" fill="#fd79a8" opacity="0.9"/>
+</svg>

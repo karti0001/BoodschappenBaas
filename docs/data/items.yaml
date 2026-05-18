@@ -1,0 +1,77 @@
+# BoodschappenBaas – Boodschappenlijst Data
+# Voeg nieuwe items toe onder de 'items' sectie
+# Beschikbare categorieën: zuivel, groente, fruit, dranken, brood, vlees, diepvries, snacks, overig
+# Beschikbare supermarkten: ah, jumbo, aldi, lidl, dirk
+
+supermarkten:
+  - id: ah
+    naam: AH
+    kleur: "#00A2E8"
+  - id: jumbo
+    naam: Jumbo
+    kleur: "#FFD200"
+  - id: aldi
+    naam: Aldi
+    kleur: "#00529B"
+  - id: lidl
+    naam: Lidl
+    kleur: "#0050AA"
+  - id: dirk
+    naam: Dirk
+    kleur: "#E2001A"
+
+categorieen:
+  - id: zuivel
+    naam: Zuivel
+    emoji: "🥛"
+    kleur: "#74B9FF"
+  - id: groente
+    naam: Groente
+    emoji: "🥦"
+    kleur: "#55EFC4"
+  - id: fruit
+    naam: Fruit
+    emoji: "🍓"
+    kleur: "#FDCB6E"
+  - id: dranken
+    naam: Dranken
+    emoji: "🥤"
+    kleur: "#A29BFE"
+  - id: brood
+    naam: Brood & Gebak
+    emoji: "🍞"
+    kleur: "#FAB1A0"
+  - id: vlees
+    naam: Vlees & Vis
+    emoji: "🥩"
+    kleur: "#FD79A8"
+  - id: diepvries
+    naam: Diepvries
+    emoji: "🧊"
+    kleur: "#81ECEC"
+  - id: snacks
+    naam: Snacks
+    emoji: "🍿"
+    kleur: "#FFEAA7"
+  - id: overig
+    naam: Overig
+    emoji: "🛒"
+    kleur: "#B2BEC3"
+
+items:
+  - id: kwark
+    naam: Kwark
+    categorie: zuivel
+    supermarkten: [ah, jumbo, aldi, lidl, dirk]
+  - id: sprite-zero
+    naam: Sprite Zero
+    categorie: dranken
+    supermarkten: [ah, jumbo, lidl, dirk]
+  - id: aardbeien
+    naam: Aardbeien
+    categorie: fruit
+    supermarkten: [ah, jumbo, aldi, lidl, dirk]
+  - id: blauwe-bessen
+    naam: Blauwe bessen
+    categorie: fruit
+    supermarkten: [ah, jumbo, aldi, lidl]

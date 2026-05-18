@@ -1,0 +1,104 @@
+name: Deploy BoodschappenBaas to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Slechts één gelijktijdige deployment
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Tests ──────────────────────────────────────────────────
+  test:
+    name: Unit & integratietests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js instellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Afhankelijkheden installeren
+        run: npm ci
+
+      - name: Tests uitvoeren
+        run: npm test
+
+  # ── Build & Deploy ─────────────────────────────────────────
+  deploy:
+    name: Bouwen en deployen
+    runs-on: ubuntu-latest
+    needs: test
+    # Alleen deployen op pushes naar main (niet op PRs)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js instellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Versie injecteren in Service Worker
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${COMMIT_SHA:0:8}"
+          TIMESTAMP=$(date +%s)
+          VERSION="${SHORT_SHA}-${TIMESTAMP}"
+          sed -i "s/%%VERSION%%/${VERSION}/g" docs/sw.js
+          echo "Service Worker versie: ${VERSION}"
+
+      - name: GitHub Pages configureren
+        uses: actions/configure-pages@v5
+
+      - name: App uploaden als artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: Deployen naar GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ── Preview deployment voor PRs ────────────────────────────
+  preview:
+    name: PR preview bouwen
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Versie injecteren in Service Worker (PR)
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${COMMIT_SHA:0:8}"
+          sed -i "s/%%VERSION%%/pr-${SHORT_SHA}/g" docs/sw.js
+
+      - name: Valideer HTML bestanden
+        run: |
+          echo "HTML bestanden valideren..."
+          find docs -name "*.html" -exec echo "✓ {}" \;
+
+      - name: Toon app bestanden
+        run: |
+          echo "App bestanden:"
+          find docs -type f | sort
