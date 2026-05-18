@@ -130,10 +130,10 @@ const BoodschappenBaas = (() => {
     opgeslagenItems.map(normaliseerItem).forEach((item) => {
       perId.set(item.id, { ...(perId.get(item.id) || {}), ...item });
     });
-    return [...perId.values()].sort(sorteerMetRoute());
+    return [...perId.values()].sort(maakRouteSorteerder());
   }
 
-  function sorteerMetRoute(route = CATEGORIEEN) {
+  function maakRouteSorteerder(route = CATEGORIEEN) {
     const routeVolgorde = normaliseerRoute(route);
     return (a, b) => {
       const categorieVerschil = routeVolgorde.indexOf(a.categorie) - routeVolgorde.indexOf(b.categorie);
@@ -142,14 +142,10 @@ const BoodschappenBaas = (() => {
     };
   }
 
-  function sorteerVoorRoute(a, b, route = CATEGORIEEN) {
-    return sorteerMetRoute(route)(a, b);
-  }
-
   function groepeerVoorRoute(items, supermarkt = "alle", route = CATEGORIEEN) {
     return [...items]
       .filter((item) => supermarkt === "alle" || item.supermarkten.includes(supermarkt))
-      .sort(sorteerMetRoute(route))
+      .sort(maakRouteSorteerder(route))
       .reduce((groepen, item) => {
         if (!groepen[item.categorie]) groepen[item.categorie] = [];
         groepen[item.categorie].push(item);
@@ -235,9 +231,10 @@ const BoodschappenBaas = (() => {
     }
 
     function verplaatsCategorie(vanIndex, naarIndex) {
-      if (vanIndex === naarIndex || naarIndex < 0 || naarIndex >= routeConcept.length) return;
       const categorie = routeConcept[vanIndex];
-      routeConcept = verplaatsInRoute(routeConcept, vanIndex, naarIndex);
+      const nieuweRoute = verplaatsInRoute(routeConcept, vanIndex, naarIndex);
+      if (!categorie || nieuweRoute.join("\n") === routeConcept.join("\n")) return;
+      routeConcept = nieuweRoute;
       renderRouteEditor();
       [...elementen.routeVolgorde.children]
         .find((item) => item.dataset.categorie === categorie)
@@ -252,7 +249,7 @@ const BoodschappenBaas = (() => {
         item.draggable = true;
         item.tabIndex = 0;
         item.dataset.categorie = categorie;
-        item.setAttribute("aria-label", `${categorie}. Versleep of gebruik de knoppen om deze categorie te verplaatsen.`);
+        item.setAttribute("aria-label", `${categorie}. Gebruik de knoppen omhoog en omlaag om deze categorie te verplaatsen.`);
         item.setAttribute("aria-roledescription", "Versleepbare categorie");
 
         const greep = document.createElement("span");
@@ -372,7 +369,7 @@ const BoodschappenBaas = (() => {
         elementen.lijst.append(section);
       });
 
-      const afgevinkt = items.filter((item) => item.afgevinkt).sort(sorteerMetRoute(route));
+      const afgevinkt = items.filter((item) => item.afgevinkt).sort(maakRouteSorteerder(route));
       if (!afgevinkt.length) {
         const leeg = document.createElement("li");
         leeg.className = "leeg";
@@ -417,7 +414,7 @@ const BoodschappenBaas = (() => {
     });
     elementen.routeOpslaan.addEventListener("click", () => {
       route = bewaarRoute(localStorage, routeConcept);
-      items = [...items].sort(sorteerMetRoute(route));
+      items = [...items].sort(maakRouteSorteerder(route));
       render();
       renderRouteEditor();
       status("Supermarkt-route opgeslagen.");
@@ -425,7 +422,7 @@ const BoodschappenBaas = (() => {
     elementen.routeReset.addEventListener("click", () => {
       route = bewaarRoute(localStorage, CATEGORIEEN);
       routeConcept = [...route];
-      items = [...items].sort(sorteerMetRoute(route));
+      items = [...items].sort(maakRouteSorteerder(route));
       render();
       renderRouteEditor();
       status("Supermarkt-route teruggezet.");
