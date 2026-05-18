@@ -109,7 +109,7 @@ async function main() {
   const aanbiedingen = vindObjecten(catalogus)
     .map(normaliseer)
     .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
-    .sort((a, b) => a.productnaam.localeCompare(b.productnaam, "nl", { sensitivity: "base" }) || a.supermarkt.localeCompare(b.supermarkt, "nl"));
+    .sort((a, b) => a.productnaam.localeCompare(b.productnaam, "nl", { sensitivity: "base" }) || a.supermarkt.localeCompare(b.supermarkt, "nl", { sensitivity: "base" }));
 
   if (zelfdeAanbiedingen(aanbiedingen)) {
     console.log("Aanbiedingen zijn ongewijzigd; JSON-bestand blijft gelijk.");

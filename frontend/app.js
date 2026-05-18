@@ -25,7 +25,6 @@ const BoodschappenBaas = (() => {
   const STOPWOORDEN = new Set(["de", "het", "een", "en", "of", "met", "voor", "bij", "van", "per", "stuk", "stuks"]);
   const EXACTE_SUBSTRING_BONUS = 0.3;
   const MINIMALE_MATCH_SCORE = 0.66;
-  const ENKEL_TOKEN_MATCH_SCORE = 1;
   const SUPERMARKT_ALIASSEN = {
     ah: "albert heijn",
     "albert heijn": "albert heijn"
@@ -241,8 +240,11 @@ const BoodschappenBaas = (() => {
   }
 
   function enkelvoudToken(token) {
-    if (token.length > 5 && token.endsWith("en")) return token.slice(0, -2);
-    if (token.length > 4 && token.endsWith("s")) return token.slice(0, -1);
+    if (token.length > 5 && token.endsWith("en")) {
+      const basis = token.slice(0, -2);
+      return /([^aeiou])\1$/i.test(basis) ? basis.slice(0, -1) : basis;
+    }
+    if (token.length > 4 && token.endsWith("s") && !token.endsWith("is")) return token.slice(0, -1);
     return token;
   }
 
@@ -298,9 +300,11 @@ const BoodschappenBaas = (() => {
         const extraScore = normaliseerZoektekst(aanbieding.productnaam).includes(normaliseerZoektekst(zoekterm)) ? EXACTE_SUBSTRING_BONUS : 0;
         return { ...aanbieding, score: dekking + extraScore };
       })
-      .filter((aanbieding) => aanbieding.score >= MINIMALE_MATCH_SCORE || (queryTokens.length === 1 && aanbieding.score >= ENKEL_TOKEN_MATCH_SCORE))
+      .filter((aanbieding) => aanbieding.score >= MINIMALE_MATCH_SCORE)
       .sort((a, b) => {
-        const prijsVerschil = (a.prijs ?? Number.MAX_SAFE_INTEGER) - (b.prijs ?? Number.MAX_SAFE_INTEGER);
+        if (a.prijs === null && b.prijs !== null) return 1;
+        if (a.prijs !== null && b.prijs === null) return -1;
+        const prijsVerschil = (a.prijs ?? Infinity) - (b.prijs ?? Infinity);
         if (prijsVerschil !== 0) return prijsVerschil;
         const kortingA = (a.oudePrijs || 0) - (a.prijs || 0);
         const kortingB = (b.oudePrijs || 0) - (b.prijs || 0);
