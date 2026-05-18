@@ -5,7 +5,7 @@ const BRON = "https://allesupers.nl/catalog/all";
 const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
 
-function pakEerste(object, velden) {
+function vindEersteVeldWaarde(object, velden) {
   for (const veld of velden) {
     const waarde = veld.split(".").reduce((huidig, deel) => huidig && huidig[deel], object);
     if (waarde !== undefined && waarde !== null && waarde !== "") return waarde;
@@ -39,9 +39,9 @@ function vindObjecten(node, gevonden = []) {
     return gevonden;
   }
 
-  const naam = pakEerste(node, ["productnaam", "productName", "name", "naam", "title", "description"]);
-  const supermarkt = pakEerste(node, ["supermarkt", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name"]);
-  const prijs = pakEerste(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice"]);
+  const naam = vindEersteVeldWaarde(node, ["productnaam", "productName", "name", "naam", "title", "description"]);
+  const supermarkt = vindEersteVeldWaarde(node, ["supermarkt", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name"]);
+  const prijs = vindEersteVeldWaarde(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice"]);
   if (naam && supermarkt && prijs) gevonden.push(node);
 
   Object.values(node).forEach((waarde) => vindObjecten(waarde, gevonden));
@@ -62,25 +62,26 @@ function isAanbieding(node, prijs, oudePrijs) {
 }
 
 function normaliseer(node) {
-  const prijs = parsePrijs(pakEerste(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice"]));
-  const oudePrijs = parsePrijs(pakEerste(node, ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "listPrice", "wasPrice"]));
+  const prijs = parsePrijs(vindEersteVeldWaarde(node, ["prijs", "price", "currentPrice", "current_price", "price.value", "pricing.price", "salesPrice"]));
+  const oudePrijs = parsePrijs(vindEersteVeldWaarde(node, ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "listPrice", "wasPrice"]));
   if (!isAanbieding(node, prijs, oudePrijs)) return null;
   return {
-    productnaam: String(pakEerste(node, ["productnaam", "productName", "name", "naam", "title", "description"])).trim(),
-    supermarkt: String(pakEerste(node, ["supermarkt", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name"])).trim(),
+    productnaam: String(vindEersteVeldWaarde(node, ["productnaam", "productName", "name", "naam", "title", "description"])).trim(),
+    supermarkt: String(vindEersteVeldWaarde(node, ["supermarkt", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name"])).trim(),
     prijs,
-    prijsTekst: String(pakEerste(node, ["prijsTekst", "priceText", "price.text"])).trim() || formatPrijs(prijs),
+    prijsTekst: String(vindEersteVeldWaarde(node, ["prijsTekst", "priceText", "price.text"])).trim() || formatPrijs(prijs),
     oudePrijs,
-    oudePrijsTekst: String(pakEerste(node, ["oudePrijsTekst", "oldPriceText", "originalPriceText"])).trim() || formatPrijs(oudePrijs),
-    korting: String(pakEerste(node, ["korting", "discount", "promotion", "offerText", "dealText"])).trim(),
-    eenheidsprijs: String(pakEerste(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])).trim(),
-    bijgewerktOp: String(pakEerste(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt"])).trim(),
-    url: absoluteUrl(pakEerste(node, ["url", "link", "productUrl", "product_url", "slug", "path"]))
+    oudePrijsTekst: String(vindEersteVeldWaarde(node, ["oudePrijsTekst", "oldPriceText", "originalPriceText"])).trim() || formatPrijs(oudePrijs),
+    korting: String(vindEersteVeldWaarde(node, ["korting", "discount", "promotion", "offerText", "dealText"])).trim(),
+    eenheidsprijs: String(vindEersteVeldWaarde(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])).trim(),
+    bijgewerktOp: String(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt"])).trim(),
+    url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path"]))
   };
 }
 
 function parseCatalogus(tekst, contentType = "") {
   if (contentType.includes("json")) return JSON.parse(tekst);
+  // Allesupers draait als Next.js-site; bij HTML-responses staat de catalogusdata in __NEXT_DATA__.
   const nextData = tekst.match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
   if (nextData) return JSON.parse(nextData[1]);
   return JSON.parse(tekst);

@@ -25,6 +25,8 @@ const BoodschappenBaas = (() => {
   const STOPWOORDEN = new Set(["de", "het", "een", "en", "of", "met", "voor", "bij", "van", "per", "stuk", "stuks"]);
   const EXACTE_SUBSTRING_BONUS = 0.3;
   const MINIMALE_MATCH_SCORE = 0.66;
+  const MIN_EN_MEERVOUD_LENGTE = 5;
+  const MIN_S_MEERVOUD_LENGTE = 4;
   const SUPERMARKT_ALIASSEN = {
     ah: "albert heijn",
     "albert heijn": "albert heijn"
@@ -240,11 +242,11 @@ const BoodschappenBaas = (() => {
   }
 
   function enkelvoudToken(token) {
-    if (token.length > 5 && token.endsWith("en")) {
+    if (token.length > MIN_EN_MEERVOUD_LENGTE && token.endsWith("en")) {
       const basis = token.slice(0, -2);
       return /([^aeiou])\1$/i.test(basis) ? basis.slice(0, -1) : basis;
     }
-    if (token.length > 4 && token.endsWith("s") && !token.endsWith("is")) return token.slice(0, -1);
+    if (token.length > MIN_S_MEERVOUD_LENGTE && token.endsWith("s") && !token.endsWith("is")) return token.slice(0, -1);
     return token;
   }
 
@@ -284,6 +286,10 @@ const BoodschappenBaas = (() => {
 
   function formatteerDatumTijd(value) {
     return value ? new Date(value).toLocaleString("nl-NL") : "";
+  }
+
+  function formatteerAanbiedingBadge(aanbieding, index) {
+    return index === 0 ? `Goedkoopste bij ${aanbieding.supermarkt}` : `In de aanbieding bij ${aanbieding.supermarkt}`;
   }
 
   function matchAanbiedingen(zoekterm, aanbiedingen, opties = {}) {
@@ -744,7 +750,7 @@ const BoodschappenBaas = (() => {
           meta.className = "boodschap__meta";
           meta.textContent = formatteerSupermarkten(item);
           tekst.append(naam, meta);
-          const cacheKey = `${item.naam}|${item.supermarkten.join(",")}`;
+          const cacheKey = JSON.stringify([item.naam, item.supermarkten]);
           if (!aanbiedingenCache.has(cacheKey)) {
             aanbiedingenCache.set(cacheKey, matchAanbiedingen(item.naam, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: 3 }));
           }
@@ -760,7 +766,7 @@ const BoodschappenBaas = (() => {
               const aanbiedingItem = document.createElement("li");
               const badge = document.createElement("span");
               badge.className = "aanbiedingen__badge";
-              badge.textContent = index === 0 ? `Goedkoopste bij ${aanbieding.supermarkt}` : `In de aanbieding bij ${aanbieding.supermarkt}`;
+              badge.textContent = formatteerAanbiedingBadge(aanbieding, index);
               const prijs = document.createElement("span");
               prijs.className = "aanbiedingen__prijs";
               prijs.textContent = aanbieding.prijsTekst || "Prijs onbekend";
