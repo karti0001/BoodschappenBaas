@@ -7,7 +7,6 @@ const APP_SHELL = [
   "./app.js",
   "./manifest.webmanifest",
   "./data/boodschappen.yml",
-  "./data/aanbiedingen.json",
   "./icons/icon.svg"
 ];
 
@@ -26,6 +25,22 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  if (url.pathname.endsWith("/data/aanbiedingen.json")) {
+    event.respondWith(
+      fetch(event.request, { cache: "reload" })
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
