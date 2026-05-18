@@ -86,6 +86,16 @@ function parseCatalogus(tekst, contentType = "") {
   return JSON.parse(tekst);
 }
 
+function zelfdeAanbiedingen(aanbiedingen) {
+  if (!fs.existsSync(doel)) return false;
+  try {
+    const bestaand = JSON.parse(fs.readFileSync(doel, "utf8"));
+    return JSON.stringify(bestaand.aanbiedingen || []) === JSON.stringify(aanbiedingen);
+  } catch {
+    return false;
+  }
+}
+
 async function main() {
   const response = await fetch(BRON, {
     headers: {
@@ -100,6 +110,11 @@ async function main() {
     .map(normaliseer)
     .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
     .sort((a, b) => a.productnaam.localeCompare(b.productnaam, "nl", { sensitivity: "base" }) || a.supermarkt.localeCompare(b.supermarkt, "nl"));
+
+  if (zelfdeAanbiedingen(aanbiedingen)) {
+    console.log("Aanbiedingen zijn ongewijzigd; JSON-bestand blijft gelijk.");
+    return;
+  }
 
   const inhoud = `${JSON.stringify({
     bron: BRON,
