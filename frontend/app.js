@@ -527,8 +527,11 @@ const BoodschappenBaas = (() => {
         });
         section.addEventListener("pointerdown", (event) => {
           const magSlepen = magCategorieblokSlepenVanaf(event.target);
-          section.draggable = magSlepen;
-          if (event.pointerType === "mouse" || !magSlepen) return;
+          if (event.pointerType === "mouse") {
+            section.draggable = magSlepen;
+            return;
+          }
+          if (!magSlepen) return;
           event.preventDefault();
           touchCategorie = categorie;
           section.classList.add("is-versleept");

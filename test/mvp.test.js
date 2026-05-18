@@ -119,7 +119,7 @@ test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkere
   const css = read("frontend/styles.css");
 
   assert.match(js, /section\.draggable = true/);
-  assert.match(js, /section\.draggable = magSlepen/);
+  assert.match(js, /if \(event\.pointerType === "mouse"\) \{[\s\S]*section\.draggable = magSlepen/);
   assert.match(js, /dragend[\s\S]*section\.draggable = true/);
   assert.match(js, /pointerup[\s\S]*section\.draggable = true/);
   assert.match(js, /pointercancel[\s\S]*section\.draggable = true/);
