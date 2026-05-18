@@ -114,6 +114,16 @@ const BoodschappenBaas = (() => {
     return volgorde;
   }
 
+  function verplaatsInRoute(route, vanIndex, naarIndex) {
+    const volgorde = normaliseerRoute(route);
+    if (vanIndex === naarIndex || vanIndex < 0 || naarIndex < 0 || vanIndex >= volgorde.length || naarIndex >= volgorde.length) {
+      return volgorde;
+    }
+    const [categorie] = volgorde.splice(vanIndex, 1);
+    volgorde.splice(naarIndex, 0, categorie);
+    return volgorde;
+  }
+
   function combineerItems(seedItems, opgeslagenItems) {
     const perId = new Map();
     seedItems.map(normaliseerItem).forEach((item) => perId.set(item.id, item));
@@ -224,10 +234,10 @@ const BoodschappenBaas = (() => {
       elementen.status.textContent = bericht;
     }
 
-    function verplaatsCategorie(van, naar) {
-      if (van === naar || naar < 0 || naar >= routeConcept.length) return;
-      const [categorie] = routeConcept.splice(van, 1);
-      routeConcept.splice(naar, 0, categorie);
+    function verplaatsCategorie(vanIndex, naarIndex) {
+      if (vanIndex === naarIndex || naarIndex < 0 || naarIndex >= routeConcept.length) return;
+      const categorie = routeConcept[vanIndex];
+      routeConcept = verplaatsInRoute(routeConcept, vanIndex, naarIndex);
       renderRouteEditor();
       [...elementen.routeVolgorde.children]
         .find((item) => item.dataset.categorie === categorie)
@@ -451,6 +461,7 @@ const BoodschappenBaas = (() => {
     normaliseerRoute,
     laadRoute,
     bewaarRoute,
+    verplaatsInRoute,
     combineerItems,
     groepeerVoorRoute,
     nieuwEigenItem,
