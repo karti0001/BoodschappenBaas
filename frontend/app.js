@@ -223,9 +223,10 @@ const BoodschappenBaas = (() => {
             bewaarItems(localStorage, items);
             render();
             status(checkbox.checked ? `${item.naam} gaat naar het winkelmandje.` : `${item.naam} staat weer op de lijst.`);
+            const animatieId = laatstAfgevinktId;
             window.setTimeout(() => {
-              laatstAfgevinktId = null;
-              render();
+              if (laatstAfgevinktId === animatieId) laatstAfgevinktId = null;
+              document.getElementById(`item-${animatieId}`)?.closest(".boodschap")?.classList.remove("naar-mandje");
             }, ANIMATION_DURATION_MS);
           });
 
