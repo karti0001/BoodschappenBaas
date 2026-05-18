@@ -286,6 +286,46 @@ main {
   font-weight: 800;
 }
 
+.supermarkt-beheer {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--rand);
+  border-radius: 1.2rem;
+  background: var(--oppervlak);
+}
+
+.supermarkt-formulier {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.supermarkt-formulier__rij {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.supermarkt-lijst {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.supermarkt-lijst li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.supermarkt-lijst button, .boodschap__verwijderen {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.86rem;
+}
+
 .route-editor {
   display: grid;
   gap: 0.85rem;
@@ -394,7 +434,7 @@ main {
 
 .boodschap {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   gap: 0.75rem;
   align-items: start;
   padding: 0.85rem;
@@ -452,4 +492,5 @@ main {
 @media (max-width: 520px) {
   .route-volgorde__item { grid-template-columns: auto 1fr; }
   .route-volgorde__knoppen { grid-column: 1 / -1; }
+  .supermarkt-formulier__rij, .boodschap { grid-template-columns: 1fr; }
 }

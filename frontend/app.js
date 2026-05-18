@@ -14,8 +14,11 @@ const BoodschappenBaas = (() => {
     "Snacks"
   ];
   const STORAGE_KEY = "boodschappenbaas-items-v1";
+  const VERWIJDERDE_ITEMS_KEY = "boodschappenbaas-verwijderde-items-v1";
+  const SUPERMARKTEN_KEY = "boodschappenbaas-supermarkten-v1";
   const ROUTE_KEY = "boodschappenbaas-route-v1";
   const THEME_KEY = "boodschappenbaas-theme";
+  const GEEN_SUPERMARKT_FILTER = "__geen_supermarkt__";
   const ANIMATION_DURATION_MS = 700;
 
   function slugify(value) {
@@ -70,29 +73,63 @@ const BoodschappenBaas = (() => {
     return items.map(normaliseerItem).filter((item) => item.naam);
   }
 
-  function normaliseerItem(item) {
+  function normaliseerSupermarkten(supermarkten = SUPERMARKTEN) {
+    return [...new Set((Array.isArray(supermarkten) ? supermarkten : SUPERMARKTEN)
+      .map((supermarkt) => String(supermarkt || "").trim())
+      .filter(Boolean))];
+  }
+
+  function laadSupermarkten(storage) {
+    try {
+      const opgeslagen = storage.getItem(SUPERMARKTEN_KEY);
+      return opgeslagen === null ? [...SUPERMARKTEN] : normaliseerSupermarkten(JSON.parse(opgeslagen));
+    } catch {
+      return [...SUPERMARKTEN];
+    }
+  }
+
+  function bewaarSupermarkten(storage, supermarkten) {
+    const gekozenSupermarkten = normaliseerSupermarkten(supermarkten);
+    storage.setItem(SUPERMARKTEN_KEY, JSON.stringify(gekozenSupermarkten));
+    return gekozenSupermarkten;
+  }
+
+  function normaliseerItem(item, beschikbareSupermarkten = SUPERMARKTEN) {
     const naam = (item.naam || "").trim();
     const categorie = CATEGORIEEN.includes(item.categorie) ? item.categorie : "Voorraadkast";
+    const toegestaneSupermarkten = normaliseerSupermarkten(beschikbareSupermarkten);
     const supermarkten = Array.isArray(item.supermarkten)
-      ? item.supermarkten.filter((markt) => SUPERMARKTEN.includes(markt))
-      : SUPERMARKTEN;
+      ? item.supermarkten.filter((markt) => toegestaneSupermarkten.includes(markt))
+      : toegestaneSupermarkten;
 
     return {
       id: item.id || slugify(`${naam}-${categorie}`),
       naam,
       categorie,
-      supermarkten: supermarkten.length ? supermarkten : SUPERMARKTEN,
+      supermarkten,
       afgevinkt: Boolean(item.afgevinkt),
       eigenItem: Boolean(item.eigenItem)
     };
   }
 
-  function laadOpgeslagenItems(storage) {
+  function laadOpgeslagenItems(storage, beschikbareSupermarkten = SUPERMARKTEN) {
     try {
-      return JSON.parse(storage.getItem(STORAGE_KEY) || "[]").map(normaliseerItem);
+      return JSON.parse(storage.getItem(STORAGE_KEY) || "[]").map((item) => normaliseerItem(item, beschikbareSupermarkten));
     } catch {
       return [];
     }
+  }
+
+  function laadVerwijderdeItems(storage) {
+    try {
+      return JSON.parse(storage.getItem(VERWIJDERDE_ITEMS_KEY) || "[]").filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  function bewaarVerwijderdeItems(storage, ids) {
+    storage.setItem(VERWIJDERDE_ITEMS_KEY, JSON.stringify([...new Set(ids.filter(Boolean))]));
   }
 
   function normaliseerRoute(route) {
@@ -124,10 +161,10 @@ const BoodschappenBaas = (() => {
     return volgorde;
   }
 
-  function combineerItems(seedItems, opgeslagenItems) {
+  function combineerItems(seedItems, opgeslagenItems, beschikbareSupermarkten = SUPERMARKTEN) {
     const perId = new Map();
-    seedItems.map(normaliseerItem).forEach((item) => perId.set(item.id, item));
-    opgeslagenItems.map(normaliseerItem).forEach((item) => {
+    seedItems.map((item) => normaliseerItem(item, beschikbareSupermarkten)).forEach((item) => perId.set(item.id, item));
+    opgeslagenItems.map((item) => normaliseerItem(item, beschikbareSupermarkten)).forEach((item) => {
       perId.set(item.id, { ...(perId.get(item.id) || {}), ...item });
     });
     return [...perId.values()].sort(maakRouteSorteerder());
@@ -144,7 +181,7 @@ const BoodschappenBaas = (() => {
 
   function groepeerVoorRoute(items, supermarkt = "alle", route = CATEGORIEEN) {
     return [...items]
-      .filter((item) => supermarkt === "alle" || item.supermarkten.includes(supermarkt))
+      .filter((item) => supermarkt === "alle" || (supermarkt === GEEN_SUPERMARKT_FILTER ? !item.supermarkten.length : item.supermarkten.includes(supermarkt)))
       .sort(maakRouteSorteerder(route))
       .reduce((groepen, item) => {
         if (!groepen[item.categorie]) groepen[item.categorie] = [];
@@ -153,18 +190,33 @@ const BoodschappenBaas = (() => {
       }, {});
   }
 
-  function nieuwEigenItem({ naam, categorie, supermarkten }) {
+  function nieuwEigenItem({ naam, categorie, supermarkten }, beschikbareSupermarkten = SUPERMARKTEN) {
     return normaliseerItem({
       id: `eigen-${slugify(naam)}-${Date.now()}`,
       naam,
       categorie,
       supermarkten,
       eigenItem: true
-    });
+    }, beschikbareSupermarkten);
   }
 
-  function bewaarItems(storage, items) {
-    storage.setItem(STORAGE_KEY, JSON.stringify(items.map(normaliseerItem)));
+  function bewaarItems(storage, items, beschikbareSupermarkten = SUPERMARKTEN) {
+    storage.setItem(STORAGE_KEY, JSON.stringify(items.map((item) => normaliseerItem(item, beschikbareSupermarkten))));
+  }
+
+  function verwijderItem(items, id) {
+    return items.filter((item) => item.id !== id);
+  }
+
+  function ontkoppelSupermarkt(items, supermarkt, beschikbareSupermarkten = SUPERMARKTEN) {
+    return items.map((item) => normaliseerItem({
+      ...item,
+      supermarkten: item.supermarkten.filter((markt) => markt !== supermarkt)
+    }, beschikbareSupermarkten));
+  }
+
+  function formatteerSupermarkten(item) {
+    return item.supermarkten.length ? item.supermarkten.join(", ") : "Geen supermarkt";
   }
 
   function setTheme(theme, root = document.documentElement, storage = localStorage) {
@@ -188,6 +240,10 @@ const BoodschappenBaas = (() => {
       categorie: document.querySelector("#categorie"),
       supermarkten: document.querySelector("#supermarkt-keuzes"),
       filter: document.querySelector("#supermarkt-filter"),
+      supermarktFormulier: document.querySelector("#supermarkt-formulier"),
+      supermarktNaam: document.querySelector("#supermarkt-naam"),
+      supermarktLijst: document.querySelector("#supermarkt-lijst"),
+      supermarktAantal: document.querySelector(".held__paneel strong"),
       lijst: document.querySelector("#boodschappenlijst"),
       mandje: document.querySelector("#mandje-lijst"),
       status: document.querySelector("#status"),
@@ -201,26 +257,16 @@ const BoodschappenBaas = (() => {
     };
 
     CATEGORIEEN.forEach((categorie) => elementen.categorie.append(maakOptie(categorie)));
-    elementen.filter.append(maakOptie("alle", "Alle supermarkten"));
-    SUPERMARKTEN.forEach((supermarkt) => elementen.filter.append(maakOptie(supermarkt)));
-    SUPERMARKTEN.forEach((supermarkt) => {
-      const label = document.createElement("label");
-      label.className = "chip";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.name = "supermarkten";
-      checkbox.value = supermarkt;
-      checkbox.checked = true;
-      label.append(checkbox, document.createTextNode(supermarkt));
-      elementen.supermarkten.append(label);
-    });
+    let supermarkten = laadSupermarkten(localStorage);
 
     const opgeslagenThema = localStorage.getItem(THEME_KEY) || "auto";
     elementen.thema.value = setTheme(opgeslagenThema);
 
     const response = await fetch("data/boodschappen.yml");
     const seedItems = parseYamlItems(await response.text());
-    let items = combineerItems(seedItems, laadOpgeslagenItems(localStorage));
+    let verwijderdeItems = laadVerwijderdeItems(localStorage);
+    let items = combineerItems(seedItems, laadOpgeslagenItems(localStorage, supermarkten), supermarkten)
+      .filter((item) => !verwijderdeItems.includes(item.id));
     let route = laadRoute(localStorage);
     let routeConcept = [...route];
     let laatstAfgevinktId = null;
@@ -231,6 +277,71 @@ const BoodschappenBaas = (() => {
 
     function status(bericht) {
       elementen.status.textContent = bericht;
+    }
+
+    function renderSupermarktOpties() {
+      const gekozenFilter = elementen.filter.value;
+      elementen.filter.replaceChildren(maakOptie("alle", "Alle supermarkten"), maakOptie(GEEN_SUPERMARKT_FILTER, "Geen supermarkt"));
+      supermarkten.forEach((supermarkt) => elementen.filter.append(maakOptie(supermarkt)));
+      if ([...elementen.filter.options].some((option) => option.value === gekozenFilter)) {
+        elementen.filter.value = gekozenFilter;
+      }
+    }
+
+    function renderSupermarktKeuzes() {
+      elementen.supermarkten.replaceChildren();
+      if (!supermarkten.length) {
+        const leeg = document.createElement("p");
+        leeg.className = "leeg";
+        leeg.textContent = "Geen supermarkten beschikbaar.";
+        elementen.supermarkten.append(leeg);
+        return;
+      }
+      supermarkten.forEach((supermarkt) => {
+        const label = document.createElement("label");
+        label.className = "chip";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = "supermarkten";
+        checkbox.value = supermarkt;
+        checkbox.checked = true;
+        label.append(checkbox, document.createTextNode(supermarkt));
+        elementen.supermarkten.append(label);
+      });
+    }
+
+    function renderSupermarktBeheer() {
+      elementen.supermarktLijst.replaceChildren();
+      elementen.supermarktAantal.textContent = String(supermarkten.length);
+      if (!supermarkten.length) {
+        const leeg = document.createElement("li");
+        leeg.className = "leeg";
+        leeg.textContent = "Nog geen supermarkten.";
+        elementen.supermarktLijst.append(leeg);
+        return;
+      }
+      supermarkten.forEach((supermarkt) => {
+        const item = document.createElement("li");
+        const naam = document.createElement("span");
+        naam.textContent = supermarkt;
+        const knop = document.createElement("button");
+        knop.type = "button";
+        knop.textContent = "Verwijderen";
+        knop.setAttribute("aria-label", `Verwijder supermarkt ${supermarkt}`);
+        knop.addEventListener("click", () => {
+          supermarkten = bewaarSupermarkten(localStorage, supermarkten.filter((markt) => markt !== supermarkt));
+          items = ontkoppelSupermarkt(items, supermarkt, supermarkten);
+          bewaarItems(localStorage, items, supermarkten);
+          if (elementen.filter.value === supermarkt) elementen.filter.value = "alle";
+          renderSupermarktOpties();
+          renderSupermarktKeuzes();
+          renderSupermarktBeheer();
+          render();
+          status(`${supermarkt} is verwijderd. Boodschappen blijven bestaan.`);
+        });
+        item.append(naam, knop);
+        elementen.supermarktLijst.append(item);
+      });
     }
 
     function routesZijnGelijk(eerste, tweede) {
@@ -461,7 +572,7 @@ const BoodschappenBaas = (() => {
           checkbox.addEventListener("change", () => {
             item.afgevinkt = checkbox.checked;
             laatstAfgevinktId = checkbox.checked ? item.id : null;
-            bewaarItems(localStorage, items);
+            bewaarItems(localStorage, items, supermarkten);
             render();
             status(checkbox.checked ? `${item.naam} gaat naar het winkelmandje.` : `${item.naam} staat weer op de lijst.`);
             const animatieId = laatstAfgevinktId;
@@ -478,9 +589,23 @@ const BoodschappenBaas = (() => {
           naam.textContent = item.naam;
           const meta = document.createElement("span");
           meta.className = "boodschap__meta";
-          meta.textContent = item.supermarkten.join(", ");
+          meta.textContent = formatteerSupermarkten(item);
           tekst.append(naam, meta);
-          row.append(checkbox, tekst);
+          const verwijderKnop = document.createElement("button");
+          verwijderKnop.type = "button";
+          verwijderKnop.className = "boodschap__verwijderen";
+          verwijderKnop.textContent = "Verwijderen";
+          verwijderKnop.setAttribute("aria-label", `Verwijder ${item.naam}`);
+          verwijderKnop.addEventListener("click", () => {
+            items = verwijderItem(items, item.id);
+            verwijderdeItems = [...new Set([...verwijderdeItems, item.id])];
+            bewaarItems(localStorage, items, supermarkten);
+            bewaarVerwijderdeItems(localStorage, verwijderdeItems);
+            if (laatstAfgevinktId === item.id) laatstAfgevinktId = null;
+            render();
+            status(`${item.naam} is verwijderd.`);
+          });
+          row.append(checkbox, tekst, verwijderKnop);
           list.append(row);
         });
 
@@ -511,14 +636,33 @@ const BoodschappenBaas = (() => {
         naam: elementen.naam.value,
         categorie: elementen.categorie.value,
         supermarkten: gekozenSupermarkten
-      });
+      }, supermarkten);
       if (!item.naam) return;
-      items = combineerItems(items, [item]);
-      bewaarItems(localStorage, items);
+      verwijderdeItems = verwijderdeItems.filter((id) => id !== item.id);
+      items = combineerItems(items, [item], supermarkten);
+      bewaarItems(localStorage, items, supermarkten);
+      bewaarVerwijderdeItems(localStorage, verwijderdeItems);
       elementen.formulier.reset();
       elementen.formulier.querySelectorAll('input[name="supermarkten"]').forEach((input) => { input.checked = true; });
       render();
       status(`${item.naam} is toegevoegd.`);
+    });
+
+    elementen.supermarktFormulier.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const naam = elementen.supermarktNaam.value.trim();
+      if (!naam) return;
+      if (supermarkten.some((supermarkt) => supermarkt.toLocaleLowerCase("nl") === naam.toLocaleLowerCase("nl"))) {
+        status(`${naam} bestaat al.`);
+        return;
+      }
+      supermarkten = bewaarSupermarkten(localStorage, [...supermarkten, naam]);
+      elementen.supermarktFormulier.reset();
+      renderSupermarktOpties();
+      renderSupermarktKeuzes();
+      renderSupermarktBeheer();
+      render();
+      status(`${naam} is toegevoegd.`);
     });
 
     elementen.filter.addEventListener("change", render);
@@ -549,11 +693,14 @@ const BoodschappenBaas = (() => {
     });
     elementen.allesUitvinken.addEventListener("click", () => {
       items = items.map((item) => ({ ...item, afgevinkt: false }));
-      bewaarItems(localStorage, items);
+      bewaarItems(localStorage, items, supermarkten);
       render();
       status("Alle boodschappen zijn weer uitgevinkt.");
     });
 
+    renderSupermarktOpties();
+    renderSupermarktKeuzes();
+    renderSupermarktBeheer();
     renderRouteEditor();
     render();
     registreerServiceWorker();
@@ -572,8 +719,12 @@ const BoodschappenBaas = (() => {
 
   return {
     SUPERMARKTEN,
+    GEEN_SUPERMARKT_FILTER,
     CATEGORIEEN,
     parseYamlItems,
+    normaliseerSupermarkten,
+    laadSupermarkten,
+    bewaarSupermarkten,
     normaliseerItem,
     normaliseerRoute,
     laadRoute,
@@ -582,6 +733,9 @@ const BoodschappenBaas = (() => {
     combineerItems,
     groepeerVoorRoute,
     nieuwEigenItem,
+    verwijderItem,
+    ontkoppelSupermarkt,
+    formatteerSupermarkten,
     setTheme,
     startApp
   };
