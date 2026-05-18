@@ -109,6 +109,34 @@ test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
   assert.ok(matches.every((aanbieding) => aanbieding.productnaam.includes("Cola")));
 });
 
+test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () => {
+  const aanroepen = [];
+  const resultaat = await app.laadAanbiedingenBestand(async (url, opties) => {
+    aanroepen.push({ url, opties });
+    return {
+      ok: true,
+      async json() {
+        return { aanbiedingen: [], bijgewerktOp: "", bron: "https://allesupers.nl/catalog/all" };
+      }
+    };
+  });
+
+  assert.equal(aanroepen.length, 1);
+  assert.match(aanroepen[0].url, /^data\/aanbiedingen\.json\?t=\d+$/);
+  assert.equal(aanroepen[0].opties.cache, "reload");
+  assert.equal(resultaat.fout, "");
+});
+
+test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
+  const resultaat = await app.laadAanbiedingenBestand(async () => ({
+    ok: false,
+    status: 503
+  }));
+
+  assert.equal(resultaat.aanbiedingen.length, 0);
+  assert.match(resultaat.fout, /status 503/);
+});
+
 test("zoektokens vangen eenvoudige meervouden op zonder vaste woorden te beschadigen", () => {
   assert.deepEqual(app.maakZoekTokens("blauwe bessen"), ["blauwe", "bes"]);
   assert.deepEqual(app.maakZoekTokens("mannen"), ["man"]);
@@ -192,7 +220,9 @@ test("PWA bestanden bieden offline en commit-versie update ondersteuning", () =>
   assert.match(sw, /__COMMIT_SHA__/);
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /caches\.open\(CACHE_NAME\)/);
-  assert.match(sw, /\.\/data\/aanbiedingen\.json/);
+  assert.doesNotMatch(sw, /\.\/data\/aanbiedingen\.json/);
+  assert.match(sw, /pathname\.endsWith\("\/data\/aanbiedingen\.json"\)/);
+  assert.match(sw, /fetch\(event\.request, \{ cache: "reload" \}\)/);
 });
 
 test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {

@@ -326,7 +326,7 @@ const BoodschappenBaas = (() => {
 
   async function laadAanbiedingenBestand(fetcher = fetch) {
     try {
-      const response = await fetcher(AANBIEDINGEN_PAD, { cache: "no-cache" });
+      const response = await fetcher(`${AANBIEDINGEN_PAD}?t=${Date.now()}`, { cache: "reload" });
       if (!response.ok) throw new Error(`Aanbiedingenbestand gaf status ${response.status}`);
       const data = await response.json();
       return {
@@ -414,7 +414,7 @@ const BoodschappenBaas = (() => {
       aanbiedingenData = await laadAanbiedingenBestand();
       render();
       const aantal = aanbiedingenData.aanbiedingen.length;
-      status(aanbiedingenData.fout ? "Aanbiedingen konden niet worden bijgewerkt; de lijst blijft bruikbaar." : `${aantal} aanbiedingen gescand.`);
+      status(aanbiedingenData.fout ? "Aanbiedingen konden niet worden bijgewerkt; de lijst blijft bruikbaar." : `${aantal} aanbiedingen opnieuw geladen uit het statische bestand.`);
     }
 
     function renderSupermarktOpties() {
