@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
 const collator = new Intl.Collator("nl", { sensitivity: "base" });
 const PRODUCTNAAM_VELDEN = ["productnaam", "productName", "name", "naam", "title", "description"];
-const SUPERMARKT_VELDEN = ["supermarkt", "supermarket", "supermarket.name", "store.name", "shop.name", "retailer.name", "offers.seller.name", "store", "shop", "retailer", "chain", "merchant"];
+const SUPERMARKT_VELDEN = ["supermarket.name", "store.name", "shop.name", "retailer.name", "offers.seller.name", "supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant"];
 const PRIJS_VELDEN = ["prijs", "price", "currentPrice", "current_price", "offerPrice", "price.value", "pricing.price", "salesPrice", "offers.price", "offers.lowPrice"];
 const OUDE_PRIJS_VELDEN = ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "normalPrice", "listPrice", "wasPrice", "offers.highPrice"];
 
@@ -104,7 +104,7 @@ function haalJsonWaardeNaMarker(tekst, marker, vanaf = 0) {
   let inString = false;
   let escape = false;
 
-  for (let index = valueStart; index < tekst.length; index += 1) {
+  for (let index = valueStart; index < tekst.length; index++) {
     const teken = tekst[index];
     if (escape) {
       escape = false;
@@ -175,7 +175,7 @@ function parseCatalogus(tekst, contentType = "") {
   if (jsonLd.length) return jsonLd;
   const nextFlightAanbiedingen = parseNextFlightAanbiedingen(tekst);
   if (nextFlightAanbiedingen.length) return nextFlightAanbiedingen;
-  throw new Error("Geen parseerbare aanbiedingen gevonden in HTML.");
+  return JSON.parse(tekst);
 }
 
 function uniekeAanbiedingen(aanbiedingen) {
