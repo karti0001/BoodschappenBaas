@@ -263,6 +263,9 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(voorbereidingOpeningTag, /aria-labelledby="voorbereiding-label route-titel"/);
   assert.match(voorbereidingOpeningTag, /\sopen\b/);
   assert.match(html, /<span id="voorbereiding-label" class="eyebrow">Voorbereiding<\/span>/);
+  const boodschappenlijstStart = html.indexOf('<section id="lijst"', voorbereidingStart);
+  const voorbereidingSectie = html.slice(voorbereidingStart, boodschappenlijstStart);
+  assert.doesNotMatch(voorbereidingSectie, /aanbiedingen-scannen/);
   assert.match(html, /<summary class="voorbereiding-toggle" aria-controls="voorbereiding-inhoud">/);
   assert.match(html, /<div id="voorbereiding-inhoud" class="voorbereiding-inhoud">/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
