@@ -20,7 +20,7 @@ const BoodschappenBaas = (() => {
   const THEME_KEY = "boodschappenbaas-theme";
   const GEEN_SUPERMARKT_FILTER = "__geen_supermarkt__";
   const ANIMATION_DURATION_MS = 700;
-  const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = ".boodschap, input, select, textarea, label, button:not(.categorie__greep)";
+  const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = ".boodschap, input, select, textarea, label, button";
   const AANBIEDINGEN_PAD = "data/aanbiedingen.json";
   const STOPWOORDEN = new Set(["de", "het", "een", "en", "of", "met", "voor", "bij", "van", "per", "stuk", "stuks"]);
   const EXACTE_SUBSTRING_BONUS = 0.3;
@@ -651,21 +651,14 @@ const BoodschappenBaas = (() => {
         const section = document.createElement("section");
         section.className = "categorie";
         section.draggable = true;
+        section.tabIndex = 0;
         section.dataset.categorie = categorie;
+        section.setAttribute("aria-label", `${categorie}. Gebruik pijl omhoog en pijl omlaag om deze categorie te verplaatsen.`);
+        section.setAttribute("aria-roledescription", "Versleepbare categorie");
         const kop = document.createElement("div");
         kop.className = "categorie__kop";
         const heading = document.createElement("h3");
         heading.textContent = categorie;
-        const greep = document.createElement("button");
-        greep.type = "button";
-        greep.className = "categorie__greep";
-        greep.draggable = true;
-        greep.setAttribute("aria-label", `Versleep ${categorie}`);
-        greep.title = "Categorie verslepen";
-        const greepIcoon = document.createElement("span");
-        greepIcoon.textContent = "↕";
-        greepIcoon.setAttribute("aria-hidden", "true");
-        greep.append(greepIcoon);
         const list = document.createElement("ul");
 
         section.addEventListener("dragstart", (event) => {
@@ -718,7 +711,8 @@ const BoodschappenBaas = (() => {
           section.draggable = true;
           schoonLijstVerslepenOp();
         });
-        greep.addEventListener("keydown", (event) => {
+        section.addEventListener("keydown", (event) => {
+          if (event.target !== section) return;
           const huidigeIndex = categorieNamen.indexOf(categorie);
           if (event.key === "ArrowUp") {
             event.preventDefault();
@@ -835,7 +829,7 @@ const BoodschappenBaas = (() => {
           list.append(row);
         });
 
-        kop.append(heading, greep);
+        kop.append(heading);
         section.append(kop, list);
         elementen.lijst.append(section);
       });

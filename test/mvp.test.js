@@ -219,12 +219,17 @@ test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkere
   const css = read("frontend/styles.css");
 
   assert.match(js, /section\.draggable = true/);
+  assert.match(js, /section\.tabIndex = 0/);
   assert.match(js, /if \(event\.pointerType === "mouse"\) \{[\s\S]*section\.draggable = magSlepen/);
   assert.match(js, /dragend[\s\S]*section\.draggable = true/);
   assert.match(js, /pointerup[\s\S]*section\.draggable = true/);
   assert.match(js, /pointercancel[\s\S]*section\.draggable = true/);
+  assert.match(js, /section\.addEventListener\("keydown"[\s\S]*verplaatsZichtbareCategorie/);
   assert.match(js, /magCategorieblokSlepenVanaf\(event\.target\)/);
   assert.match(js, /target\.closest\(NIET_SLEEPBARE_CATEGORIE_ELEMENTEN\)/);
+  assert.doesNotMatch(js, /Categorie verslepen/);
+  assert.doesNotMatch(js, /categorie__greep/);
+  assert.doesNotMatch(css, /\.categorie__greep/);
   const selectorConstante = js.match(/const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = "([^"]+)"/);
   assert.deepEqual(selectorConstante[1].split(",").map((selector) => selector.trim()), [
     ".boodschap",
@@ -232,7 +237,7 @@ test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkere
     "select",
     "textarea",
     "label",
-    "button:not(.categorie__greep)"
+    "button"
   ]);
   assert.match(css, /\.categorie \{[\s\S]*cursor: grab;/);
   assert.match(css, /\.categorie ul \{[\s\S]*cursor: default;/);
