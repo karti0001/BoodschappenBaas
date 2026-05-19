@@ -53,7 +53,7 @@
           <div>
             <p class="eyebrow">Actuele acties</p>
             <h2 id="aanbiedingen-titel">Aanbiedingen zoeken</h2>
-            <p>Zoeken start met een live scan via de API. Bij geen live resultaten of een fout wordt alleen fallback uit <code>data/aanbiedingen.json</code> gebruikt. Je kunt resultaten direct aan je boodschappenlijst toevoegen.</p>
+            <p>Zoeken en verversen gebruiken standaard <code>data/aanbiedingen.json</code> met een verse fetch. In deployments met een server-API wordt live ophalen automatisch gebruikt, met fallback naar dit bestand. Je kunt resultaten direct aan je boodschappenlijst toevoegen.</p>
           </div>
           <form id="aanbiedingen-zoek-formulier" class="aanbiedingen-zoek-formulier">
             <div class="veld">
@@ -66,7 +66,7 @@
             </div>
             <div class="formulier-acties">
               <button type="submit">Zoeken</button>
-              <button id="aanbiedingen-scannen" type="button">Scan aanbiedingen</button>
+              <button id="aanbiedingen-scannen" type="button">Ververs aanbiedingen</button>
             </div>
           </form>
           <p id="aanbiedingen-overzicht-status" class="status" role="status" aria-live="polite"></p>

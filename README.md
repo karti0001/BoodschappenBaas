@@ -35,6 +35,8 @@ Aanbiedingen komen uit [`frontend/data/aanbiedingen.json`](frontend/data/aanbied
 
 De GitHub Pages workflow bouwt de statische bestanden op elke push naar `main` en op pull requests. Tijdens de build wordt de commit-SHA in de service worker gezet, waardoor de PWA bij elke commit een nieuwe cacheversie krijgt.
 
+Wil je in een alternatieve deployment toch een runtime API gebruiken, dan kun je vóór `app.js` een globale variabele zetten: `window.BOODSCHAPPENBAAS_LIVE_AANBIEDINGEN_API_PAD = "api/aanbiedingen"` (of een ander API-pad). Zonder deze variabele gebruikt de app standaard `data/aanbiedingen.json`.
+
 ## Post-MVP ideeën
 
 - Meerdere winkelsessies of vaste lijsttemplates, zoals weekboodschappen, feestje of meal prep.
