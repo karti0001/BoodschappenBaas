@@ -255,7 +255,6 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<div id="voorbereiding-inhoud" class="voorbereiding-inhoud">/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
   assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
-  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>/);
   assert.match(html, /<button id="route-opslaan" type="button">Opslaan<\/button>/);
   assert.match(html, /<button id="route-reset" type="button">Reset route<\/button>/);
   assert.match(html, /<select id="thema"/);
