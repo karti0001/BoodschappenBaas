@@ -293,6 +293,12 @@ const BoodschappenBaas = (() => {
     return index === 0 ? `Goedkoopste bij ${aanbieding.supermarkt}` : `In de aanbieding bij ${aanbieding.supermarkt}`;
   }
 
+  function formatteerAanbiedingenTitel(aantal, isAanbiedingenScanBezig = false) {
+    if (isAanbiedingenScanBezig) return "Bezig met scannen...";
+    if (aantal === 1) return "1 aanbieding gevonden";
+    return aantal > 1 ? `${aantal} aanbiedingen gevonden` : "Geen actuele aanbieding gevonden";
+  }
+
   function matchAanbiedingen(zoekterm, aanbiedingen, opties = {}) {
     const queryTokens = maakZoekTokens(zoekterm);
     if (!queryTokens.length) return [];
@@ -343,6 +349,15 @@ const BoodschappenBaas = (() => {
         fout: fout.message || "Aanbiedingen konden niet worden geladen."
       };
     }
+  }
+
+  function maakLegeAanbiedingenData() {
+    return {
+      aanbiedingen: [],
+      bijgewerktOp: "",
+      bron: "",
+      fout: ""
+    };
   }
 
   function setTheme(theme, root = document.documentElement, storage = localStorage) {
@@ -405,13 +420,22 @@ const BoodschappenBaas = (() => {
     let touchCategorie = null;
     let touchDoelCategorie = null;
     let aanbiedingenData = await laadAanbiedingenBestand();
+    let isAanbiedingenScanBezig = false;
 
     function status(bericht) {
       elementen.status.textContent = bericht;
     }
 
     async function scanAanbiedingen() {
+      if (isAanbiedingenScanBezig) return;
+      isAanbiedingenScanBezig = true;
+      elementen.aanbiedingenScannen.disabled = true;
+      aanbiedingenData = maakLegeAanbiedingenData();
+      render();
+      status("Bezig met scannen...");
       aanbiedingenData = await laadAanbiedingenBestand();
+      isAanbiedingenScanBezig = false;
+      elementen.aanbiedingenScannen.disabled = false;
       render();
       const aantal = aanbiedingenData.aanbiedingen.length;
       status(aanbiedingenData.fout ? "Aanbiedingen konden niet worden bijgewerkt; de lijst blijft bruikbaar." : `${aantal} aanbiedingen opnieuw geladen uit het statische bestand.`);
@@ -759,9 +783,9 @@ const BoodschappenBaas = (() => {
           const aanbiedingenBlok = document.createElement("div");
           aanbiedingenBlok.className = `aanbiedingen${itemAanbiedingen.length ? "" : " aanbiedingen--leeg"}`;
           const aanbiedingenTitel = document.createElement("strong");
-          aanbiedingenTitel.textContent = itemAanbiedingen.length ? `${itemAanbiedingen.length} aanbieding${itemAanbiedingen.length === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden";
+          aanbiedingenTitel.textContent = formatteerAanbiedingenTitel(itemAanbiedingen.length, isAanbiedingenScanBezig);
           aanbiedingenBlok.append(aanbiedingenTitel);
-          if (itemAanbiedingen.length) {
+          if (!isAanbiedingenScanBezig && itemAanbiedingen.length) {
             const lijst = document.createElement("ul");
             itemAanbiedingen.forEach((aanbieding, index) => {
               const aanbiedingItem = document.createElement("li");
@@ -943,8 +967,10 @@ const BoodschappenBaas = (() => {
     normaliseerZoektekst,
     maakZoekTokens,
     normaliseerAanbieding,
+    formatteerAanbiedingenTitel,
     matchAanbiedingen,
     laadAanbiedingenBestand,
+    maakLegeAanbiedingenData,
     setTheme,
     startApp
   };
