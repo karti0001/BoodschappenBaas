@@ -168,6 +168,8 @@ test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", (
   assert.deepEqual(ahZoekresultaten.map((aanbieding) => aanbieding.productnaam), ["Magere kwark", "Kwark dessert"]);
   assert.deepEqual(geenResultaten, []);
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "AH"), "2 aanbiedingen getoond voor kwark bij AH.");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "alle"), "2 aanbiedingen getoond voor kwark.");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "", "AH"), "2 aanbiedingen getoond voor AH.");
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Bezig met scannen...");
 });
 

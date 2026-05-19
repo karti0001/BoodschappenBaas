@@ -412,8 +412,10 @@ const BoodschappenBaas = (() => {
 
   function formatteerAanbiedingenOverzichtStatus(aantal, zoekterm, supermarkt, isBezig = false) {
     if (isBezig) return "Bezig met scannen...";
-    if (zoekterm && supermarkt !== "alle") return `${aantal} aanbiedingen getoond voor ${zoekterm} bij ${supermarkt}.`;
-    return `${aantal} aanbiedingen getoond voor ${zoekterm || (supermarkt === "alle" ? "alle supermarkten" : supermarkt)}.`;
+    const onderwerp = zoekterm && supermarkt !== "alle"
+      ? `${zoekterm} bij ${supermarkt}`
+      : zoekterm || (supermarkt === "alle" ? "alle supermarkten" : supermarkt);
+    return `${aantal} aanbiedingen getoond voor ${onderwerp}.`;
   }
 
   async function laadAanbiedingenBestand(fetcher = fetch) {
