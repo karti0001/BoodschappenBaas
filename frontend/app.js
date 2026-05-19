@@ -317,12 +317,16 @@ const BoodschappenBaas = (() => {
     ].map((waarde) => normaliseerZoektekst(waarde)).join(CACHE_SCHEIDINGSTEKEN);
   }
 
+  function bewaarNieuwsteAanbiedingSleutels(sleutels, maximum = MAX_GEKOOPPELDE_AANBIEDINGEN) {
+    return [...new Set(sleutels)].slice(-maximum);
+  }
+
   function koppelAanbiedingAanItem(items, id, aanbieding, maximum = MAX_GEKOOPPELDE_AANBIEDINGEN) {
     const sleutel = maakAanbiedingSleutel(aanbieding);
     if (!sleutel) return items;
     return items.map((item) => {
       if (item.id !== id) return item;
-      const gekoppeldeAanbiedingen = [...new Set([...(item.gekoppeldeAanbiedingen || []), sleutel])].slice(-maximum);
+      const gekoppeldeAanbiedingen = bewaarNieuwsteAanbiedingSleutels([...(item.gekoppeldeAanbiedingen || []), sleutel], maximum);
       return normaliseerItem({ ...item, gekoppeldeAanbiedingen });
     });
   }

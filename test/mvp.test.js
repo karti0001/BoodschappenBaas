@@ -132,10 +132,10 @@ test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
 test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aan items", () => {
   const aanbiedingen = [
     { productnaam: "Magere yoghurt 1L", supermarkt: "Lidl", merk: "Milbona", categorie: { name: "Zuivel" }, prijs: 0.89, url: "https://example.test/yoghurt" },
-    { productnaam: "Appelsientje sinaasappel", supermarkt: "AH", merk: "Appelsientje", categorie: "Dranken", prijs: 1.49 }
+    { productnaam: "Appelsientje sinaasappel", supermarkt: "AH", merk: "Appelsientje", categorie: { name: "Dranken" }, prijs: 1.49 }
   ];
   const items = [
-    app.normaliseerItem({ id: "yoghurt", naam: "yoghurt", categorie: "Zuivel", supermarkten: ["Lidl"], gekoppeldeAanbiedingen: ["", app.maakAanbiedingSleutel(aanbiedingen[0])] })
+    app.normaliseerItem({ id: "yoghurt", naam: "yoghurt", categorie: "Zuivel", supermarkten: ["Lidl"], gekoppeldeAanbiedingen: [app.maakAanbiedingSleutel(aanbiedingen[0])] })
   ];
 
   const merkMatches = app.matchAanbiedingen("Milbona", aanbiedingen, { supermarkten: ["Lidl"] });
@@ -155,15 +155,18 @@ test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item",
   const items = [app.normaliseerItem({ id: "cola", naam: "Cola", categorie: "Dranken", supermarkten: ["Jumbo"] })];
   const aanbiedingen = [
     { productnaam: "Cola Zero", supermarkt: "Jumbo", prijs: 1.29 },
-    { productnaam: "Cola Regular", supermarkt: "Jumbo", prijs: 1.39 }
+    { productnaam: "Cola Regular", supermarkt: "Jumbo", prijs: 1.39 },
+    { productnaam: "Cola Max", supermarkt: "Jumbo", prijs: 0.99 }
   ];
 
   const eenKeer = app.koppelAanbiedingAanItem(items, "cola", aanbiedingen[0]);
   const dubbel = app.koppelAanbiedingAanItem(eenKeer, "cola", aanbiedingen[0]);
   const twee = app.koppelAanbiedingAanItem(dubbel, "cola", aanbiedingen[1]);
+  const nieuwste = app.koppelAanbiedingAanItem(twee, "cola", aanbiedingen[2], 1);
 
   assert.equal(dubbel[0].gekoppeldeAanbiedingen.length, 1);
   assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(twee[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Zero", "Cola Regular"]);
+  assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(nieuwste[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Max"]);
 });
 
 test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () => {
