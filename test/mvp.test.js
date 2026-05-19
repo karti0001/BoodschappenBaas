@@ -279,7 +279,7 @@ test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
   assert.match(resultaat.fout, /status 503/);
 });
 
-test("live aanbiedingen laden op GitHub Pages standaard uit het statische bestand met no-store", async () => {
+test("aanbiedingen laden standaard uit statisch bestand met cache-busting", async () => {
   const aanroepen = [];
   const resultaat = await app.laadLiveAanbiedingen(async (url, opties) => {
     aanroepen.push({ url, opties });

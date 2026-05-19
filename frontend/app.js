@@ -22,6 +22,7 @@ const BoodschappenBaas = (() => {
   const ANIMATION_DURATION_MS = 700;
   const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = ".boodschap, input, select, textarea, label, button";
   const AANBIEDINGEN_PAD = "data/aanbiedingen.json";
+  const AANBIEDINGEN_BRON_URL = "https://www.reclamefolder.nl/aanbiedingen/";
   const LIVE_AANBIEDINGEN_API_PAD = typeof window !== "undefined"
     ? (window.BOODSCHAPPENBAAS_LIVE_AANBIEDINGEN_API_PAD || "")
     : "";
@@ -31,6 +32,7 @@ const BoodschappenBaas = (() => {
   const MIN_EN_MEERVOUD_LENGTE = 5;
   const MIN_S_MEERVOUD_LENGTE = 4;
   const CACHE_SCHEIDINGSTEKEN = "\u0000";
+  const AANBIEDINGEN_VERVERSEN_FOUTMELDING = "Het verversen van aanbiedingen is mislukt en aanbiedingen zijn tijdelijk niet beschikbaar.";
   const MAX_GEKOOPPELDE_AANBIEDINGEN = 5;
   const MAX_ZOEKRESULTATEN = 6;
   const MAX_AANBIEDINGEN_OVERZICHT = 12;
@@ -507,14 +509,14 @@ const BoodschappenBaas = (() => {
       return {
         aanbiedingen: Array.isArray(data.aanbiedingen) ? data.aanbiedingen.map(normaliseerAanbieding) : [],
         bijgewerktOp: data.bijgewerktOp || "",
-        bron: data.bron || "https://www.reclamefolder.nl/aanbiedingen/",
+        bron: data.bron || AANBIEDINGEN_BRON_URL,
         fout: ""
       };
     } catch (fout) {
       return {
         aanbiedingen: [],
         bijgewerktOp: "",
-        bron: "https://www.reclamefolder.nl/aanbiedingen/",
+        bron: AANBIEDINGEN_BRON_URL,
         fout: fout.message || "Aanbiedingen konden niet worden geladen."
       };
     }
@@ -530,14 +532,14 @@ const BoodschappenBaas = (() => {
       return {
         aanbiedingen: Array.isArray(data.aanbiedingen) ? data.aanbiedingen.map(normaliseerAanbieding) : [],
         bijgewerktOp: data.bijgewerktOp || "",
-        bron: data.bron || (liveViaApi ? "live" : "https://www.reclamefolder.nl/aanbiedingen/"),
+        bron: data.bron || (liveViaApi ? "live" : AANBIEDINGEN_BRON_URL),
         fout: ""
       };
     } catch (fout) {
       return {
         aanbiedingen: [],
         bijgewerktOp: "",
-        bron: liveViaApi ? "live" : "https://www.reclamefolder.nl/aanbiedingen/",
+        bron: liveViaApi ? "live" : AANBIEDINGEN_BRON_URL,
         fout: fout.message || (liveViaApi
           ? "Live aanbiedingen konden niet worden opgehaald."
           : "Aanbiedingen konden niet worden ververst.")
@@ -684,7 +686,7 @@ const BoodschappenBaas = (() => {
       const liveViaApi = liveAanbiedingenData.bron === "live";
       const bericht = fallbackNodig
         ? (aanbiedingenData.fout
-          ? "Aanbiedingen verversen mislukt en aanbiedingen zijn tijdelijk niet beschikbaar."
+          ? AANBIEDINGEN_VERVERSEN_FOUTMELDING
           : `Live ophalen mislukt; ${aantal} aanbiedingen uit data/aanbiedingen.json geladen.`)
         : (liveViaApi
           ? `${aantal} live aanbiedingen geladen.`
@@ -733,7 +735,7 @@ const BoodschappenBaas = (() => {
         return;
       }
       if (aanbiedingenData.fout) {
-        aanbiedingenStatus("Aanbiedingen verversen mislukt en aanbiedingen zijn tijdelijk niet beschikbaar.");
+        aanbiedingenStatus(AANBIEDINGEN_VERVERSEN_FOUTMELDING);
         return;
       }
       aanbiedingenStatus("Live ophalen gaf geen resultaten; aanbiedingen uit data/aanbiedingen.json worden gebruikt.");
