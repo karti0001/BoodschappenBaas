@@ -295,7 +295,8 @@ const BoodschappenBaas = (() => {
 
   function formatteerAanbiedingenTitel(aantal, isAanbiedingenScanBezig = false) {
     if (isAanbiedingenScanBezig) return "Bezig met scannen...";
-    return aantal ? `${aantal} aanbieding${aantal === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden";
+    if (aantal === 1) return "1 aanbieding gevonden";
+    return aantal > 1 ? `${aantal} aanbiedingen gevonden` : "Geen actuele aanbieding gevonden";
   }
 
   function matchAanbiedingen(zoekterm, aanbiedingen, opties = {}) {

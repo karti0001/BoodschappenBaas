@@ -143,6 +143,7 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
 
   assert.equal(app.formatteerAanbiedingenTitel(0, true), "Bezig met scannen...");
   assert.equal(app.formatteerAanbiedingenTitel(0), "Geen actuele aanbieding gevonden");
+  assert.equal(app.formatteerAanbiedingenTitel(1), "1 aanbieding gevonden");
   assert.equal(app.formatteerAanbiedingenTitel(2), "2 aanbiedingen gevonden");
   assert.deepEqual(app.maakLegeAanbiedingenData(), {
     aanbiedingen: [],
