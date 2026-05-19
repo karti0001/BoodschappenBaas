@@ -410,11 +410,61 @@ test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als enige bron", () =
     .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
     .find(Boolean);
 
-  assert.deepEqual(aanbiedingenUpdater.BRONNEN, ["https://www.reclamefolder.nl/aanbiedingen/"]);
+  assert.ok(aanbiedingenUpdater.BRONNEN.some((bron) => bron === "https://www.ah.nl/bonus/folder"));
   assert.equal(aanbieding.productnaam, "Kwark voordeelpak");
   assert.equal(aanbieding.supermarkt, "Lidl");
   assert.equal(aanbieding.prijs, 0.99);
   assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/kwark");
+});
+
+test("aanbiedingenupdate gebruikt per supermarkt een adapter met categorie en bronmetadata", async () => {
+  const bronData = new Map(aanbiedingenUpdater.ADAPTERS.map((adapter) => {
+    const bron = adapter.bronnen[0];
+    const product = `${adapter.supermarkt} actieproduct`;
+    const catalogus = [{
+      name: product,
+      price: "1.99",
+      oldPrice: "2.49",
+      category: adapter.id === "dirck3" ? "wijn" : "zuivel",
+      validFrom: "2026-05-20",
+      validUntil: "2026-05-26",
+      image: "/actie.png",
+      url: "/actie"
+    }];
+    if (adapter.id === "ah") catalogus.push({ ...catalogus[0] });
+    if (adapter.id === "jumbo") catalogus[0].category = "frisdrank";
+    if (adapter.id === "hoogvliet") catalogus[0].category = "AGF";
+    if (adapter.id === "dirk") catalogus[0].category = "brood";
+    if (adapter.id === "aldi") {
+      return [bron.url, {
+        contentType: "application/pdf",
+        body: "Aldi diepvries pizza € 2,49 van € 3,49 geldig 20-05 t/m 26-05"
+      }];
+    }
+    if (adapter.id === "plus") catalogus[0].category = "drogisterij";
+    return [bron.url, { contentType: "application/json", body: JSON.stringify(catalogus) }];
+  }));
+  const fakeFetch = async (url) => {
+    const bron = bronData.get(url);
+    return {
+      ok: true,
+      headers: { get() { return bron.contentType; } },
+      async text() { return bron.body; }
+    };
+  };
+
+  const { aanbiedingen, fouten } = await aanbiedingenUpdater.haalAanbiedingenVanBronnen(fakeFetch);
+
+  assert.deepEqual(fouten, []);
+  assert.equal(aanbiedingen.length, aanbiedingenUpdater.ADAPTERS.length);
+  assert.deepEqual(new Set(aanbiedingen.map((aanbieding) => aanbieding.supermarkt)), new Set(["AH", "Jumbo", "Hoogvliet", "Dirk", "Dirck3", "Aldi", "PLUS"]));
+  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.productnaam && aanbieding.prijs !== null && aanbieding.geldigheidsperiode));
+  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.bronType === "folder" || aanbieding.bronType === "scrape"));
+  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.betrouwbaarheid === "tekst" || aanbieding.betrouwbaarheid === "ocr"));
+  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.opgehaaldOp));
+  assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Dirck3").categorie, "Wijn & sterke drank");
+  assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Aldi").categorie, "Diepvries");
+  assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Aldi").betrouwbaarheid, "ocr");
 });
 
 test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
