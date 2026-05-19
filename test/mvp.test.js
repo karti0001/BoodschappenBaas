@@ -249,8 +249,16 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<html lang="nl">/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
-  assert.match(html, /<div class="formulier-acties">\s*<button type="submit">Toevoegen<\/button>\s*<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>\s*<\/div>/);
-  assert.match(html, /<details class="kaart instellingen" aria-labelledby="route-titel" open>/);
+  const formulierActiesStart = html.indexOf('<div class="formulier-acties">');
+  assert.notEqual(formulierActiesStart, -1);
+  const formulierActies = html.slice(formulierActiesStart, html.indexOf("</div>", formulierActiesStart));
+  assert.match(formulierActies, /<button type="submit">Toevoegen<\/button>/);
+  assert.match(formulierActies, /<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>/);
+  const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
+  assert.notEqual(voorbereidingStart, -1);
+  const voorbereidingTag = html.slice(voorbereidingStart, html.indexOf(">", voorbereidingStart) + 1);
+  assert.match(voorbereidingTag, /aria-labelledby="route-titel"/);
+  assert.match(voorbereidingTag, /\sopen\b/);
   assert.match(html, /<summary class="voorbereiding-toggle" aria-controls="voorbereiding-inhoud">/);
   assert.match(html, /<div id="voorbereiding-inhoud" class="voorbereiding-inhoud">/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);

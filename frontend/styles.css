@@ -297,7 +297,7 @@ main {
 }
 
 .voorbereiding-toggle::-webkit-details-marker { display: none; }
-.voorbereiding-toggle::marker { display: none; content: ""; }
+.voorbereiding-toggle::marker { display: none; }
 
 .voorbereiding-toggle__titel {
   font-size: 1.5rem;
