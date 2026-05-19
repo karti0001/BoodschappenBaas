@@ -138,6 +138,22 @@ test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
   assert.match(resultaat.fout, /status 503/);
 });
 
+test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw matchen", () => {
+  const js = read("frontend/app.js");
+
+  assert.deepEqual(app.maakLegeAanbiedingenData(), {
+    aanbiedingen: [],
+    bijgewerktOp: "",
+    bron: "",
+    fout: ""
+  });
+  assert.match(js, /if \(isAanbiedingenScanBezig\) return;/);
+  assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
+  assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);[\s\S]*render\(\);[\s\S]*status\("Bezig met scannen\.\.\."\);[\s\S]*aanbiedingenData = await laadAanbiedingenBestand\(\);/);
+  assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
+  assert.match(js, /isAanbiedingenScanBezig[\s\S]*\? "Bezig met scannen\.\.\."/);
+});
+
 test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () => {
   const html = `<script type="application/ld+json">${JSON.stringify({
     "@type": "Product",

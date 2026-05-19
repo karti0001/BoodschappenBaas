@@ -345,6 +345,15 @@ const BoodschappenBaas = (() => {
     }
   }
 
+  function maakLegeAanbiedingenData() {
+    return {
+      aanbiedingen: [],
+      bijgewerktOp: "",
+      bron: "",
+      fout: ""
+    };
+  }
+
   function setTheme(theme, root = document.documentElement, storage = localStorage) {
     const gekozenThema = ["auto", "light", "dark"].includes(theme) ? theme : "auto";
     root.dataset.theme = gekozenThema;
@@ -405,13 +414,22 @@ const BoodschappenBaas = (() => {
     let touchCategorie = null;
     let touchDoelCategorie = null;
     let aanbiedingenData = await laadAanbiedingenBestand();
+    let isAanbiedingenScanBezig = false;
 
     function status(bericht) {
       elementen.status.textContent = bericht;
     }
 
     async function scanAanbiedingen() {
+      if (isAanbiedingenScanBezig) return;
+      isAanbiedingenScanBezig = true;
+      elementen.aanbiedingenScannen.disabled = true;
+      aanbiedingenData = maakLegeAanbiedingenData();
+      render();
+      status("Bezig met scannen...");
       aanbiedingenData = await laadAanbiedingenBestand();
+      isAanbiedingenScanBezig = false;
+      elementen.aanbiedingenScannen.disabled = false;
       render();
       const aantal = aanbiedingenData.aanbiedingen.length;
       status(aanbiedingenData.fout ? "Aanbiedingen konden niet worden bijgewerkt; de lijst blijft bruikbaar." : `${aantal} aanbiedingen opnieuw geladen uit het statische bestand.`);
@@ -759,9 +777,11 @@ const BoodschappenBaas = (() => {
           const aanbiedingenBlok = document.createElement("div");
           aanbiedingenBlok.className = `aanbiedingen${itemAanbiedingen.length ? "" : " aanbiedingen--leeg"}`;
           const aanbiedingenTitel = document.createElement("strong");
-          aanbiedingenTitel.textContent = itemAanbiedingen.length ? `${itemAanbiedingen.length} aanbieding${itemAanbiedingen.length === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden";
+          aanbiedingenTitel.textContent = isAanbiedingenScanBezig
+            ? "Bezig met scannen..."
+            : (itemAanbiedingen.length ? `${itemAanbiedingen.length} aanbieding${itemAanbiedingen.length === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden");
           aanbiedingenBlok.append(aanbiedingenTitel);
-          if (itemAanbiedingen.length) {
+          if (!isAanbiedingenScanBezig && itemAanbiedingen.length) {
             const lijst = document.createElement("ul");
             itemAanbiedingen.forEach((aanbieding, index) => {
               const aanbiedingItem = document.createElement("li");
@@ -945,6 +965,7 @@ const BoodschappenBaas = (() => {
     normaliseerAanbieding,
     matchAanbiedingen,
     laadAanbiedingenBestand,
+    maakLegeAanbiedingenData,
     setTheme,
     startApp
   };
