@@ -1,7 +1,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const ADAPTERS = require("./aanbiedingen-adapters");
 
-const BRONNEN = ["https://www.reclamefolder.nl/aanbiedingen/"];
+const BRONNEN = ADAPTERS.flatMap((adapter) => adapter.bronnen.map((bron) => bron.url));
 const BRON = BRONNEN[0];
 const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
@@ -10,6 +11,47 @@ const PRODUCTNAAM_VELDEN = ["productnaam", "productName", "name", "naam", "title
 const SUPERMARKT_VELDEN = ["supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name", "retailer.name", "offers.seller.name"];
 const PRIJS_VELDEN = ["prijs", "price", "currentPrice", "current_price", "offerPrice", "salesPrice", "price.value", "pricing.price", "offers.price", "offers.lowPrice"];
 const OUDE_PRIJS_VELDEN = ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "normalPrice", "listPrice", "wasPrice", "offers.highPrice"];
+const GELDIG_VAN_VELDEN = ["geldigVan", "validFrom", "valid_from", "startDate", "validity.from", "validity.start"];
+const GELDIG_TOT_VELDEN = ["geldigTot", "validThrough", "validUntil", "valid_to", "endDate", "validity.to", "validity.end", "expires"];
+const GELDIGHEID_VELDEN = ["geldigheidsperiode", "validityPeriod", "validity.period", "validity", "periode", "validityText"];
+const APP_CATEGORIEEN = [
+  "AGF",
+  "Bier",
+  "Frisdrank & sap",
+  "Wijn & sterke drank",
+  "Zuivel & eieren",
+  "Non-food",
+  "Diepvries",
+  "Brood & gebak",
+  "Vlees",
+  "Vleeswaren",
+  "Vegetarisch/vegan",
+  "Ontbijt & beleg",
+  "Koffie/thee",
+  "Huishoudelijk",
+  "Drogisterij",
+  "Huisdieren",
+  "Snacks",
+  "Voorraadkast"
+];
+const CATEGORIE_HINTS = [
+  ["Bier", ["bier", "pils", "radler", "krat", "speciaalbier"]],
+  ["Wijn & sterke drank", ["wijn", "prosecco", "champagne", "whisky", "rum", "gin", "vodka", "likeur", "jenever", "sterke drank"]],
+  ["Frisdrank & sap", ["frisdrank", "cola", "sinas", "limonade", "sap", "juice", "water", "ice tea"]],
+  ["AGF", ["agf", "aardbei", "aardbeien", "appel", "appels", "banaan", "bananen", "bes", "bessen", "groente", "fruit", "komkommer", "tomaat", "sla", "paprika"]],
+  ["Zuivel & eieren", ["zuivel", "melk", "yoghurt", "kwark", "kaas", "eieren", "ei", "boter", "vla"]],
+  ["Diepvries", ["diepvries", "ijs", "frozen", "vriesvers"]],
+  ["Brood & gebak", ["brood", "gebak", "cake", "croissant", "bolletjes", "taart"]],
+  ["Vleeswaren", ["vleeswaren", "ham", "salami", "worst", "kipfilet"]],
+  ["Vegetarisch/vegan", ["vegetarisch", "vegan", "vega", "plantaardig"]],
+  ["Vlees", ["vlees", "gehakt", "kip", "biefstuk", "schnitzel", "hamburger"]],
+  ["Ontbijt & beleg", ["ontbijt", "beleg", "hagelslag", "pindakaas", "jam", "muesli", "cruesli", "cornflakes"]],
+  ["Koffie/thee", ["koffie", "thee", "espresso", "cappuccino"]],
+  ["Huishoudelijk", ["huishoud", "wasmiddel", "vaatwas", "schoonmaak", "toiletpapier", "keukenpapier"]],
+  ["Drogisterij", ["drogist", "shampoo", "tandpasta", "deodorant", "luiers", "verzorging"]],
+  ["Huisdieren", ["huisdier", "katten", "honden", "kattenvoer", "hondenvoer"]],
+  ["Non-food", ["non-food", "non food", "kleding", "speelgoed", "tuin", "gereedschap"]]
+];
 
 function vindVeldWaarde(object, delen) {
   if (object === undefined || object === null) return "";
@@ -49,6 +91,22 @@ function normaliseerTekstWaarde(value) {
     .trim();
 }
 
+function normaliseerZoektekst(value) {
+  return normaliseerTekstWaarde(value)
+    .toLocaleLowerCase("nl")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function normaliseerCategorie(categorie, productnaam = "") {
+  const tekst = normaliseerZoektekst(`${categorie} ${productnaam}`);
+  if (!tekst) return "";
+  const bestaandeCategorie = APP_CATEGORIEEN.find((naam) => normaliseerZoektekst(naam) === normaliseerZoektekst(categorie));
+  if (bestaandeCategorie) return bestaandeCategorie;
+  const match = CATEGORIE_HINTS.find(([, hints]) => hints.some((hint) => tekst.includes(hint)));
+  return match ? match[0] : normaliseerTekstWaarde(categorie);
+}
+
 function absoluteUrl(url, bron = BRON) {
   if (!url) return "";
   try {
@@ -58,19 +116,19 @@ function absoluteUrl(url, bron = BRON) {
   }
 }
 
-function vindObjecten(node, gevonden = []) {
+function vindObjecten(node, gevonden = [], opties = {}) {
   if (!node || typeof node !== "object") return gevonden;
   if (Array.isArray(node)) {
-    node.forEach((item) => vindObjecten(item, gevonden));
+    node.forEach((item) => vindObjecten(item, gevonden, opties));
     return gevonden;
   }
 
   const naam = vindEersteVeldWaarde(node, PRODUCTNAAM_VELDEN);
-  const supermarkt = vindEersteVeldWaarde(node, SUPERMARKT_VELDEN);
+  const supermarkt = vindEersteVeldWaarde(node, SUPERMARKT_VELDEN) || opties.supermarkt;
   const prijs = vindEersteVeldWaarde(node, PRIJS_VELDEN);
   if (naam && supermarkt && prijs) gevonden.push(node);
 
-  Object.values(node).forEach((waarde) => vindObjecten(waarde, gevonden));
+  Object.values(node).forEach((waarde) => vindObjecten(waarde, gevonden, opties));
   return gevonden;
 }
 
@@ -80,22 +138,33 @@ function isAanbieding(node, prijs, oudePrijs) {
   return /korting|aanbieding|actie|bonus|deal|%|gratis|voor/.test(tekst);
 }
 
-function normaliseer(node, bron = BRON) {
+function normaliseer(node, bron = BRON, opties = {}) {
   const prijs = parsePrijs(vindEersteVeldWaarde(node, PRIJS_VELDEN));
   const oudePrijs = parsePrijs(vindEersteVeldWaarde(node, OUDE_PRIJS_VELDEN));
   if (!isAanbieding(node, prijs, oudePrijs)) return null;
+  const productnaam = normaliseerTekstWaarde(vindEersteVeldWaarde(node, PRODUCTNAAM_VELDEN));
+  const categorie = normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["categorie.name", "category.name", "categorie", "category", "productCategory"]));
+  const geldigVan = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIG_VAN_VELDEN));
+  const geldigTot = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIG_TOT_VELDEN));
+  const geldigheidsperiode = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIGHEID_VELDEN)) || [geldigVan, geldigTot].filter(Boolean).join(" t/m ");
   return {
-    productnaam: normaliseerTekstWaarde(vindEersteVeldWaarde(node, PRODUCTNAAM_VELDEN)),
-    supermarkt: normaliseerTekstWaarde(vindEersteVeldWaarde(node, SUPERMARKT_VELDEN)),
+    productnaam,
+    supermarkt: normaliseerTekstWaarde(vindEersteVeldWaarde(node, SUPERMARKT_VELDEN)) || opties.supermarkt || "Meerdere winkels",
     merk: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["merk", "brand", "manufacturer", "brand.name"])),
-    categorie: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["categorie.name", "category.name", "categorie", "category", "productCategory"])),
+    categorie: opties.categoriseer ? normaliseerCategorie(categorie, productnaam) : categorie,
     prijs,
     prijsTekst: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["prijsTekst", "priceText", "price.text"])) || formatPrijs(prijs),
     oudePrijs,
     oudePrijsTekst: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["oudePrijsTekst", "oldPriceText", "originalPriceText"])) || formatPrijs(oudePrijs),
     korting: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["korting", "discount", "promotion", "offerText", "dealText"])),
     eenheidsprijs: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])),
-    bijgewerktOp: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt", "validFrom"])),
+    geldigVan,
+    geldigTot,
+    geldigheidsperiode,
+    bronType: opties.bronType || normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bronType", "sourceType"])) || "scrape",
+    betrouwbaarheid: opties.betrouwbaarheid || normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["betrouwbaarheid", "reliability"])) || "tekst",
+    opgehaaldOp: opties.opgehaaldOp || "",
+    bijgewerktOp: opties.opgehaaldOp || normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt", "validFrom"])),
     afbeelding: absoluteUrl(vindEersteVeldWaarde(node, ["afbeelding", "image.url", "image.imageUrl", "imageUrl", "thumbnail", "thumbnailUrl", "image"]), bron),
     url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path", "permaname", "offers.url"]), bron)
   };
@@ -184,6 +253,41 @@ function parseCatalogus(tekst, contentType = "") {
   return JSON.parse(tekst);
 }
 
+function tekstZonderHtml(tekst) {
+  return String(tekst || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "\n")
+    .replace(/<style[\s\S]*?<\/style>/gi, "\n")
+    .replace(/<[^>]+>/g, "\n")
+    .replace(/&euro;|&#8364;/gi, "€")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+\n/g, "\n");
+}
+
+function parseTekstAanbiedingen(tekst, adapter = {}, bron = {}) {
+  return tekstZonderHtml(tekst)
+    .split(/\r?\n/)
+    .map((regel) => regel.replace(/\s+/g, " ").trim())
+    .filter((regel) => regel.length > 5)
+    .flatMap((regel) => {
+      const match = regel.match(/^(.{2,}?)\s*(?:[-|:]\s*)?€?\s*(\d+[\.,]\d{1,2})(?:\s*(?:van|was|oude prijs)\s*€?\s*(\d+[\.,]\d{1,2}))?/i);
+      if (!match) return [];
+      const periode = regel.match(/(?:geldig|van)\s+(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)\s*(?:t\/m|tot|-)\s*(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)/i);
+      return [{
+        productnaam: match[1].replace(/\s[-|:]+$/, "").trim(),
+        supermarkt: adapter.supermarkt,
+        prijs: match[2],
+        oudePrijs: match[3] || "",
+        categorie: normaliseerCategorie(regel),
+        geldigheidsperiode: periode ? `${periode[1]} t/m ${periode[2]}` : "",
+        geldigVan: periode ? periode[1] : "",
+        geldigTot: periode ? periode[2] : "",
+        bronType: bron.type,
+        betrouwbaarheid: bron.betrouwbaarheid,
+        url: bron.url
+      }];
+    });
+}
+
 function uniekeAanbiedingen(aanbiedingen) {
   const gezien = new Set();
   return aanbiedingen.filter((aanbieding) => {
@@ -191,8 +295,7 @@ function uniekeAanbiedingen(aanbiedingen) {
       aanbieding.productnaam,
       aanbieding.supermarkt,
       aanbieding.prijs,
-      aanbieding.oudePrijs,
-      aanbieding.url
+      aanbieding.geldigheidsperiode || `${aanbieding.geldigVan || ""} ${aanbieding.geldigTot || ""}`
     ].map((waarde) => String(waarde || "").toLocaleLowerCase("nl")).join("\u0000");
     if (gezien.has(sleutel)) return false;
     gezien.add(sleutel);
@@ -233,23 +336,57 @@ async function main() {
   console.log(`${aanbiedingen.length} aanbiedingen opgeslagen in ${path.relative(root, doel)}.`);
 }
 
-async function haalAanbiedingenVanBronnen(fetcher = fetch, bronnen = BRONNEN) {
+function normaliseerAdapters(bronnen) {
+  return bronnen.map((bron, index) => {
+    if (typeof bron === "string") {
+      return {
+        id: `bron-${index}`,
+        supermarkt: "",
+        bronnen: [{ url: bron, type: "scrape", betrouwbaarheid: "tekst", documentatie: "Losse bron zonder supermarktadapter." }]
+      };
+    }
+    return bron;
+  });
+}
+
+async function haalAanbiedingenVanBronnen(fetcher = fetch, bronnen = ADAPTERS) {
   const gevonden = [];
   const fouten = [];
-  for (const bron of bronnen) {
-    try {
-      const response = await fetcher(bron, {
-        headers: {
-          "accept": "application/json,text/html;q=0.9",
-          "user-agent": "BoodschappenBaas GitHub Action (+https://github.com/karti0001/BoodschappenBaas)"
-        }
-      });
-      if (!response.ok) throw new Error(`${bron} gaf status ${response.status}`);
+  const opgehaaldOp = new Date().toISOString();
+  for (const adapter of normaliseerAdapters(bronnen)) {
+    for (const bron of adapter.bronnen) {
+      try {
+        const response = await fetcher(bron.url, {
+          headers: {
+            "accept": "application/json,text/html;q=0.9",
+            "user-agent": "BoodschappenBaas GitHub Action (+https://github.com/karti0001/BoodschappenBaas)"
+          }
+        });
+        if (!response.ok) throw new Error(`${bron.url} gaf status ${response.status}`);
 
-      const catalogus = parseCatalogus(await response.text(), response.headers.get("content-type") || "");
-      gevonden.push(...vindObjecten(catalogus).map((node) => normaliseer(node, bron)));
-    } catch (fout) {
-      fouten.push(`${bron}: ${fout.message}`);
+        const tekst = await response.text();
+        const contentType = response.headers.get("content-type") || "";
+        let catalogus;
+        try {
+          catalogus = parseCatalogus(tekst, contentType);
+        } catch {
+          catalogus = [];
+        }
+        const opties = {
+          supermarkt: adapter.supermarkt,
+          bronType: bron.type,
+          betrouwbaarheid: bron.betrouwbaarheid,
+          opgehaaldOp,
+          categoriseer: Boolean(adapter.supermarkt)
+        };
+        const objecten = vindObjecten(catalogus, [], opties);
+        gevonden.push(...objecten.map((node) => normaliseer(node, bron.url, opties)));
+        if (!objecten.length) {
+          gevonden.push(...parseTekstAanbiedingen(tekst, adapter, bron).map((node) => normaliseer(node, bron.url, opties)));
+        }
+      } catch (fout) {
+        fouten.push(`${bron.url}: ${fout.message}`);
+      }
     }
   }
 
@@ -268,11 +405,16 @@ if (require.main === module) {
 }
 
 module.exports = {
+  ADAPTERS,
+  APP_CATEGORIEEN,
   BRON,
   BRONNEN,
   haalAanbiedingenVanBronnen,
   parseCatalogus,
   parseNextFlightAanbiedingen,
+  parseTekstAanbiedingen,
+  normaliseerCategorie,
+  uniekeAanbiedingen,
   vindObjecten,
   normaliseer
 };

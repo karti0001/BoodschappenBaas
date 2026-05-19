@@ -1,5 +1,5 @@
 const BoodschappenBaas = (() => {
-  const SUPERMARKTEN = ["AH", "Jumbo", "Aldi", "Lidl", "Dirk"];
+  const SUPERMARKTEN = ["AH", "Jumbo", "Hoogvliet", "Dirk", "Dirck3", "Aldi", "PLUS", "Lidl"];
   const CATEGORIEEN = [
     "Zuivel",
     "Groente",
@@ -11,7 +11,22 @@ const BoodschappenBaas = (() => {
     "Voorraadkast",
     "Huishouden",
     "Persoonlijke verzorging",
-    "Snacks"
+    "Snacks",
+    "AGF",
+    "Bier",
+    "Frisdrank & sap",
+    "Wijn & sterke drank",
+    "Zuivel & eieren",
+    "Non-food",
+    "Brood & gebak",
+    "Vlees",
+    "Vleeswaren",
+    "Vegetarisch/vegan",
+    "Ontbijt & beleg",
+    "Koffie/thee",
+    "Huishoudelijk",
+    "Drogisterij",
+    "Huisdieren"
   ];
   const STORAGE_KEY = "boodschappenbaas-items-v1";
   const VERWIJDERDE_ITEMS_KEY = "boodschappenbaas-verwijderde-items-v1";
