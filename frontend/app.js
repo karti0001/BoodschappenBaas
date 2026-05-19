@@ -516,6 +516,12 @@ const BoodschappenBaas = (() => {
     return `${aantal} aanbiedingen getoond voor ${onderwerp}.`;
   }
 
+  function formatteerAanbiedingenMeta(data) {
+    const bijgewerkt = data?.bijgewerktOp ? formatteerDatumTijd(data.bijgewerktOp) : "onbekend";
+    const waarschuwing = data?.fout || data?.waarschuwing || "";
+    return [`Laatst bijgewerkt op ${bijgewerkt}.`, waarschuwing].filter(Boolean).join(" ");
+  }
+
   async function laadAanbiedingenBestand(fetcher = fetch) {
     try {
       const response = await fetcher(`${AANBIEDINGEN_PAD}?t=${Date.now()}`, { cache: "reload" });
@@ -525,6 +531,8 @@ const BoodschappenBaas = (() => {
         aanbiedingen: Array.isArray(data.aanbiedingen) ? data.aanbiedingen.map(normaliseerAanbieding) : [],
         bijgewerktOp: data.bijgewerktOp || "",
         bron: data.bron || AANBIEDINGEN_BRON_URL,
+        bronnen: Array.isArray(data.bronnen) ? data.bronnen : [],
+        waarschuwing: data.waarschuwing || "",
         fout: ""
       };
     } catch (fout) {
@@ -532,6 +540,8 @@ const BoodschappenBaas = (() => {
         aanbiedingen: [],
         bijgewerktOp: "",
         bron: AANBIEDINGEN_BRON_URL,
+        bronnen: [],
+        waarschuwing: "",
         fout: fout.message || "Aanbiedingen konden niet worden geladen."
       };
     }
@@ -548,6 +558,8 @@ const BoodschappenBaas = (() => {
         aanbiedingen: Array.isArray(data.aanbiedingen) ? data.aanbiedingen.map(normaliseerAanbieding) : [],
         bijgewerktOp: data.bijgewerktOp || "",
         bron: data.bron || (liveViaApi ? "live" : AANBIEDINGEN_BRON_URL),
+        bronnen: Array.isArray(data.bronnen) ? data.bronnen : [],
+        waarschuwing: data.waarschuwing || "",
         fout: ""
       };
     } catch (fout) {
@@ -555,6 +567,8 @@ const BoodschappenBaas = (() => {
         aanbiedingen: [],
         bijgewerktOp: "",
         bron: liveViaApi ? "live" : AANBIEDINGEN_BRON_URL,
+        bronnen: [],
+        waarschuwing: "",
         fout: fout.message || (liveViaApi
           ? "Live aanbiedingen konden niet worden opgehaald."
           : "Aanbiedingen konden niet worden ververst.")
@@ -567,6 +581,8 @@ const BoodschappenBaas = (() => {
       aanbiedingen: [],
       bijgewerktOp: "",
       bron: "",
+      bronnen: [],
+      waarschuwing: "",
       fout: ""
     };
   }
@@ -610,6 +626,7 @@ const BoodschappenBaas = (() => {
       aanbiedingZoekterm: document.querySelector("#aanbiedingen-zoekterm"),
       aanbiedingFilter: document.querySelector("#aanbiedingen-supermarkt-filter"),
       aanbiedingenOverzicht: document.querySelector("#aanbiedingen-overzicht"),
+      aanbiedingenMeta: document.querySelector("#aanbiedingen-meta"),
       aanbiedingenOverzichtStatus: document.querySelector("#aanbiedingen-overzicht-status"),
       tabs: document.querySelectorAll("[data-tab-target]"),
       tabPanelen: document.querySelectorAll(".tab-paneel"),
@@ -670,14 +687,8 @@ const BoodschappenBaas = (() => {
       return eersteSet.size === tweedeSet.size && [...eersteSet].every((supermarkt) => tweedeSet.has(supermarkt));
     }
 
-    async function laadAanbiedingenDataMetFallback() {
-      const liveAanbiedingenData = await laadLiveAanbiedingen();
-      const fallbackNodig = liveAanbiedingenData.fout || !liveAanbiedingenData.aanbiedingen.length;
-      if (!fallbackNodig) {
-        return { aanbiedingenData: liveAanbiedingenData, fallbackNodig, liveAanbiedingenData };
-      }
-      const lokaleData = await laadAanbiedingenBestand();
-      return { aanbiedingenData: lokaleData, fallbackNodig, liveAanbiedingenData };
+    async function laadLokaleAanbiedingenData() {
+      return laadAanbiedingenBestand();
     }
 
     async function scanAanbiedingen() {
@@ -689,23 +700,15 @@ const BoodschappenBaas = (() => {
       renderAanbiedingenOverzicht();
       aanbiedingenStatus("Aanbiedingen worden ververst...");
       status("Aanbiedingen worden ververst...");
-      const liveResultaat = await laadAanbiedingenDataMetFallback();
-      const { fallbackNodig } = liveResultaat;
-      const liveAanbiedingenData = liveResultaat.liveAanbiedingenData;
-      aanbiedingenData = liveResultaat.aanbiedingenData;
+      aanbiedingenData = await laadLokaleAanbiedingenData();
       isAanbiedingenScanBezig = false;
       elementen.aanbiedingenScannen.disabled = false;
       render();
       renderAanbiedingenOverzicht();
       const aantal = aanbiedingenData.aanbiedingen.length;
-      const liveViaApi = liveAanbiedingenData.bron === "live";
-      const bericht = fallbackNodig
-        ? (aanbiedingenData.fout
-          ? AANBIEDINGEN_VERVERSEN_FOUTMELDING
-          : `Live ophalen mislukt; ${aantal} aanbiedingen uit data/aanbiedingen.json geladen.`)
-        : (liveViaApi
-          ? `${aantal} live aanbiedingen geladen.`
-          : `${aantal} aanbiedingen ververst uit data/aanbiedingen.json.`);
+      const bericht = aanbiedingenData.fout
+        ? AANBIEDINGEN_VERVERSEN_FOUTMELDING
+        : `${aantal} lokale aanbiedingen ververst uit data/aanbiedingen.json.`;
       aanbiedingenStatus(bericht);
       status(bericht);
     }
@@ -737,23 +740,15 @@ const BoodschappenBaas = (() => {
       elementen.aanbiedingenScannen.disabled = true;
       renderAanbiedingenOverzicht();
       aanbiedingenStatus("Aanbiedingen worden ververst...");
-      const liveResultaat = await laadAanbiedingenDataMetFallback();
-      const { fallbackNodig } = liveResultaat;
-      aanbiedingenData = liveResultaat.aanbiedingenData;
+      aanbiedingenData = await laadLokaleAanbiedingenData();
       isAanbiedingenScanBezig = false;
       elementen.aanbiedingenScannen.disabled = false;
       renderAanbiedingenOverzicht();
-      if (!fallbackNodig) {
-        aanbiedingenStatus(liveResultaat.liveAanbiedingenData.bron === "live"
-          ? "Live aanbiedingen geladen voor je zoekopdracht."
-          : "Aanbiedingen zijn ververst voor je zoekopdracht.");
-        return;
-      }
       if (aanbiedingenData.fout) {
         aanbiedingenStatus(AANBIEDINGEN_VERVERSEN_FOUTMELDING);
         return;
       }
-      aanbiedingenStatus("Live ophalen gaf geen resultaten; aanbiedingen uit data/aanbiedingen.json worden gebruikt.");
+      aanbiedingenStatus("Lokale aanbiedingen zijn ververst voor je zoekopdracht.");
     }
 
     function renderSupermarktOpties() {
@@ -776,6 +771,7 @@ const BoodschappenBaas = (() => {
 
     function renderAanbiedingenOverzicht() {
       elementen.aanbiedingenOverzicht.replaceChildren();
+      elementen.aanbiedingenMeta.textContent = formatteerAanbiedingenMeta(aanbiedingenData);
       const zoekterm = elementen.aanbiedingZoekterm.value.trim();
       const supermarkt = elementen.aanbiedingFilter.value || "alle";
       const resultaten = isAanbiedingenScanBezig ? [] : selecteerAanbiedingenOverzicht(zoekterm, supermarkt, aanbiedingenData.aanbiedingen);
@@ -1484,6 +1480,7 @@ const BoodschappenBaas = (() => {
     matchAanbiedingen,
     selecteerAanbiedingenOverzicht,
     formatteerAanbiedingenOverzichtStatus,
+    formatteerAanbiedingenMeta,
     laadAanbiedingenBestand,
     laadLiveAanbiedingen,
     maakLegeAanbiedingenData,

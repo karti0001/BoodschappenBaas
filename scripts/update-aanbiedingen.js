@@ -4,6 +4,25 @@ const ADAPTERS = require("./aanbiedingen-adapters");
 
 const BRONNEN = ADAPTERS.flatMap((adapter) => adapter.bronnen.map((bron) => bron.url));
 const BRON = BRONNEN[0];
+const BRONNEN_META = ADAPTERS.flatMap((adapter) => adapter.bronnen.map((bron) => ({
+  supermarkt: adapter.supermarkt,
+  url: bron.url,
+  type: bron.type,
+  betrouwbaarheid: bron.betrouwbaarheid,
+  documentatie: bron.documentatie
+})));
+const TOEGESTANE_SUPERMARKTEN = ["AH", "Jumbo", "Hoogvliet", "Dirk", "Dirck3", "Aldi", "PLUS"];
+const SUPERMARKT_ALIASSEN = new Map([
+  ["ah", "AH"],
+  ["albert heijn", "AH"],
+  ["jumbo", "Jumbo"],
+  ["hoogvliet", "Hoogvliet"],
+  ["dirk", "Dirk"],
+  ["dirck3", "Dirck3"],
+  ["dirck 3", "Dirck3"],
+  ["aldi", "Aldi"],
+  ["plus", "PLUS"]
+]);
 const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
 const collator = new Intl.Collator("nl", { sensitivity: "base" });
@@ -101,6 +120,19 @@ function normaliseerZoektekst(value) {
     .toLocaleLowerCase("nl")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function normaliseerSupermarktVoorFilter(supermarkt) {
+  return SUPERMARKT_ALIASSEN.get(normaliseerZoektekst(supermarkt)) || "";
+}
+
+function filterToegestaneSupermarkten(aanbiedingen) {
+  return aanbiedingen
+    .map((aanbieding) => ({
+      ...aanbieding,
+      supermarkt: normaliseerSupermarktVoorFilter(aanbieding.supermarkt) || aanbieding.supermarkt
+    }))
+    .filter((aanbieding) => TOEGESTANE_SUPERMARKTEN.includes(aanbieding.supermarkt));
 }
 
 function normaliseerCategorie(categorie, productnaam = "") {
@@ -324,8 +356,12 @@ function zelfdeAanbiedingen(aanbiedingen) {
 async function main() {
   const { aanbiedingen, fouten } = await haalAanbiedingenVanBronnen();
 
+  if (fouten.length) {
+    throw new Error(`Aanbiedingen ophalen mislukt; bestaand aanbiedingenbestand blijft behouden. ${fouten.join(" ")}`);
+  }
+
   if (!aanbiedingen.length) {
-    throw new Error(`Geen aanbiedingen gevonden; bestaand aanbiedingenbestand blijft behouden. ${fouten.join(" ")}`.trim());
+    throw new Error("Geen aanbiedingen gevonden na supermarktfilter; bestaand aanbiedingenbestand blijft behouden.");
   }
 
   if (zelfdeAanbiedingen(aanbiedingen)) {
@@ -335,8 +371,9 @@ async function main() {
 
   const inhoud = `${JSON.stringify({
     bron: BRON,
-    bronnen: BRONNEN,
+    bronnen: BRONNEN_META,
     bijgewerktOp: new Date().toISOString(),
+    waarschuwing: "",
     aanbiedingen
   }, null, 2)}\n`;
   fs.mkdirSync(path.dirname(doel), { recursive: true });
@@ -404,9 +441,9 @@ async function haalAanbiedingenVanBronnen(fetcher = fetch, bronnen = ADAPTERS) {
     }
   }
 
-  const aanbiedingen = uniekeAanbiedingen(gevonden
+  const aanbiedingen = uniekeAanbiedingen(filterToegestaneSupermarkten(gevonden
     .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
-  ).sort((a, b) => collator.compare(a.productnaam, b.productnaam) || collator.compare(a.supermarkt, b.supermarkt));
+  )).sort((a, b) => collator.compare(a.productnaam, b.productnaam) || collator.compare(a.supermarkt, b.supermarkt));
 
   return { aanbiedingen, fouten };
 }
@@ -423,6 +460,9 @@ module.exports = {
   APP_CATEGORIEEN,
   BRON,
   BRONNEN,
+  BRONNEN_META,
+  TOEGESTANE_SUPERMARKTEN,
+  filterToegestaneSupermarkten,
   haalAanbiedingenVanBronnen,
   parseCatalogus,
   parseNextFlightAanbiedingen,

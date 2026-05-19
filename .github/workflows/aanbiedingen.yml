@@ -23,7 +23,11 @@ jobs:
         with:
           node-version: 22
       - name: Haal Reclamefolder-data op
-        run: node scripts/update-aanbiedingen.js
+        run: |
+          if ! node scripts/update-aanbiedingen.js; then
+            echo "Aanbiedingen ophalen mislukt; bestaand JSON-bestand wordt niet overschreven."
+            exit 1
+          fi
       - name: Commit gewijzigde aanbiedingen
         run: |
           if git diff --quiet -- frontend/data/aanbiedingen.json; then
