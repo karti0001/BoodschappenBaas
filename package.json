@@ -4,7 +4,7 @@
   "private": true,
   "description": "Nederlandse PWA voor boodschappenlijsten per supermarkt en categorie.",
   "scripts": {
-    "lint": "node --check frontend/app.js && node --check scripts/build.js && node --check scripts/update-aanbiedingen.js && node --check test/mvp.test.js",
+    "lint": "node --check frontend/app.js && node --check scripts/build.js && node --check scripts/update-aanbiedingen.js && node --check api/aanbiedingen.js && node --check test/mvp.test.js",
     "test": "node --test",
     "build": "node scripts/build.js"
   },

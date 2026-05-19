@@ -170,7 +170,7 @@ test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", (
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "AH"), "2 aanbiedingen getoond voor kwark bij AH.");
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "alle"), "2 aanbiedingen getoond voor kwark.");
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "", "AH"), "2 aanbiedingen getoond voor AH.");
-  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Bezig met scannen...");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Bezig met live scannen...");
 });
 
 test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
@@ -219,10 +219,52 @@ test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
   assert.match(resultaat.fout, /status 503/);
 });
 
+test("live aanbiedingen-API wordt zonder browser-CORS direct via de eigen proxy opgehaald", async () => {
+  const aanroepen = [];
+  const resultaat = await app.laadLiveAanbiedingen(async (url, opties) => {
+    aanroepen.push({ url, opties });
+    return {
+      ok: true,
+      async json() {
+        return {
+          bron: "live",
+          bijgewerktOp: "2026-05-19T00:00:00.000Z",
+          aanbiedingen: [{
+            productnaam: "Voorbeeldproduct",
+            supermarkt: "Albert Heijn",
+            prijs: "1,99",
+            oudePrijs: "2,49",
+            url: "https://voorbeeld.nl"
+          }]
+        };
+      }
+    };
+  });
+
+  assert.equal(aanroepen.length, 1);
+  assert.match(aanroepen[0].url, /^api\/aanbiedingen\?t=\d+$/);
+  assert.equal(aanroepen[0].opties.cache, "no-store");
+  assert.equal(resultaat.bron, "live");
+  assert.equal(resultaat.aanbiedingen[0].prijs, 1.99);
+  assert.equal(resultaat.aanbiedingen[0].prijsTekst, "€ 1,99");
+  assert.equal(resultaat.fout, "");
+});
+
+test("live aanbiedingen halen valt toetsbaar terug wanneer de proxy faalt", async () => {
+  const resultaat = await app.laadLiveAanbiedingen(async () => ({
+    ok: false,
+    status: 502
+  }));
+
+  assert.equal(resultaat.aanbiedingen.length, 0);
+  assert.equal(resultaat.bron, "live");
+  assert.match(resultaat.fout, /status 502/);
+});
+
 test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw matchen", () => {
   const js = read("frontend/app.js");
 
-  assert.equal(app.formatteerAanbiedingenTitel(0, true), "Bezig met scannen...");
+  assert.equal(app.formatteerAanbiedingenTitel(0, true), "Bezig met live scannen...");
   assert.equal(app.formatteerAanbiedingenTitel(0), "Geen actuele aanbieding gevonden");
   assert.equal(app.formatteerAanbiedingenTitel(1), "1 aanbieding gevonden");
   assert.equal(app.formatteerAanbiedingenTitel(2), "2 aanbiedingen gevonden");
@@ -235,10 +277,46 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
   assert.match(js, /if \(isAanbiedingenScanBezig\) return;/);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
   assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);/);
-  assert.match(js, /status\("Bezig met scannen\.\.\."\);/);
-  assert.match(js, /aanbiedingenData = await laadAanbiedingenBestand\(\);/);
+  assert.match(js, /status\("Bezig met live scannen\.\.\."\);/);
+  assert.match(js, /const liveAanbiedingenData = await laadLiveAanbiedingen\(\);/);
+  assert.match(js, /fallbackNodig \? await laadAanbiedingenBestand\(\) : liveAanbiedingenData/);
+  assert.match(js, /Live ophalen mislukt; \$\{aantal\} lokale aanbiedingen geladen\./);
+  assert.match(js, /\$\{aantal\} live aanbiedingen geladen\./);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
   assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
+});
+
+test("serverless aanbiedingenproxy normaliseert live brondata naar frontendformaat", async () => {
+  const api = require("../api/aanbiedingen.js");
+  const liveFetch = async () => ({
+    ok: true,
+    headers: { get() { return "application/json"; } },
+    async text() {
+      return JSON.stringify({
+        productnaam: "Live kwark",
+        supermarkt: "Lidl",
+        prijs: 0.99,
+        oudePrijs: 1.49,
+        korting: "Actie",
+        url: "https://example.test/kwark"
+      });
+    }
+  });
+  const headers = {};
+  const res = {
+    statusCode: 200,
+    setHeader(naam, waarde) { headers[naam] = waarde; },
+    end(inhoud = "") { this.inhoud = inhoud; }
+  };
+
+  await api({ method: "GET", fetch: liveFetch }, res);
+
+  const body = JSON.parse(res.inhoud);
+  assert.equal(res.statusCode, 200);
+  assert.equal(headers["Access-Control-Allow-Origin"], "*");
+  assert.equal(body.bron, "live");
+  assert.equal(body.aanbiedingen[0].productnaam, "Live kwark");
+  assert.equal(body.aanbiedingen[0].prijsTekst, "€ 0,99");
 });
 
 test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als enige bron", () => {
