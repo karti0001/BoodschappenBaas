@@ -151,6 +151,23 @@ test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aa
   assert.deepEqual(ontkoppeld[0].gekoppeldeAanbiedingen, []);
 });
 
+test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", () => {
+  const aanbiedingen = [
+    { productnaam: "Magere kwark", supermarkt: "Albert Heijn", merk: "AH", prijs: 1.09 },
+    { productnaam: "Volle kwark", supermarkt: "Jumbo", prijs: 0.99 },
+    { productnaam: "Sinaasappelsap", supermarkt: "Lidl", prijs: 1.49 },
+    { productnaam: "Kwark dessert", supermarkt: "Albert Heijn", prijs: 1.29 }
+  ];
+
+  const goedkoopsteBijAlle = app.selecteerAanbiedingenOverzicht("", "alle", aanbiedingen, 2);
+  const ahZoekresultaten = app.selecteerAanbiedingenOverzicht("kwark", "AH", aanbiedingen, 5);
+  const geenResultaten = app.selecteerAanbiedingenOverzicht("kwark", "Lidl", aanbiedingen, 5);
+
+  assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.productnaam), ["Volle kwark", "Magere kwark"]);
+  assert.deepEqual(ahZoekresultaten.map((aanbieding) => aanbieding.productnaam), ["Magere kwark", "Kwark dessert"]);
+  assert.deepEqual(geenResultaten, []);
+});
+
 test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
   const items = [app.normaliseerItem({ id: "cola", naam: "Cola", categorie: "Dranken", supermarkten: ["Jumbo"] })];
   const aanbiedingen = [
@@ -389,10 +406,12 @@ test("tabs scheiden aanbiedingen zoeken van boodschappenbeheer zonder routes", (
   assert.match(js, /function activeerTab\(tab\)/);
   assert.match(js, /paneel\.hidden = paneel\.id !== tab\.dataset\.tabTarget/);
   assert.match(js, /skipLink: document\.querySelector\("\.skip-link"\)/);
-  assert.match(js, /tab\.dataset\.tabTarget === "paneel-lijst"/);
+  assert.match(js, /const LIJST_TAB_ID = "paneel-lijst"/);
+  assert.match(js, /tab\.dataset\.tabTarget === LIJST_TAB_ID/);
   assert.match(js, /document\.querySelector\("#lijst"\)\.focus\(\)/);
   assert.match(js, /renderAanbiedingenOverzicht/);
-  assert.match(js, /matchAanbiedingen\(zoekterm, aanbiedingenData\.aanbiedingen, \{ supermarkten: geselecteerdeSupermarkten, maximum: 12 \}\)/);
+  assert.match(js, /function selecteerAanbiedingenOverzicht\(zoekterm, supermarkt, aanbiedingen, maximum = MAX_AANBIEDINGEN_OVERZICHT\)/);
+  assert.match(js, /matchAanbiedingen\(zoekterm, aanbiedingen, \{ supermarkten: geselecteerdeSupermarkten, maximum \}\)/);
   assert.match(css, /\.app-tabs/);
   assert.match(css, /\.tab-paneel\[hidden\]/);
   assert.match(css, /@media \(max-width: 520px\) \{[\s\S]*\.app-tabs \{[\s\S]*position: fixed;/);
