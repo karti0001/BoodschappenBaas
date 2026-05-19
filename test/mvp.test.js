@@ -447,7 +447,7 @@ test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
 
 test("aanbiedingenupdate bewaart merk, categorie en afbeelding wanneer de bron die velden levert", () => {
   const aanbieding = aanbiedingenUpdater.normaliseer({
-    name: "Biologische kwark",
+    name: "Єmma. Biologische kwark",
     brand: "Zuivelhoeve",
     category: { name: "Zuivel" },
     supermarket: "Dirk",
@@ -457,6 +457,7 @@ test("aanbiedingenupdate bewaart merk, categorie en afbeelding wanneer de bron d
     url: "/kwark"
   }, "https://example.test/folder/");
 
+  assert.equal(aanbieding.productnaam, "Emma. Biologische kwark");
   assert.equal(aanbieding.merk, "Zuivelhoeve");
   assert.equal(aanbieding.categorie, "Zuivel");
   assert.equal(aanbieding.afbeelding, "https://example.test/images/kwark.png");

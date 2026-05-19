@@ -42,6 +42,13 @@ function formatPrijs(value) {
   return value === null ? "" : new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(value);
 }
 
+function normaliseerTekstWaarde(value) {
+  return String(value || "")
+    .replace(/\u0404/g, "E")
+    .replace(/\u0454/g, "e")
+    .trim();
+}
+
 function absoluteUrl(url, bron = BRON) {
   if (!url) return "";
   try {
@@ -78,17 +85,17 @@ function normaliseer(node, bron = BRON) {
   const oudePrijs = parsePrijs(vindEersteVeldWaarde(node, OUDE_PRIJS_VELDEN));
   if (!isAanbieding(node, prijs, oudePrijs)) return null;
   return {
-    productnaam: String(vindEersteVeldWaarde(node, PRODUCTNAAM_VELDEN)).trim(),
-    supermarkt: String(vindEersteVeldWaarde(node, SUPERMARKT_VELDEN)).trim(),
-    merk: String(vindEersteVeldWaarde(node, ["merk", "brand", "manufacturer", "brand.name"])).trim(),
-    categorie: String(vindEersteVeldWaarde(node, ["categorie.name", "category.name", "categorie", "category", "productCategory"])).trim(),
+    productnaam: normaliseerTekstWaarde(vindEersteVeldWaarde(node, PRODUCTNAAM_VELDEN)),
+    supermarkt: normaliseerTekstWaarde(vindEersteVeldWaarde(node, SUPERMARKT_VELDEN)),
+    merk: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["merk", "brand", "manufacturer", "brand.name"])),
+    categorie: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["categorie.name", "category.name", "categorie", "category", "productCategory"])),
     prijs,
-    prijsTekst: String(vindEersteVeldWaarde(node, ["prijsTekst", "priceText", "price.text"])).trim() || formatPrijs(prijs),
+    prijsTekst: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["prijsTekst", "priceText", "price.text"])) || formatPrijs(prijs),
     oudePrijs,
-    oudePrijsTekst: String(vindEersteVeldWaarde(node, ["oudePrijsTekst", "oldPriceText", "originalPriceText"])).trim() || formatPrijs(oudePrijs),
-    korting: String(vindEersteVeldWaarde(node, ["korting", "discount", "promotion", "offerText", "dealText"])).trim(),
-    eenheidsprijs: String(vindEersteVeldWaarde(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])).trim(),
-    bijgewerktOp: String(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt", "validFrom"])).trim(),
+    oudePrijsTekst: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["oudePrijsTekst", "oldPriceText", "originalPriceText"])) || formatPrijs(oudePrijs),
+    korting: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["korting", "discount", "promotion", "offerText", "dealText"])),
+    eenheidsprijs: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])),
+    bijgewerktOp: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt", "validFrom"])),
     afbeelding: absoluteUrl(vindEersteVeldWaarde(node, ["afbeelding", "image.url", "image.imageUrl", "imageUrl", "thumbnail", "thumbnailUrl", "image"]), bron),
     url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path", "permaname", "offers.url"]), bron)
   };

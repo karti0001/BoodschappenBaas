@@ -3,7 +3,7 @@
   "bronnen": [
     "https://www.reclamefolder.nl/aanbiedingen/"
   ],
-  "bijgewerktOp": "2026-05-19T18:06:30.709Z",
+  "bijgewerktOp": "2026-05-19T18:09:48.372Z",
   "aanbiedingen": [
     {
       "productnaam": "Bellize Blouse Olijfgroen",
@@ -34,6 +34,21 @@
       "bijgewerktOp": "2026-04-14T22:00:00.000Z",
       "afbeelding": "https://resizer-production.reclamefolder.org/media/52cbe477c8af058b25f68111af5577c9d663ee008ebc8ba88cbb402ee39cfd4c",
       "url": "https://www.reclamefolder.nl/aanbiedingen/corbyn-top-offwhite-olijfgroen"
+    },
+    {
+      "productnaam": "Emma. Hoofdkussen AirGrid comfort",
+      "supermarkt": "Albert Heijn",
+      "merk": "",
+      "categorie": "",
+      "prijs": 64,
+      "prijsTekst": "€ 64,00",
+      "oudePrijs": 129,
+      "oudePrijsTekst": "€ 129,00",
+      "korting": "",
+      "eenheidsprijs": "",
+      "bijgewerktOp": "2026-05-17T22:00:00.000Z",
+      "afbeelding": "https://resizer-production.reclamefolder.org/media/841da479e8e508c56d4a0018f620f6124d3bb17d0aba17fcd98f0fd6c5aebfc6",
+      "url": "https://www.reclamefolder.nl/aanbiedingen/yemma-hoofdkussen-airgrid-comfort"
     },
     {
       "productnaam": "Ezra Blouse Olijfgroen",
@@ -244,21 +259,6 @@
       "bijgewerktOp": "2026-04-14T22:00:00.000Z",
       "afbeelding": "https://resizer-production.reclamefolder.org/media/3187461542c838da5d3e689ba95de9bb3149e78a05ff21a879ce53c21d1aabb8",
       "url": "https://www.reclamefolder.nl/aanbiedingen/zwarte-bloemen-top"
-    },
-    {
-      "productnaam": "Єmma. Hoofdkussen AirGrid comfort",
-      "supermarkt": "Albert Heijn",
-      "merk": "",
-      "categorie": "",
-      "prijs": 64,
-      "prijsTekst": "€ 64,00",
-      "oudePrijs": 129,
-      "oudePrijsTekst": "€ 129,00",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-05-17T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/841da479e8e508c56d4a0018f620f6124d3bb17d0aba17fcd98f0fd6c5aebfc6",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/yemma-hoofdkussen-airgrid-comfort"
     }
   ]
 }
