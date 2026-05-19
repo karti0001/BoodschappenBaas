@@ -282,13 +282,18 @@ const BoodschappenBaas = (() => {
     return match ? Number(match[0]) : null;
   }
 
+  function normaliseerTekstVeld(value) {
+    if (value && typeof value === "object") return String(value.name || value.naam || value.title || "").trim();
+    return String(value || "").trim();
+  }
+
   function normaliseerAanbieding(aanbieding) {
     const prijs = parsePrijs(aanbieding.prijs);
     return {
-      productnaam: String(aanbieding.productnaam || aanbieding.naam || "").trim(),
-      supermarkt: String(aanbieding.supermarkt || "").trim(),
-      merk: String(aanbieding.merk || aanbieding.brand || "").trim(),
-      categorie: String(aanbieding.categorie || aanbieding.category || "").trim(),
+      productnaam: normaliseerTekstVeld(aanbieding.productnaam || aanbieding.naam),
+      supermarkt: normaliseerTekstVeld(aanbieding.supermarkt),
+      merk: normaliseerTekstVeld(aanbieding.merk || aanbieding.brand),
+      categorie: normaliseerTekstVeld(aanbieding.categorie || aanbieding.category),
       prijs,
       prijsTekst: aanbieding.prijsTekst || (prijs === null ? "" : EURO_FORMATTER.format(prijs)),
       oudePrijs: parsePrijs(aanbieding.oudePrijs),
@@ -686,6 +691,14 @@ const BoodschappenBaas = (() => {
 
     function maakAanbiedingRegel(aanbieding, opties = {}) {
       const aanbiedingItem = document.createElement("li");
+      if (aanbieding.afbeelding) {
+        const afbeelding = document.createElement("img");
+        afbeelding.className = "aanbiedingen__afbeelding";
+        afbeelding.src = aanbieding.afbeelding;
+        afbeelding.alt = "";
+        afbeelding.loading = "lazy";
+        aanbiedingItem.append(afbeelding);
+      }
       const badge = document.createElement("span");
       badge.className = "aanbiedingen__badge";
       badge.textContent = opties.badge || "Aanbieding";

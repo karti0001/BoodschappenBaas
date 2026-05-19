@@ -536,6 +536,14 @@ main {
   gap: 0.25rem;
 }
 
+.aanbiedingen__afbeelding {
+  width: 4rem;
+  max-width: 100%;
+  border: 1px solid var(--rand);
+  border-radius: 0.6rem;
+  background: var(--oppervlak);
+}
+
 .aanbiedingen__badge {
   justify-self: start;
   border-radius: 999px;

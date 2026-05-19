@@ -11,7 +11,7 @@ BoodschappenBaas is een kleine Nederlandse PWA om boodschappen per supermarkt en
 - Zelf boodschappen toevoegen; wijzigingen worden lokaal in de browser opgeslagen.
 - Items individueel afvinken of alles tegelijk uitvinken.
 - Afgevinkte items bewegen visueel richting het winkelmandje.
-- Aanbiedingen scannen tegen een lokaal JSON-bestand met Allesupers-data.
+- Aanbiedingen scannen tegen een lokaal JSON-bestand met Allesupers-data, zoeken op artikel/merk/categorie en gevonden aanbiedingen aan items koppelen.
 - Licht, donker en automatisch thema op basis van het apparaatprofiel.
 - PWA met offline cache en automatische verversing wanneer een nieuwe service worker per commit wordt uitgerold.
 

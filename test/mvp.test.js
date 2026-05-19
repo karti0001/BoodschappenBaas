@@ -131,7 +131,7 @@ test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
 
 test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aan items", () => {
   const aanbiedingen = [
-    { productnaam: "Magere yoghurt 1L", supermarkt: "Lidl", merk: "Milbona", categorie: "Zuivel", prijs: 0.89, url: "https://example.test/yoghurt" },
+    { productnaam: "Magere yoghurt 1L", supermarkt: "Lidl", merk: "Milbona", categorie: { name: "Zuivel" }, prijs: 0.89, url: "https://example.test/yoghurt" },
     { productnaam: "Appelsientje sinaasappel", supermarkt: "AH", merk: "Appelsientje", categorie: "Dranken", prijs: 1.49 }
   ];
   const items = [
@@ -147,6 +147,7 @@ test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aa
   assert.equal(categorieMatches[0].productnaam, "Appelsientje sinaasappel");
   assert.deepEqual(items[0].gekoppeldeAanbiedingen, [app.maakAanbiedingSleutel(aanbiedingen[0])]);
   assert.equal(gekoppeld[0].merk, "Milbona");
+  assert.equal(gekoppeld[0].categorie, "Zuivel");
   assert.deepEqual(ontkoppeld[0].gekoppeldeAanbiedingen, []);
 });
 
@@ -325,11 +326,13 @@ test("boodschappenlijst toont supermarktkeuzes per bestaand item", () => {
   assert.match(js, /Zoek artikel, merk of categorie/);
   assert.match(js, /koppelAanbiedingAanItem\(items, item\.id, aanbieding\)/);
   assert.match(js, /ontkoppelAanbiedingVanItem\(items, item\.id, sleutel\)/);
+  assert.match(js, /aanbiedingen__afbeelding/);
   assert.match(js, /wijzigItemSupermarkten\(items, item\.id, gekozenSupermarkten, supermarkten\)/);
   assert.match(js, /bewaarItems\(localStorage, items, supermarkten\);/);
   assert.match(js, /row\.append\(checkbox, tekst, verwijderKnop, supermarktVeldset, aanbiedingenBlok\);/);
   assert.match(css, /\.boodschap__supermarkten/);
   assert.match(css, /\.aanbiedingen__zoeker/);
+  assert.match(css, /\.aanbiedingen__afbeelding/);
 });
 
 test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
