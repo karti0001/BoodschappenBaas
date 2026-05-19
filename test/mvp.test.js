@@ -267,6 +267,9 @@ test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () 
   assert.match(aanroepen[0].url, /^data\/aanbiedingen\.json\?t=\d+$/);
   assert.equal(aanroepen[0].opties.cache, "reload");
   assert.equal(resultaat.fout, "");
+  assert.deepEqual(resultaat.bronnen, []);
+  assert.equal(app.formatteerAanbiedingenMeta({ bijgewerktOp: "2026-05-19T00:00:00.000Z" }).startsWith("Laatst bijgewerkt op "), true);
+  assert.match(app.formatteerAanbiedingenMeta({ waarschuwing: "Bron tijdelijk beperkt." }), /Bron tijdelijk beperkt\./);
 });
 
 test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
@@ -331,29 +334,29 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
     aanbiedingen: [],
     bijgewerktOp: "",
     bron: "",
+    bronnen: [],
+    waarschuwing: "",
     fout: ""
   });
   assert.match(js, /if \(isAanbiedingenScanBezig\) return;/);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
   assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);/);
   assert.match(js, /status\("Aanbiedingen worden ververst\.\.\."\);/);
-  assert.match(js, /async function laadAanbiedingenDataMetFallback\(\)/);
-  assert.match(js, /const liveAanbiedingenData = await laadLiveAanbiedingen\(\);/);
-  assert.match(js, /const fallbackNodig = liveAanbiedingenData\.fout \|\| !liveAanbiedingenData\.aanbiedingen\.length;/);
-  assert.match(js, /const lokaleData = await laadAanbiedingenBestand\(\);/);
-  assert.match(js, /return \{ aanbiedingenData: lokaleData, fallbackNodig, liveAanbiedingenData \};/);
-  assert.match(js, /Live ophalen mislukt; \$\{aantal\} aanbiedingen uit data\/aanbiedingen\.json geladen\./);
-  assert.match(js, /\$\{aantal\} aanbiedingen ververst uit data\/aanbiedingen\.json\./);
+  assert.match(js, /async function laadLokaleAanbiedingenData\(\)/);
+  assert.match(js, /return laadAanbiedingenBestand\(\);/);
+  assert.match(js, /\$\{aantal\} lokale aanbiedingen ververst uit data\/aanbiedingen\.json\./);
+  assert.doesNotMatch(js, /Live ophalen mislukt/);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
   assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
 });
 
-test("formulierzoekopdracht gebruikt live scanpad en resultaten hebben toevoegactie", () => {
+test("formulierzoekopdracht ververst lokale JSON en resultaten hebben toevoegactie", () => {
   const js = read("frontend/app.js");
 
   assert.match(js, /elementen\.aanbiedingZoekFormulier\.addEventListener\("submit", async \(event\) =>/);
   assert.match(js, /await zoekAanbiedingenOverzicht\(\);/);
-  assert.match(js, /const liveResultaat = await laadAanbiedingenDataMetFallback\(\);/);
+  assert.match(js, /aanbiedingenData = await laadLokaleAanbiedingenData\(\);/);
+  assert.match(js, /Lokale aanbiedingen zijn ververst voor je zoekopdracht\./);
   assert.match(js, /actieTekst: "Toevoegen aan lijst"/);
   assert.match(js, /onActie: \(\) => verwerkAanbiedingNaarLijst\(aanbieding\)/);
   assert.match(js, /voegAanbiedingToeAanBoodschappenlijst\(items, supermarkten, aanbieding\)/);
@@ -367,7 +370,6 @@ test("serverless aanbiedingenproxy normaliseert live brondata naar frontendforma
     async text() {
       return JSON.stringify({
         productnaam: "Live kwark",
-        supermarkt: "Lidl",
         prijs: 0.99,
         oudePrijs: 1.49,
         korting: "Actie",
@@ -465,6 +467,24 @@ test("aanbiedingenupdate gebruikt per supermarkt een adapter met categorie en br
   assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Dirck3").categorie, "Wijn & sterke drank");
   assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Aldi").categorie, "Diepvries");
   assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Aldi").betrouwbaarheid, "ocr");
+});
+
+test("aanbiedingenupdate filtert niet-ondersteunde winkels uit brondata", async () => {
+  const catalogus = [
+    { name: "AH kwark", supermarket: "Albert Heijn", price: "0.99", oldPrice: "1.49" },
+    { name: "Modeblouse", supermarket: "Mart Visser", price: "119", oldPrice: "149" }
+  ];
+  const fakeFetch = async () => ({
+    ok: true,
+    headers: { get() { return "application/json"; } },
+    async text() { return JSON.stringify(catalogus); }
+  });
+
+  const { aanbiedingen, fouten } = await aanbiedingenUpdater.haalAanbiedingenVanBronnen(fakeFetch, ["https://example.test/aanbiedingen"]);
+
+  assert.deepEqual(fouten, []);
+  assert.deepEqual(aanbiedingen.map((aanbieding) => aanbieding.supermarkt), ["AH"]);
+  assert.equal(aanbiedingen[0].productnaam, "AH kwark");
 });
 
 test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
@@ -599,7 +619,8 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<form id="aanbiedingen-zoek-formulier"/);
   assert.match(html, /<input id="aanbiedingen-zoekterm" name="aanbiedingen-zoekterm" type="search"/);
   assert.match(html, /<select id="aanbiedingen-supermarkt-filter" name="aanbiedingen-supermarkt-filter"><\/select>/);
-  assert.match(html, /Zoeken en verversen gebruiken standaard <code>data\/aanbiedingen\.json<\/code> met een verse fetch/);
+  assert.match(html, /Zoeken en verversen lezen alleen het lokale <code>data\/aanbiedingen\.json<\/code>-bestand opnieuw in/);
+  assert.match(html, /<p id="aanbiedingen-meta" class="aanbiedingen-meta" aria-live="polite"><\/p>/);
   assert.match(html, /<ul id="aanbiedingen-overzicht" class="aanbiedingen-overzicht" aria-label="Gevonden aanbiedingen"><\/ul>/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
   const toevoegFormulierStart = html.indexOf('<form id="toevoeg-formulier"');
@@ -611,7 +632,7 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.notEqual(formulierEinde, -1);
   assert.ok(formulierActiesStart < formulierActiesSubmit);
   assert.ok(formulierActiesSubmit < formulierEinde);
-  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Ververs aanbiedingen<\/button>/);
+  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Ververs lokale aanbiedingen<\/button>/);
   const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
   assert.notEqual(voorbereidingStart, -1);
   assert.match(html, /<details class="kaart instellingen" open>/);
@@ -679,12 +700,16 @@ test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
   const workflow = read(".github/workflows/aanbiedingen.yml");
   const data = JSON.parse(read("frontend/data/aanbiedingen.json"));
 
-  assert.equal(data.bron, "https://www.reclamefolder.nl/aanbiedingen/");
-  assert.deepEqual(data.bronnen, ["https://www.reclamefolder.nl/aanbiedingen/"]);
+  assert.equal(data.bron, aanbiedingenUpdater.BRON);
+  assert.ok(Array.isArray(data.bronnen));
+  assert.ok(data.bronnen.every((bron) => bron.supermarkt && bron.url && bron.documentatie));
+  assert.equal(typeof data.waarschuwing, "string");
   assert.ok(data.aanbiedingen.length > 0);
   assert.ok(data.aanbiedingen.every((aanbieding) => aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null));
+  assert.ok(data.aanbiedingen.every((aanbieding) => aanbiedingenUpdater.TOEGESTANE_SUPERMARKTEN.includes(aanbieding.supermarkt)));
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /node scripts\/update-aanbiedingen\.js/);
+  assert.match(workflow, /Aanbiedingen ophalen mislukt; bestaand JSON-bestand wordt niet overschreven\./);
   assert.match(workflow, /git diff --quiet -- frontend\/data\/aanbiedingen\.json/);
 });

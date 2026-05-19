@@ -1,43 +1,62 @@
 {
-  "bron": "https://www.reclamefolder.nl/aanbiedingen/",
+  "bron": "https://www.ah.nl/bonus/folder",
   "bronnen": [
-    "https://www.reclamefolder.nl/aanbiedingen/"
+    {
+      "supermarkt": "AH",
+      "url": "https://www.ah.nl/bonus/folder",
+      "type": "folder",
+      "betrouwbaarheid": "tekst",
+      "documentatie": "Albert Heijn Bonusfolder; de folder is leidend boven losse productpagina's."
+    },
+    {
+      "supermarkt": "Jumbo",
+      "url": "https://www.jumbo.com/aanbiedingen",
+      "type": "scrape",
+      "betrouwbaarheid": "tekst",
+      "documentatie": "Jumbo aanbiedingenpagina; categorieën uit de pagina worden naar app-categorieën gemapt."
+    },
+    {
+      "supermarkt": "Hoogvliet",
+      "url": "https://www.hoogvliet.com/aanbiedingen",
+      "type": "folder",
+      "betrouwbaarheid": "tekst",
+      "documentatie": "Hoogvliet folder/aanbiedingenpagina; tekstlaag wordt gebruikt en OCR-tekst kan via dezelfde parser worden verwerkt."
+    },
+    {
+      "supermarkt": "Dirk",
+      "url": "https://www.dirk.nl/aanbiedingen",
+      "type": "scrape",
+      "betrouwbaarheid": "tekst",
+      "documentatie": "Dirk aanbiedingenpagina of folderdata wanneer die als tekst in de pagina staat."
+    },
+    {
+      "supermarkt": "Dirck3",
+      "url": "https://www.dirck3.nl/aanbiedingen",
+      "type": "scrape",
+      "betrouwbaarheid": "tekst",
+      "documentatie": "Dirck3 drankaanbiedingen voor bier, wijn en sterke drank uit de aanbiedingenpagina/folder."
+    },
+    {
+      "supermarkt": "Aldi",
+      "url": "https://www.aldi.nl/aanbiedingen.html",
+      "type": "folder",
+      "betrouwbaarheid": "ocr",
+      "documentatie": "Aldi folder; wanneer de folder geen tekstlaag bevat kan OCR-tekst door de tekstfallback worden verwerkt."
+    },
+    {
+      "supermarkt": "PLUS",
+      "url": "https://www.plus.nl/aanbiedingen",
+      "type": "folder",
+      "betrouwbaarheid": "tekst",
+      "documentatie": "PLUS folder of aanbiedingenpagina als bron voor actuele aanbiedingen."
+    }
   ],
-  "bijgewerktOp": "2026-05-19T18:09:48.372Z",
+  "bijgewerktOp": "2026-05-19T19:43:41.433Z",
+  "waarschuwing": "",
   "aanbiedingen": [
     {
-      "productnaam": "Bellize Blouse Olijfgroen",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 119,
-      "prijsTekst": "€ 119,00",
-      "oudePrijs": 149.95,
-      "oudePrijsTekst": "€ 149,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/7da215d881d74316795f28b9bcb7a8cfaebd0791fe9626454ce3379251ec75b3",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/bellize-blouse-olijfgroen"
-    },
-    {
-      "productnaam": "Corbyn Top Offwhite / Olijfgroen",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 119,
-      "prijsTekst": "€ 119,00",
-      "oudePrijs": 149.95,
-      "oudePrijsTekst": "€ 149,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/52cbe477c8af058b25f68111af5577c9d663ee008ebc8ba88cbb402ee39cfd4c",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/corbyn-top-offwhite-olijfgroen"
-    },
-    {
       "productnaam": "Emma. Hoofdkussen AirGrid comfort",
-      "supermarkt": "Albert Heijn",
+      "supermarkt": "AH",
       "merk": "",
       "categorie": "",
       "prijs": 64,
@@ -51,143 +70,8 @@
       "url": "https://www.reclamefolder.nl/aanbiedingen/yemma-hoofdkussen-airgrid-comfort"
     },
     {
-      "productnaam": "Ezra Blouse Olijfgroen",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 119,
-      "prijsTekst": "€ 119,00",
-      "oudePrijs": 149.95,
-      "oudePrijsTekst": "€ 149,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/fec25ecf1255889bf05c7db6c46a5c223864b79cc5c8f30f9f2ae703e649788d",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/ezra-blouse-olijfgroen"
-    },
-    {
-      "productnaam": "Ines Print Blouse Blauw / Multi",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 135,
-      "prijsTekst": "€ 135,00",
-      "oudePrijs": 169.95,
-      "oudePrijsTekst": "€ 169,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/3b1ff51285c9166ee91b4cb91aa9ac1ae2ab0f8a863b0b91a464f8cc8f52e6ab",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/ines-print-blouse-blauw-multi"
-    },
-    {
-      "productnaam": "Ines Print Blouse Licht Berry / Multi",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 135,
-      "prijsTekst": "€ 135,00",
-      "oudePrijs": 169.95,
-      "oudePrijsTekst": "€ 169,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/8419ce748487be7cc45130a97568614e8397be9de58ae2128f0cfd8c2400a50a",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/ines-print-blouse-licht-berry-multi"
-    },
-    {
-      "productnaam": "Kate Jurk Bordeaux",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 175,
-      "prijsTekst": "€ 175,00",
-      "oudePrijs": 219.95,
-      "oudePrijsTekst": "€ 219,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/c7e2e9cdf199eb094d6491da65c867afabe993ba371cdb988686805dabd4912b",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/kate-jurk-bordeaux"
-    },
-    {
-      "productnaam": "Lara Plisse Rok Blauw / Multi",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 135,
-      "prijsTekst": "€ 135,00",
-      "oudePrijs": 169.95,
-      "oudePrijsTekst": "€ 169,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/6f755828bfd6dcdc5c8f79f80255b0c04ed3dbee60d0c81eaa675a0cc14275b5",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/lara-plisse-rok-blauw-multi"
-    },
-    {
-      "productnaam": "Lara Plisse Rok Licht Berry / Multi",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 135,
-      "prijsTekst": "€ 135,00",
-      "oudePrijs": 169.95,
-      "oudePrijsTekst": "€ 169,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/a1de4e75cb8d5a13c21d633f61c9598972d5aad58115d7215974824ee6cdb11d",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/lara-plisse-rok-licht-berry-multi"
-    },
-    {
-      "productnaam": "Lina Blouse Olijfgroen",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 111,
-      "prijsTekst": "€ 111,00",
-      "oudePrijs": 139.95,
-      "oudePrijsTekst": "€ 139,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/f8ae4e85f607207a77b4b5384bedb1cd089d5f239e27852a7f3ba03713f918f7",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/lina-blouse-olijfgroen"
-    },
-    {
-      "productnaam": "Rode Bloemen Jurk",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 95,
-      "prijsTekst": "€ 95,00",
-      "oudePrijs": 159.95,
-      "oudePrijsTekst": "€ 159,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/b981588c9e7f607d80cb561de2d7a91216696272031003780231fb8c9f4db111",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/rode-bloemen-jurk"
-    },
-    {
-      "productnaam": "Rode Bloemen Top",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 65,
-      "prijsTekst": "€ 65,00",
-      "oudePrijs": 109.95,
-      "oudePrijsTekst": "€ 109,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/21abfad72a9db5fad917f272d8ba62a5577ce43e0a61a4c20ffd0690960e8eed",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/rode-bloemen-top"
-    },
-    {
       "productnaam": "SAMSUNG Lichtgewicht steelstofzuiger",
-      "supermarkt": "Albert Heijn",
+      "supermarkt": "AH",
       "merk": "",
       "categorie": "",
       "prijs": 179,
@@ -202,7 +86,7 @@
     },
     {
       "productnaam": "seeger Slushiemachine",
-      "supermarkt": "Albert Heijn",
+      "supermarkt": "AH",
       "merk": "",
       "categorie": "",
       "prijs": 149,
@@ -217,7 +101,7 @@
     },
     {
       "productnaam": "SONY Bluetooth-partyspeaker",
-      "supermarkt": "Albert Heijn",
+      "supermarkt": "AH",
       "merk": "",
       "categorie": "",
       "prijs": 249,
@@ -229,36 +113,6 @@
       "bijgewerktOp": "2026-05-17T22:00:00.000Z",
       "afbeelding": "https://resizer-production.reclamefolder.org/media/93b6e2e67420cb2e4f6d90ac033306f83df3d07ff8bffdf2570640d62a0beaf9",
       "url": "https://www.reclamefolder.nl/aanbiedingen/sony-bluetooth-partyspeaker"
-    },
-    {
-      "productnaam": "Zwarte Bloemen Jurk",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 95,
-      "prijsTekst": "€ 95,00",
-      "oudePrijs": 159.95,
-      "oudePrijsTekst": "€ 159,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/73951d7e43caeeff9b1b1d0088204ca5983a32d36472bd7229eef3bc1ccd96ed",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/zwarte-bloemen-jurk"
-    },
-    {
-      "productnaam": "Zwarte Bloemen Top",
-      "supermarkt": "Mart Visser",
-      "merk": "",
-      "categorie": "",
-      "prijs": 55,
-      "prijsTekst": "€ 55,00",
-      "oudePrijs": 139.95,
-      "oudePrijsTekst": "€ 139,95",
-      "korting": "",
-      "eenheidsprijs": "",
-      "bijgewerktOp": "2026-04-14T22:00:00.000Z",
-      "afbeelding": "https://resizer-production.reclamefolder.org/media/3187461542c838da5d3e689ba95de9bb3149e78a05ff21a879ce53c21d1aabb8",
-      "url": "https://www.reclamefolder.nl/aanbiedingen/zwarte-bloemen-top"
     }
   ]
 }
