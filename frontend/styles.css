@@ -296,7 +296,7 @@ main {
   list-style: none;
 }
 
-.voorbereiding-toggle::-webkit-details-marker { display: none; }
+.voorbereiding-toggle::-webkit-details-marker,
 .voorbereiding-toggle::marker { display: none; }
 
 .voorbereiding-toggle__titel {
