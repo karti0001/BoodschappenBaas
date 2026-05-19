@@ -426,14 +426,14 @@ const BoodschappenBaas = (() => {
       return {
         aanbiedingen: Array.isArray(data.aanbiedingen) ? data.aanbiedingen.map(normaliseerAanbieding) : [],
         bijgewerktOp: data.bijgewerktOp || "",
-        bron: data.bron || "https://allesupers.nl/catalog/all",
+        bron: data.bron || "https://www.reclamefolder.nl/aanbiedingen/",
         fout: ""
       };
     } catch (fout) {
       return {
         aanbiedingen: [],
         bijgewerktOp: "",
-        bron: "https://allesupers.nl/catalog/all",
+        bron: "https://www.reclamefolder.nl/aanbiedingen/",
         fout: fout.message || "Aanbiedingen konden niet worden geladen."
       };
     }

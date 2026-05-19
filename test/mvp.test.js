@@ -118,7 +118,7 @@ test("routevolgorde wordt lokaal geladen en verplaatst", () => {
 
 test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
   const aanbiedingen = [
-    { productnaam: "Coca-Cola Zero Sugar 1,5L", supermarkt: "Albert Heijn", prijs: 1.49, oudePrijs: 2.19, url: "https://allesupers.nl/product/cola-zero" },
+    { productnaam: "Coca-Cola Zero Sugar 1,5L", supermarkt: "Albert Heijn", prijs: 1.49, oudePrijs: 2.19, url: "https://www.reclamefolder.nl/aanbiedingen/cola-zero" },
     { productnaam: "Coca Cola Zero blikjes", supermarkt: "Jumbo", prijs: 1.29, korting: "2e halve prijs" },
     { productnaam: "Pepsi Max", supermarkt: "Dirk", prijs: 0.99 }
   ];
@@ -198,7 +198,7 @@ test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () 
     return {
       ok: true,
       async json() {
-        return { aanbiedingen: [], bijgewerktOp: "", bron: "https://allesupers.nl/catalog/all" };
+        return { aanbiedingen: [], bijgewerktOp: "", bron: "https://www.reclamefolder.nl/aanbiedingen/" };
       }
     };
   });
@@ -241,7 +241,7 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
   assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
 });
 
-test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () => {
+test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als enige bron", () => {
   const html = `<script type="application/ld+json">${JSON.stringify({
     "@type": "Product",
     name: "Kwark voordeelpak",
@@ -259,10 +259,7 @@ test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () =
     .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
     .find(Boolean);
 
-  assert.deepEqual(aanbiedingenUpdater.BRONNEN, [
-    "https://allesupers.nl/catalog/all",
-    "https://www.reclamefolder.nl/aanbiedingen/"
-  ]);
+  assert.deepEqual(aanbiedingenUpdater.BRONNEN, ["https://www.reclamefolder.nl/aanbiedingen/"]);
   assert.equal(aanbieding.productnaam, "Kwark voordeelpak");
   assert.equal(aanbieding.supermarkt, "Lidl");
   assert.equal(aanbieding.prijs, 0.99);
@@ -451,11 +448,8 @@ test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
   const workflow = read(".github/workflows/aanbiedingen.yml");
   const data = JSON.parse(read("frontend/data/aanbiedingen.json"));
 
-  assert.equal(data.bron, "https://allesupers.nl/catalog/all");
-  assert.deepEqual(data.bronnen, [
-    "https://allesupers.nl/catalog/all",
-    "https://www.reclamefolder.nl/aanbiedingen/"
-  ]);
+  assert.equal(data.bron, "https://www.reclamefolder.nl/aanbiedingen/");
+  assert.deepEqual(data.bronnen, ["https://www.reclamefolder.nl/aanbiedingen/"]);
   assert.ok(data.aanbiedingen.length > 0);
   assert.ok(data.aanbiedingen.some((aanbieding) => aanbieding.productnaam.toLowerCase().includes("kwark")));
   assert.match(workflow, /workflow_dispatch:/);

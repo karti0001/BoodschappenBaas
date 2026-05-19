@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Haal Allesupers-data op
+      - name: Haal Reclamefolder-data op
         run: node scripts/update-aanbiedingen.js
       - name: Commit gewijzigde aanbiedingen
         run: |
