@@ -14,6 +14,10 @@ const OUDE_PRIJS_VELDEN = ["oudePrijs", "oldPrice", "originalPrice", "original_p
 const GELDIG_VAN_VELDEN = ["geldigVan", "validFrom", "valid_from", "startDate", "validity.from", "validity.start"];
 const GELDIG_TOT_VELDEN = ["geldigTot", "validThrough", "validUntil", "valid_to", "endDate", "validity.to", "validity.end", "expires"];
 const GELDIGHEID_VELDEN = ["geldigheidsperiode", "validityPeriod", "validity.period", "validity", "periode", "validityText"];
+// OCR-/foldertekstregel: productnaam, aanbiedingsprijs en optioneel oude prijs.
+const TEKST_AANBIEDING_REGEX = /^(.{2,}?)\s*(?:[-|:]\s*)?€?\s*(\d+[\.,]\d{1,2})(?:\s*(?:van|was|oude prijs)\s*€?\s*(\d+[\.,]\d{1,2}))?/i;
+// Geldigheid uit foldertekst, bijvoorbeeld "geldig 20-05 t/m 26-05".
+const TEKST_GELDIGHEID_REGEX = /(?:geldig|van)\s+(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)\s*(?:t\/m|tot|-)\s*(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)/i;
 const APP_CATEGORIEEN = [
   "AGF",
   "Bier",
@@ -107,6 +111,10 @@ function normaliseerCategorie(categorie, productnaam = "") {
   return match ? match[0] : normaliseerTekstWaarde(categorie);
 }
 
+function formatGeldigheidsperiode(geldigVan, geldigTot) {
+  return [geldigVan, geldigTot].filter(Boolean).join(" t/m ");
+}
+
 function absoluteUrl(url, bron = BRON) {
   if (!url) return "";
   try {
@@ -146,7 +154,7 @@ function normaliseer(node, bron = BRON, opties = {}) {
   const categorie = normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["categorie.name", "category.name", "categorie", "category", "productCategory"]));
   const geldigVan = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIG_VAN_VELDEN));
   const geldigTot = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIG_TOT_VELDEN));
-  const geldigheidsperiode = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIGHEID_VELDEN)) || [geldigVan, geldigTot].filter(Boolean).join(" t/m ");
+  const geldigheidsperiode = normaliseerTekstWaarde(vindEersteVeldWaarde(node, GELDIGHEID_VELDEN)) || formatGeldigheidsperiode(geldigVan, geldigTot);
   return {
     productnaam,
     supermarkt: normaliseerTekstWaarde(vindEersteVeldWaarde(node, SUPERMARKT_VELDEN)) || opties.supermarkt || "Meerdere winkels",
@@ -267,9 +275,9 @@ function parseTekstAanbiedingen(tekst, adapter = {}, bron = {}) {
     .map((regel) => regel.replace(/\s+/g, " ").trim())
     .filter((regel) => regel.length > 5)
     .flatMap((regel) => {
-      const match = regel.match(/^(.{2,}?)\s*(?:[-|:]\s*)?€?\s*(\d+[\.,]\d{1,2})(?:\s*(?:van|was|oude prijs)\s*€?\s*(\d+[\.,]\d{1,2}))?/i);
+      const match = regel.match(TEKST_AANBIEDING_REGEX);
       if (!match) return [];
-      const periode = regel.match(/(?:geldig|van)\s+(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)\s*(?:t\/m|tot|-)\s*(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)/i);
+      const periode = regel.match(TEKST_GELDIGHEID_REGEX);
       return [{
         productnaam: match[1].replace(/\s[-|:]+$/, "").trim(),
         supermarkt: adapter.supermarkt,
@@ -293,7 +301,7 @@ function uniekeAanbiedingen(aanbiedingen) {
       aanbieding.productnaam,
       aanbieding.supermarkt,
       aanbieding.prijs,
-      aanbieding.geldigheidsperiode || [aanbieding.geldigVan, aanbieding.geldigTot].filter(Boolean).join(" t/m ")
+      aanbieding.geldigheidsperiode || formatGeldigheidsperiode(aanbieding.geldigVan, aanbieding.geldigTot)
     ].map((waarde) => String(waarde || "").toLocaleLowerCase("nl")).join("\u0000");
     if (gezien.has(sleutel)) return false;
     gezien.add(sleutel);
