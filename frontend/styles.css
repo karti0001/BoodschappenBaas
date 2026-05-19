@@ -61,9 +61,7 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-button, input, select {
-  font: inherit;
-}
+button, input, select { font: inherit; }
 
 button, select, input {
   border: 1px solid var(--rand);
@@ -92,9 +90,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   outline-offset: 3px;
 }
 
-.held {
-  padding: 1rem clamp(1rem, 4vw, 3rem) 2rem;
-}
+.held { padding: 1rem clamp(1rem, 4vw, 3rem) 2rem; }
 
 .werkbalk {
   display: flex;
@@ -108,9 +104,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   font-weight: 700;
 }
 
-.werkbalk select {
-  min-width: 9.5rem;
-}
+.werkbalk select { min-width: 9.5rem; }
 
 .skip-link {
   position: absolute;
@@ -135,9 +129,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   margin: 4rem auto 0;
 }
 
-.held__tekst {
-  max-width: 48rem;
-}
+.held__tekst { max-width: 48rem; }
 
 .held__tekst p:last-child {
   max-width: 42rem;
@@ -154,14 +146,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   box-shadow: var(--schaduw-zacht);
 }
 
-:root[data-theme="dark"] .held__paneel {
-  background: linear-gradient(160deg, rgba(17, 28, 49, 0.9), rgba(17, 28, 49, 0.66));
-}
+:root[data-theme="dark"] .held__paneel { background: linear-gradient(160deg, rgba(17, 28, 49, 0.9), rgba(17, 28, 49, 0.66)); }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .held__paneel {
-    background: linear-gradient(160deg, rgba(17, 28, 49, 0.9), rgba(17, 28, 49, 0.66));
-  }
+  :root:not([data-theme="light"]) .held__paneel { background: linear-gradient(160deg, rgba(17, 28, 49, 0.9), rgba(17, 28, 49, 0.66)); }
 }
 
 .held__paneel div {
@@ -175,9 +163,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   background: var(--oppervlak);
 }
 
-.held__paneel strong {
-  font-size: 1.35rem;
-}
+.held__paneel strong { font-size: 1.35rem; }
 
 .held__paneel span {
   color: var(--zacht);
@@ -205,43 +191,11 @@ p { color: var(--zacht); }
 }
 
 main {
+  display: grid;
+  gap: 1.25rem;
   width: min(1180px, calc(100% - 2rem));
   margin: 0 auto 3rem;
 }
-
-.app-tabs {
-  position: sticky;
-  top: 0.75rem;
-  z-index: 10;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  padding: 0.45rem;
-  border: 1px solid var(--rand);
-  border-radius: 1.3rem;
-  background: var(--kaart);
-  box-shadow: var(--schaduw-zacht);
-  backdrop-filter: blur(18px);
-}
-
-.app-tab {
-  color: var(--accent);
-  background: transparent;
-  box-shadow: none;
-}
-
-.app-tab:hover {
-  box-shadow: none;
-}
-
-.app-tab.is-actief {
-  color: white;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 14px 28px rgba(15, 118, 110, 0.22);
-}
-
-.tab-paneel[hidden] { display: none; }
 
 .kaart {
   border: 1px solid var(--rand);
@@ -253,59 +207,39 @@ main {
 
 .formulier-kaart {
   display: grid;
-  grid-template-columns: minmax(12rem, 0.7fr) minmax(16rem, 1.3fr);
+  grid-template-columns: minmax(12rem, 0.45fr) minmax(18rem, 1fr) minmax(16rem, 0.7fr);
   gap: 1.25rem;
   padding: 1.5rem;
-}
-
-.aanbiedingen-kaart {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1.5rem;
-}
-
-.aanbiedingen-kaart p {
-  margin-bottom: 0;
-}
-
-.aanbiedingen-meta {
-  margin: 0;
-  color: var(--zacht);
-  font-size: 0.9rem;
-}
-
-.aanbiedingen-zoek-formulier {
-  display: grid;
-  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 0.55fr) auto;
-  gap: 1rem;
-  align-items: end;
+  align-items: start;
 }
 
 .formulier {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
-.formulier-acties {
+.formulier-acties, .status, .supermarkten {
   grid-column: 1 / -1;
+}
+
+.formulier-acties {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.veld, .supermarkten, .instellingen {
+.veld, .supermarkten {
   display: grid;
   gap: 0.5rem;
 }
 
-.veld label, .supermarkten legend, .instellingen label {
+.veld label, .supermarkten legend, .supermarkt-formulier label {
   color: var(--tekst);
   font-weight: 800;
 }
 
 .supermarkten {
-  grid-column: 1 / -1;
   border: 0;
   padding: 0;
   margin: 0;
@@ -316,6 +250,8 @@ main {
   flex-wrap: wrap;
   gap: 0.6rem;
 }
+
+.chips--compact { gap: 0.35rem; }
 
 .chip {
   display: inline-flex;
@@ -329,59 +265,15 @@ main {
   font-weight: 700;
 }
 
-.route-grid {
-  display: grid;
-  grid-template-columns: minmax(15rem, 0.7fr) minmax(18rem, 1.3fr);
-  gap: 1.25rem;
-  margin-top: 1.25rem;
-}
-
-.instellingen, .lijst-kaart { padding: 1.5rem; }
-
-.instellingen {
-  align-content: start;
-  position: sticky;
-  top: 1rem;
-}
-
-.voorbereiding-toggle {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.35rem 0.75rem;
-  align-items: center;
-  cursor: pointer;
-  list-style: none;
-}
-
-.voorbereiding-toggle::-webkit-details-marker,
-.voorbereiding-toggle::marker { display: none; }
-
-.voorbereiding-toggle__titel {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 900;
-}
-
-.voorbereiding-toggle__icoon {
-  grid-row: 1 / span 2;
-  grid-column: 2;
-  color: var(--accent);
-  font-size: 1.35rem;
-  font-weight: 900;
-  transition: transform 160ms ease;
-}
-
-.instellingen[open] .voorbereiding-toggle__icoon {
-  transform: rotate(180deg);
-}
-
-.voorbereiding-inhoud {
-  display: grid;
-  gap: 0.5rem;
+.chip--compact {
+  padding: 0.28rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .status {
   min-height: 1.5rem;
+  margin: 0;
   color: var(--accent);
   font-weight: 800;
 }
@@ -408,7 +300,7 @@ main {
 
 .supermarkt-lijst {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -421,68 +313,12 @@ main {
   gap: 0.75rem;
 }
 
-.supermarkt-lijst button, .boodschap__verwijderen, .aanbiedingen button {
-  padding: 0.55rem 0.7rem;
-  font-size: 0.86rem;
+.supermarkt-lijst button, .boodschap__verwijderen, .formulier-acties button, .supermarkt-formulier button {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.84rem;
 }
 
-.route-editor {
-  display: grid;
-  gap: 0.85rem;
-  padding: 1rem;
-  border: 1px solid var(--rand-sterk);
-  border-radius: 1.2rem;
-  background: rgba(15, 118, 110, 0.08);
-}
-
-.route-editor[hidden] { display: none; }
-
-.route-editor p { margin: 0; }
-
-.route-volgorde {
-  display: grid;
-  gap: 0.55rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.route-volgorde__item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.6rem;
-  align-items: center;
-  padding: 0.65rem;
-  border: 1px solid var(--rand);
-  border-radius: 0.85rem;
-  background: var(--oppervlak);
-  cursor: grab;
-}
-
-.route-volgorde__item.is-versleept {
-  opacity: 0.55;
-}
-
-.route-volgorde__greep {
-  color: var(--accent);
-  font-weight: 900;
-}
-
-.route-volgorde__knoppen, .route-acties {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.route-volgorde__knoppen button, .route-acties button {
-  padding: 0.55rem 0.7rem;
-  font-size: 0.86rem;
-}
-
-.route-volgorde__knoppen button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
+.lijst-kaart { padding: 1.5rem; }
 
 .lijst {
   display: grid;
@@ -498,9 +334,7 @@ main {
   cursor: grab;
 }
 
-.categorie.is-versleept {
-  opacity: 0.6;
-}
+.categorie.is-versleept { opacity: 0.6; }
 
 .categorie.is-dropdoel {
   border-color: var(--accent);
@@ -515,9 +349,7 @@ main {
   touch-action: none;
 }
 
-.categorie h3 {
-  color: var(--accent);
-}
+.categorie h3 { color: var(--accent); }
 
 .categorie ul, .mandje ul {
   display: grid;
@@ -527,139 +359,58 @@ main {
   list-style: none;
 }
 
-.categorie ul {
-  cursor: default;
-}
+.categorie ul { cursor: default; }
 
 .boodschap {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 0.75rem;
+  gap: 0.65rem;
   align-items: start;
-  padding: 0.85rem;
+  padding: 0.75rem;
   border: 1px solid var(--rand);
   border-radius: 1rem;
   background: var(--oppervlak);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
-.boodschap input { margin-top: 0.35rem; }
+.boodschap input { margin-top: 0.2rem; }
 
-.boodschap__naam { display: block; font-weight: 800; }
-.boodschap__meta { color: var(--zacht); font-size: 0.92rem; }
+.boodschap__naam {
+  display: block;
+  font-weight: 800;
+}
+
+.boodschap__meta {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 0.2rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--zacht);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .boodschap__supermarkten {
   grid-column: 2 / -1;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.35rem;
   margin: 0;
   padding: 0;
   border: 0;
 }
 
 .boodschap__supermarkten legend {
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.1rem;
   color: var(--zacht);
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
 .boodschap.is-afgevinkt { opacity: 0.68; }
 .boodschap.is-afgevinkt .boodschap__naam { text-decoration: line-through; }
 .boodschap.naar-mandje { animation: naarMandje 700ms cubic-bezier(0.2, 0.8, 0.2, 1); }
-
-.aanbiedingen {
-  grid-column: 2 / -1;
-  display: grid;
-  gap: 0.55rem;
-  padding: 0.75rem;
-  border: 1px solid var(--rand-sterk);
-  border-radius: 0.85rem;
-  background: rgba(15, 118, 110, 0.08);
-  font-size: 0.9rem;
-}
-
-.aanbiedingen--leeg {
-  border-style: dashed;
-  background: transparent;
-  color: var(--zacht);
-}
-
-.aanbiedingen ul {
-  gap: 0.45rem;
-}
-
-.aanbiedingen li {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.aanbiedingen__afbeelding {
-  width: 100%;
-  max-width: 4rem;
-  border: 1px solid var(--rand);
-  border-radius: 0.6rem;
-  background: var(--oppervlak);
-}
-
-.aanbiedingen__badge {
-  justify-self: start;
-  border-radius: 999px;
-  padding: 0.25rem 0.55rem;
-  background: var(--accent);
-  color: white;
-  font-weight: 800;
-}
-
-.aanbiedingen__prijs {
-  font-size: 1.05rem;
-  font-weight: 900;
-}
-
-.aanbiedingen__subtitel, .aanbiedingen__zoeker label {
-  color: var(--zacht);
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-
-.aanbiedingen__zoeker {
-  display: grid;
-  gap: 0.4rem;
-}
-
-.aanbiedingen__zoekrij {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.45rem;
-}
-
-.aanbiedingen__verlopen {
-  margin: 0;
-  font-size: 0.86rem;
-}
-
-.aanbiedingen a {
-  color: var(--accent-2);
-  font-weight: 800;
-}
-
-.aanbiedingen-overzicht {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.aanbiedingen-overzicht li {
-  display: grid;
-  gap: 0.35rem;
-  align-content: start;
-  padding: 0.9rem;
-  border: 1px solid var(--rand-sterk);
-  border-radius: 1rem;
-  background: rgba(15, 118, 110, 0.08);
-}
 
 .mandje {
   margin-top: 1rem;
@@ -693,22 +444,12 @@ main {
 }
 
 @media (max-width: 900px) {
-  .formulier-kaart, .formulier, .route-grid, .held__layout, .aanbiedingen-zoek-formulier { grid-template-columns: 1fr; }
+  .formulier-kaart, .formulier, .held__layout { grid-template-columns: 1fr; }
   .held__layout { margin-top: 2rem; }
-  .instellingen { position: static; }
 }
 
 @media (max-width: 520px) {
-  main {
-    margin-bottom: 6rem;
-  }
-  .app-tabs {
-    position: fixed;
-    inset: auto 1rem 1rem;
-    margin: 0;
-  }
-  .route-volgorde__item { grid-template-columns: auto 1fr; }
-  .route-volgorde__knoppen { grid-column: 1 / -1; }
-  .supermarkt-formulier__rij, .boodschap, .aanbiedingen__zoekrij { grid-template-columns: 1fr; }
-  .boodschap__supermarkten, .aanbiedingen { grid-column: 1 / -1; }
+  main { margin-bottom: 2rem; }
+  .supermarkt-formulier__rij, .boodschap { grid-template-columns: 1fr; }
+  .boodschap__supermarkten { grid-column: 1 / -1; }
 }

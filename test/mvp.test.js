@@ -4,7 +4,6 @@ const path = require("node:path");
 const test = require("node:test");
 
 const app = require("../frontend/app.js");
-const aanbiedingenUpdater = require("../scripts/update-aanbiedingen.js");
 const root = path.resolve(__dirname, "..");
 
 function read(relativePath) {
@@ -17,7 +16,7 @@ test("YAML startdata bevat de gevraagde boodschappen", () => {
   assert.ok(items.every((item) => app.SUPERMARKTEN.every((supermarkt) => item.supermarkten.includes(supermarkt))));
 });
 
-test("items worden per categorie als route gegroepeerd en lokaal te combineren", () => {
+test("items worden per categorie gegroepeerd en lokaal gecombineerd", () => {
   const seed = app.parseYamlItems(read("frontend/data/boodschappen.yml"));
   const eigen = app.normaliseerItem({ naam: "komkommer", categorie: "Groente", supermarkten: ["Lidl"], eigenItem: true });
   const gecombineerd = app.combineerItems(seed, [eigen, { ...seed[0], afgevinkt: true }]);
@@ -70,7 +69,6 @@ test("supermarkt van bestaand item wijzigen bewaart overige itemgegevens", () =>
   assert.equal(melk.categorie, "Zuivel");
   assert.equal(melk.afgevinkt, true);
   assert.equal(melk.eigenItem, true);
-  assert.deepEqual(bijgewerkt.find((item) => item.id === "brood").supermarkten, ["AH"]);
   assert.deepEqual(Object.keys(app.groepeerVoorRoute(bijgewerkt, "Lidl")), ["Zuivel"]);
   assert.deepEqual(Object.keys(app.groepeerVoorRoute(bijgewerkt, "AH")), ["Brood"]);
 });
@@ -88,7 +86,7 @@ test("supermarkten worden uniek opgeslagen en geladen", () => {
   assert.deepEqual(app.laadSupermarkten(storage), ["AH", "Plus"]);
 });
 
-test("aangepaste categorievolgorde stuurt de supermarkt-route", () => {
+test("aangepaste categorievolgorde stuurt de lijstvolgorde", () => {
   const route = app.bewaarRoute({
     waarde: "",
     setItem(_key, value) { this.waarde = value; }
@@ -116,431 +114,6 @@ test("routevolgorde wordt lokaal geladen en verplaatst", () => {
   assert.deepEqual(app.verplaatsInRoute(app.laadRoute(storage), 2, 0).slice(0, 3), ["Zuivel", "Groente", "Brood"]);
 });
 
-test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
-  const aanbiedingen = [
-    { productnaam: "Coca-Cola Zero Sugar 1,5L", supermarkt: "Albert Heijn", prijs: 1.49, oudePrijs: 2.19, url: "https://www.reclamefolder.nl/aanbiedingen/cola-zero" },
-    { productnaam: "Coca Cola Zero blikjes", supermarkt: "Jumbo", prijs: 1.29, korting: "2e halve prijs" },
-    { productnaam: "Pepsi Max", supermarkt: "Dirk", prijs: 0.99 }
-  ];
-
-  const matches = app.matchAanbiedingen("Cola Zero", aanbiedingen, { supermarkten: ["AH", "Jumbo"] });
-
-  assert.deepEqual(matches.map((aanbieding) => aanbieding.supermarkt), ["Jumbo", "Albert Heijn"]);
-  assert.ok(matches.every((aanbieding) => aanbieding.productnaam.includes("Cola")));
-});
-
-test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aan items", () => {
-  const aanbiedingen = [
-    { productnaam: "Magere yoghurt 1L", supermarkt: "Lidl", merk: "Milbona", categorie: { name: "Zuivel" }, prijs: 0.89, url: "https://example.test/yoghurt" },
-    { productnaam: "Appelsientje sinaasappel", supermarkt: "AH", merk: "Appelsientje", categorie: { name: "Dranken" }, prijs: 1.49 }
-  ];
-  const items = [
-    app.normaliseerItem({ id: "yoghurt", naam: "yoghurt", categorie: "Zuivel", supermarkten: ["Lidl"], gekoppeldeAanbiedingen: [app.maakAanbiedingSleutel(aanbiedingen[0])] })
-  ];
-
-  const merkMatches = app.matchAanbiedingen("Milbona", aanbiedingen, { supermarkten: ["Lidl"] });
-  const categorieMatches = app.matchAanbiedingen("Dranken", aanbiedingen, { supermarkten: ["AH"] });
-  const gekoppeld = app.selecteerGekoppeldeAanbiedingen(items[0], aanbiedingen);
-  const ontkoppeld = app.ontkoppelAanbiedingVanItem(items, "yoghurt", app.maakAanbiedingSleutel(aanbiedingen[0]));
-
-  assert.equal(merkMatches[0].productnaam, "Magere yoghurt 1L");
-  assert.equal(categorieMatches[0].productnaam, "Appelsientje sinaasappel");
-  assert.deepEqual(items[0].gekoppeldeAanbiedingen, [app.maakAanbiedingSleutel(aanbiedingen[0])]);
-  assert.equal(gekoppeld[0].merk, "Milbona");
-  assert.equal(gekoppeld[0].categorie, "Zuivel");
-  assert.deepEqual(ontkoppeld[0].gekoppeldeAanbiedingen, []);
-});
-
-test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", () => {
-  const aanbiedingen = [
-    { productnaam: "Magere kwark", supermarkt: "Albert Heijn", merk: "AH", prijs: 1.09 },
-    { productnaam: "Volle kwark", supermarkt: "Jumbo", prijs: 0.99 },
-    { productnaam: "Sinaasappelsap", supermarkt: "Lidl", prijs: 1.49 },
-    { productnaam: "Kwark dessert", supermarkt: "Albert Heijn", prijs: 1.29 }
-  ];
-
-  const goedkoopsteBijAlle = app.selecteerAanbiedingenOverzicht("", "alle", aanbiedingen, 2);
-  const ahZoekresultaten = app.selecteerAanbiedingenOverzicht("kwark", "AH", aanbiedingen, 5);
-  const geenResultaten = app.selecteerAanbiedingenOverzicht("kwark", "Lidl", aanbiedingen, 5);
-
-  assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.productnaam), ["Volle kwark", "Magere kwark"]);
-  assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.prijs), [0.99, 1.09]);
-  assert.deepEqual(ahZoekresultaten.map((aanbieding) => aanbieding.productnaam), ["Magere kwark", "Kwark dessert"]);
-  assert.deepEqual(geenResultaten, []);
-  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "AH"), "2 aanbiedingen getoond voor kwark bij AH.");
-  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "alle"), "2 aanbiedingen getoond voor kwark.");
-  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "", "AH"), "2 aanbiedingen getoond voor AH.");
-  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Aanbiedingen worden ververst...");
-});
-
-test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
-  const items = [app.normaliseerItem({ id: "cola", naam: "Cola", categorie: "Dranken", supermarkten: ["Jumbo"] })];
-  const aanbiedingen = [
-    { productnaam: "Cola Zero", supermarkt: "Jumbo", prijs: 1.29 },
-    { productnaam: "Cola Regular", supermarkt: "Jumbo", prijs: 1.39 },
-    { productnaam: "Cola Max", supermarkt: "Jumbo", prijs: 0.99 }
-  ];
-
-  const eenKeer = app.koppelAanbiedingAanItem(items, "cola", aanbiedingen[0]);
-  const dubbel = app.koppelAanbiedingAanItem(eenKeer, "cola", aanbiedingen[0]);
-  const twee = app.koppelAanbiedingAanItem(dubbel, "cola", aanbiedingen[1]);
-  const nieuwste = app.koppelAanbiedingAanItem(twee, "cola", aanbiedingen[2], 1);
-
-  assert.equal(dubbel[0].gekoppeldeAanbiedingen.length, 1);
-  assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(twee[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Zero", "Cola Regular"]);
-  assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(nieuwste[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Max"]);
-});
-
-test("aanbieding uit overzicht wordt omgezet naar boodschappenitem met alias, categorie en koppeling", () => {
-  const resultaat = app.voegAanbiedingToeAanBoodschappenlijst([], ["AH", "Jumbo"], {
-    productnaam: "Speciaal bier",
-    supermarkt: "Albert Heijn",
-    categorie: "Dranken",
-    prijs: 1.99
-  });
-  const item = resultaat.items[0];
-  const gekoppeld = app.selecteerGekoppeldeAanbiedingen(item, [{
-    productnaam: "Speciaal bier",
-    supermarkt: "Albert Heijn",
-    categorie: "Dranken",
-    prijs: 1.99
-  }]);
-
-  assert.equal(resultaat.supermarkt, "AH");
-  assert.deepEqual(item.supermarkten, ["AH"]);
-  assert.equal(item.categorie, "Dranken");
-  assert.equal(item.eigenItem, true);
-  assert.equal(item.naam, "Speciaal bier");
-  assert.equal(item.gekoppeldeAanbiedingen.length, 1);
-  assert.equal(gekoppeld.length, 1);
-});
-
-test("onbekende supermarkt wordt automatisch toegevoegd bij aanbieding uit live zoekresultaat", () => {
-  const resultaat = app.voegAanbiedingToeAanBoodschappenlijst([], ["AH"], {
-    productnaam: "Tonic",
-    supermarkt: "Poiesz",
-    categorie: "Dranken",
-    prijs: 0.99
-  });
-
-  assert.ok(resultaat.supermarkten.includes("Poiesz"));
-  assert.deepEqual(resultaat.items[0].supermarkten, ["Poiesz"]);
-});
-
-test("dezelfde aanbieding of product+supermarkt maakt geen duplicaat item", () => {
-  const bestaandItem = app.normaliseerItem({
-    id: "eigen-speciaal-bier-1",
-    naam: "Speciaal bier",
-    categorie: "Dranken",
-    supermarkten: ["AH"],
-    eigenItem: true
-  }, ["AH"]);
-  const aanbod = {
-    productnaam: "Speciaal bier",
-    supermarkt: "Albert Heijn",
-    categorie: "Dranken",
-    prijs: 1.99
-  };
-
-  const resultaat = app.voegAanbiedingToeAanBoodschappenlijst([bestaandItem], ["AH"], aanbod);
-  const nogEenKeer = app.voegAanbiedingToeAanBoodschappenlijst(resultaat.items, resultaat.supermarkten, aanbod);
-
-  assert.equal(resultaat.items.length, 1);
-  assert.equal(resultaat.items[0].gekoppeldeAanbiedingen.length, 1);
-  assert.equal(nogEenKeer.items.length, 1);
-  assert.equal(nogEenKeer.items[0].gekoppeldeAanbiedingen.length, 1);
-});
-
-test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () => {
-  const aanroepen = [];
-  const resultaat = await app.laadAanbiedingenBestand(async (url, opties) => {
-    aanroepen.push({ url, opties });
-    return {
-      ok: true,
-      async json() {
-        return { aanbiedingen: [], bijgewerktOp: "", bron: "https://www.reclamefolder.nl/aanbiedingen/" };
-      }
-    };
-  });
-
-  assert.equal(aanroepen.length, 1);
-  assert.match(aanroepen[0].url, /^data\/aanbiedingen\.json\?t=\d+$/);
-  assert.equal(aanroepen[0].opties.cache, "reload");
-  assert.equal(resultaat.fout, "");
-  assert.deepEqual(resultaat.bronnen, []);
-  assert.equal(app.formatteerAanbiedingenMeta({ bijgewerktOp: "2026-05-19T00:00:00.000Z" }).startsWith("Laatst bijgewerkt op "), true);
-  assert.match(app.formatteerAanbiedingenMeta({ waarschuwing: "Bron tijdelijk beperkt." }), /Bron tijdelijk beperkt\./);
-});
-
-test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
-  const resultaat = await app.laadAanbiedingenBestand(async () => ({
-    ok: false,
-    status: 503
-  }));
-
-  assert.equal(resultaat.aanbiedingen.length, 0);
-  assert.match(resultaat.fout, /status 503/);
-});
-
-test("aanbiedingen laden standaard uit statisch bestand met cache-busting", async () => {
-  const aanroepen = [];
-  const resultaat = await app.laadLiveAanbiedingen(async (url, opties) => {
-    aanroepen.push({ url, opties });
-    return {
-      ok: true,
-      async json() {
-        return {
-          bijgewerktOp: "2026-05-19T00:00:00.000Z",
-          aanbiedingen: [{
-            productnaam: "Voorbeeldproduct",
-            supermarkt: "Albert Heijn",
-            prijs: "1,99",
-            oudePrijs: "2,49",
-            url: "https://voorbeeld.nl"
-          }]
-        };
-      }
-    };
-  });
-
-  assert.equal(aanroepen.length, 1);
-  assert.match(aanroepen[0].url, /^data\/aanbiedingen\.json\?t=\d+$/);
-  assert.equal(aanroepen[0].opties.cache, "no-store");
-  assert.equal(resultaat.bron, "https://www.reclamefolder.nl/aanbiedingen/");
-  assert.equal(resultaat.aanbiedingen[0].prijs, 1.99);
-  assert.equal(resultaat.aanbiedingen[0].prijsTekst, "€ 1,99");
-  assert.equal(resultaat.fout, "");
-});
-
-test("aanbiedingen verversen meldt fout wanneer het statische bestand niet beschikbaar is", async () => {
-  const resultaat = await app.laadLiveAanbiedingen(async () => ({
-    ok: false,
-    status: 502
-  }));
-
-  assert.equal(resultaat.aanbiedingen.length, 0);
-  assert.equal(resultaat.bron, "https://www.reclamefolder.nl/aanbiedingen/");
-  assert.match(resultaat.fout, /status 502/);
-});
-
-test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw matchen", () => {
-  const js = read("frontend/app.js");
-
-  assert.equal(app.formatteerAanbiedingenTitel(0, true), "Aanbiedingen worden ververst...");
-  assert.equal(app.formatteerAanbiedingenTitel(0), "Geen actuele aanbieding gevonden");
-  assert.equal(app.formatteerAanbiedingenTitel(1), "1 aanbieding gevonden");
-  assert.equal(app.formatteerAanbiedingenTitel(2), "2 aanbiedingen gevonden");
-  assert.deepEqual(app.maakLegeAanbiedingenData(), {
-    aanbiedingen: [],
-    bijgewerktOp: "",
-    bron: "",
-    bronnen: [],
-    waarschuwing: "",
-    fout: ""
-  });
-  assert.match(js, /if \(isAanbiedingenScanBezig\) return;/);
-  assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
-  assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);/);
-  assert.match(js, /status\("Aanbiedingen worden ververst\.\.\."\);/);
-  assert.match(js, /async function laadLokaleAanbiedingenData\(\)/);
-  assert.match(js, /return laadAanbiedingenBestand\(\);/);
-  assert.match(js, /\$\{aantal\} lokale aanbiedingen ververst uit data\/aanbiedingen\.json\./);
-  assert.doesNotMatch(js, /Live ophalen mislukt/);
-  assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
-  assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
-});
-
-test("formulierzoekopdracht ververst lokale JSON en resultaten hebben toevoegactie", () => {
-  const js = read("frontend/app.js");
-
-  assert.match(js, /elementen\.aanbiedingZoekFormulier\.addEventListener\("submit", async \(event\) =>/);
-  assert.match(js, /await zoekAanbiedingenOverzicht\(\);/);
-  assert.match(js, /aanbiedingenData = await laadLokaleAanbiedingenData\(\);/);
-  assert.match(js, /Lokale aanbiedingen zijn ververst voor je zoekopdracht\./);
-  assert.match(js, /actieTekst: "Toevoegen aan lijst"/);
-  assert.match(js, /onActie: \(\) => verwerkAanbiedingNaarLijst\(aanbieding\)/);
-  assert.match(js, /voegAanbiedingToeAanBoodschappenlijst\(items, supermarkten, aanbieding\)/);
-});
-
-test("serverless aanbiedingenproxy normaliseert live brondata naar frontendformaat", async () => {
-  const api = require("../api/aanbiedingen.js");
-  const liveFetch = async () => ({
-    ok: true,
-    headers: { get() { return "application/json"; } },
-    async text() {
-      return JSON.stringify({
-        productnaam: "Live kwark",
-        prijs: 0.99,
-        oudePrijs: 1.49,
-        korting: "Actie",
-        url: "https://example.test/kwark"
-      });
-    }
-  });
-  const headers = {};
-  const res = {
-    statusCode: 200,
-    setHeader(naam, waarde) { headers[naam] = waarde; },
-    end(inhoud = "") { this.inhoud = inhoud; }
-  };
-
-  await api({ method: "GET", fetch: liveFetch }, res);
-
-  const body = JSON.parse(res.inhoud);
-  assert.equal(res.statusCode, 200);
-  assert.equal(headers["Access-Control-Allow-Origin"], "*");
-  assert.equal(body.bron, "live");
-  assert.equal(body.aanbiedingen[0].productnaam, "Live kwark");
-  assert.equal(body.aanbiedingen[0].prijsTekst, "€ 0,99");
-});
-
-test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als enige bron", () => {
-  const html = `<script type="application/ld+json">${JSON.stringify({
-    "@type": "Product",
-    name: "Kwark voordeelpak",
-    supermarket: "Lidl",
-    offers: [{
-      price: "0.99",
-      highPrice: "1.49",
-      seller: { name: "Lidl" },
-      url: "/aanbiedingen/kwark"
-    }],
-    description: "Aanbieding"
-  })}</script>`;
-  const catalogus = aanbiedingenUpdater.parseCatalogus(html, "text/html");
-  const aanbieding = aanbiedingenUpdater.vindObjecten(catalogus)
-    .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
-    .find(Boolean);
-
-  assert.ok(aanbiedingenUpdater.BRONNEN.some((bron) => bron === "https://www.ah.nl/bonus/folder"));
-  assert.equal(aanbieding.productnaam, "Kwark voordeelpak");
-  assert.equal(aanbieding.supermarkt, "Lidl");
-  assert.equal(aanbieding.prijs, 0.99);
-  assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/kwark");
-});
-
-test("aanbiedingenupdate gebruikt per supermarkt een adapter met categorie en bronmetadata", async () => {
-  const bronData = new Map(aanbiedingenUpdater.ADAPTERS.map((adapter) => {
-    const bron = adapter.bronnen[0];
-    const product = `${adapter.supermarkt} actieproduct`;
-    const catalogus = [{
-      name: product,
-      price: "1.99",
-      oldPrice: "2.49",
-      category: adapter.id === "dirck3" ? "wijn" : "zuivel",
-      validFrom: "2026-05-20",
-      validUntil: "2026-05-26",
-      image: "/actie.png",
-      url: "/actie"
-    }];
-    if (adapter.id === "ah") catalogus.push({ ...catalogus[0] });
-    if (adapter.id === "jumbo") catalogus[0].category = "frisdrank";
-    if (adapter.id === "hoogvliet") catalogus[0].category = "AGF";
-    if (adapter.id === "dirk") catalogus[0].category = "brood";
-    if (adapter.id === "aldi") {
-      return [bron.url, {
-        contentType: "application/pdf",
-        body: "Aldi diepvries pizza € 2,49 van € 3,49 geldig 20-05 t/m 26-05"
-      }];
-    }
-    if (adapter.id === "plus") catalogus[0].category = "drogisterij";
-    return [bron.url, { contentType: "application/json", body: JSON.stringify(catalogus) }];
-  }));
-  const fakeFetch = async (url) => {
-    const bron = bronData.get(url);
-    return {
-      ok: true,
-      headers: { get() { return bron.contentType; } },
-      async text() { return bron.body; }
-    };
-  };
-
-  const { aanbiedingen, fouten } = await aanbiedingenUpdater.haalAanbiedingenVanBronnen(fakeFetch);
-
-  assert.deepEqual(fouten, []);
-  assert.equal(aanbiedingen.length, aanbiedingenUpdater.ADAPTERS.length);
-  assert.deepEqual(new Set(aanbiedingen.map((aanbieding) => aanbieding.supermarkt)), new Set(["AH", "Jumbo", "Hoogvliet", "Dirk", "Dirck3", "Aldi", "PLUS"]));
-  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.productnaam && aanbieding.prijs !== null && aanbieding.geldigheidsperiode));
-  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.bronType === "folder" || aanbieding.bronType === "scrape"));
-  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.betrouwbaarheid === "tekst" || aanbieding.betrouwbaarheid === "ocr"));
-  assert.ok(aanbiedingen.every((aanbieding) => aanbieding.opgehaaldOp));
-  assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Dirck3").categorie, "Wijn & sterke drank");
-  assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Aldi").categorie, "Diepvries");
-  assert.equal(aanbiedingen.find((aanbieding) => aanbieding.supermarkt === "Aldi").betrouwbaarheid, "ocr");
-});
-
-test("aanbiedingenupdate filtert niet-ondersteunde winkels uit brondata", async () => {
-  const catalogus = [
-    { name: "AH kwark", supermarket: "Albert Heijn", price: "0.99", oldPrice: "1.49" },
-    { name: "Modeblouse", supermarket: "Mart Visser", price: "119", oldPrice: "149" }
-  ];
-  const fakeFetch = async () => ({
-    ok: true,
-    headers: { get() { return "application/json"; } },
-    async text() { return JSON.stringify(catalogus); }
-  });
-
-  const { aanbiedingen, fouten } = await aanbiedingenUpdater.haalAanbiedingenVanBronnen(fakeFetch, ["https://example.test/aanbiedingen"]);
-
-  assert.deepEqual(fouten, []);
-  assert.deepEqual(aanbiedingen.map((aanbieding) => aanbieding.supermarkt), ["AH"]);
-  assert.equal(aanbiedingen[0].productnaam, "AH kwark");
-});
-
-test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
-  const flightData = `14:["$","$L1b",null,{"offersFromProps":[${JSON.stringify({
-    id: "68648909",
-    normalPrice: 109.95,
-    offerPrice: 65,
-    title: "Rode Bloemen Top",
-    type: "OFFER",
-    source: "reclamefolder",
-    validFrom: "2026-04-14T22:00:00.000Z",
-    permaname: "rode-bloemen-top",
-    retailer: { name: "Test Retailer" },
-    image: { imageUrl: "https://example.test/rode-bloemen.png" }
-  })}]}]`;
-  const html = `<script>self.__next_f.push([1,${JSON.stringify(flightData)}])</script>`;
-  const catalogus = aanbiedingenUpdater.parseCatalogus(html, "text/html");
-  const aanbieding = aanbiedingenUpdater.vindObjecten(catalogus)
-    .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
-    .find(Boolean);
-
-  assert.equal(catalogus.length, 1);
-  assert.equal(aanbieding.productnaam, "Rode Bloemen Top");
-  assert.equal(aanbieding.supermarkt, "Test Retailer");
-  assert.equal(aanbieding.prijs, 65);
-  assert.equal(aanbieding.oudePrijs, 109.95);
-  assert.equal(aanbieding.afbeelding, "https://example.test/rode-bloemen.png");
-  assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/rode-bloemen-top");
-});
-
-test("aanbiedingenupdate bewaart merk, categorie en afbeelding wanneer de bron die velden levert", () => {
-  const aanbieding = aanbiedingenUpdater.normaliseer({
-    name: "Єmma. Biologische kwark",
-    brand: "Zuivelhoeve",
-    category: { name: "Zuivel" },
-    supermarket: "Dirk",
-    price: 1.19,
-    oldPrice: 1.79,
-    image: "/images/kwark.png",
-    url: "/kwark"
-  }, "https://example.test/folder/");
-
-  assert.equal(aanbieding.productnaam, "Emma. Biologische kwark");
-  assert.equal(aanbieding.merk, "Zuivelhoeve");
-  assert.equal(aanbieding.categorie, "Zuivel");
-  assert.equal(aanbieding.afbeelding, "https://example.test/images/kwark.png");
-});
-
-test("zoektokens vangen eenvoudige meervouden op zonder vaste woorden te beschadigen", () => {
-  assert.deepEqual(app.maakZoekTokens("blauwe bessen"), ["blauwe", "bes"]);
-  assert.deepEqual(app.maakZoekTokens("mannen"), ["man"]);
-  assert.deepEqual(app.maakZoekTokens("kussen"), ["kus"]);
-  assert.deepEqual(app.maakZoekTokens("mais"), ["mais"]);
-  assert.deepEqual(app.maakZoekTokens("tennis"), ["tennis"]);
-});
-
 test("categorie verslepen bewaart volgorde en behoudt itemgroepen", () => {
   const storage = {
     waarde: "",
@@ -559,157 +132,89 @@ test("categorie verslepen bewaart volgorde en behoudt itemgroepen", () => {
   assert.equal(groepen.Zuivel[0].naam, "melk");
 });
 
-test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkeren", () => {
+test("categorieblokken blijven direct versleepbaar op desktop en mobiel", () => {
   const js = read("frontend/app.js");
   const css = read("frontend/styles.css");
 
   assert.match(js, /section\.draggable = true/);
   assert.match(js, /section\.tabIndex = 0/);
   assert.match(js, /if \(event\.pointerType === "mouse"\) \{[\s\S]*section\.draggable = magSlepen/);
-  assert.match(js, /dragend[\s\S]*section\.draggable = true/);
-  assert.match(js, /pointerup[\s\S]*section\.draggable = true/);
-  assert.match(js, /pointercancel[\s\S]*section\.draggable = true/);
+  assert.match(js, /pointermove[\s\S]*markeerTouchDoel\(event\)/);
+  assert.match(js, /pointerup[\s\S]*verplaatsZichtbareCategorie\(categorie, doelCategorie\)/);
   assert.match(js, /section\.addEventListener\("keydown"[\s\S]*verplaatsZichtbareCategorie/);
   assert.match(js, /magCategorieblokSlepenVanaf\(event\.target\)/);
   assert.match(js, /target\.closest\(NIET_SLEEPBARE_CATEGORIE_ELEMENTEN\)/);
-  assert.doesNotMatch(js, /Categorie verslepen/);
-  assert.doesNotMatch(js, /categorie__greep/);
-  assert.doesNotMatch(css, /\.categorie__greep/);
-  const selectorConstante = js.match(/const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = "([^"]+)"/);
-  assert.deepEqual(selectorConstante[1].split(",").map((selector) => selector.trim()), [
-    ".boodschap",
-    "input",
-    "select",
-    "textarea",
-    "label",
-    "button"
-  ]);
   assert.match(css, /\.categorie \{[\s\S]*cursor: grab;/);
   assert.match(css, /\.categorie ul \{[\s\S]*cursor: default;/);
   assert.match(css, /\.categorie__kop \{[\s\S]*touch-action: none;/);
 });
 
-test("boodschappenlijst toont supermarktkeuzes per bestaand item", () => {
-  const js = read("frontend/app.js");
-  const css = read("frontend/styles.css");
-
-  assert.match(js, /boodschap__supermarkten/);
-  assert.match(js, /Supermarkt aanpassen/);
-  assert.match(js, /Zoek artikel, merk of categorie/);
-  assert.match(js, /koppelAanbiedingAanItem\(items, item\.id, aanbieding\)/);
-  assert.match(js, /ontkoppelAanbiedingVanItem\(items, item\.id, sleutel\)/);
-  assert.match(js, /aanbiedingen__afbeelding/);
-  assert.match(js, /wijzigItemSupermarkten\(items, item\.id, gekozenSupermarkten, supermarkten\)/);
-  assert.match(js, /bewaarItems\(localStorage, items, supermarkten\);/);
-  assert.match(js, /row\.append\(checkbox, tekst, verwijderKnop, supermarktVeldset, aanbiedingenBlok\);/);
-  assert.match(css, /\.boodschap__supermarkten/);
-  assert.match(css, /\.aanbiedingen__zoeker/);
-  assert.match(css, /\.aanbiedingen__afbeelding/);
-});
-
-test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
+test("HTML is één duidelijke boodschappenlijstpagina", () => {
   const html = read("frontend/index.html");
+  const removedFeature = new RegExp("aanbied", "i");
+
   assert.match(html, /<html lang="nl">/);
   assert.match(html, /aria-live="polite"/);
-  assert.match(html, /<nav class="app-tabs" role="tablist" aria-label="BoodschappenBaas onderdelen">/);
-  assert.match(html, /data-tab-target="paneel-aanbiedingen">Aanbiedingen zoeken<\/button>/);
-  assert.match(html, /data-tab-target="paneel-lijst">Boodschappenlijst<\/button>/);
-  assert.match(html, /<section id="paneel-aanbiedingen" class="tab-paneel" role="tabpanel" aria-labelledby="tab-aanbiedingen">/);
-  assert.match(html, /<section id="paneel-lijst" class="tab-paneel" role="tabpanel" aria-labelledby="tab-lijst" hidden>/);
-  assert.match(html, /<form id="aanbiedingen-zoek-formulier"/);
-  assert.match(html, /<input id="aanbiedingen-zoekterm" name="aanbiedingen-zoekterm" type="search"/);
-  assert.match(html, /<select id="aanbiedingen-supermarkt-filter" name="aanbiedingen-supermarkt-filter"><\/select>/);
-  assert.match(html, /Zoeken en verversen lezen alleen het lokale <code>data\/aanbiedingen\.json<\/code>-bestand opnieuw in/);
-  assert.match(html, /<p id="aanbiedingen-meta" class="aanbiedingen-meta" aria-live="polite"><\/p>/);
-  assert.match(html, /<ul id="aanbiedingen-overzicht" class="aanbiedingen-overzicht" aria-label="Gevonden aanbiedingen"><\/ul>/);
-  assert.match(html, /<label for="naam">Naam<\/label>/);
-  const toevoegFormulierStart = html.indexOf('<form id="toevoeg-formulier"');
-  const formulierActiesStart = html.indexOf('<div class="formulier-acties">', toevoegFormulierStart);
-  const formulierActiesSubmit = html.indexOf('<button type="submit">Toevoegen</button>', formulierActiesStart);
-  const formulierEinde = html.indexOf("</form>", formulierActiesStart);
-  assert.notEqual(formulierActiesStart, -1);
-  assert.notEqual(formulierActiesSubmit, -1);
-  assert.notEqual(formulierEinde, -1);
-  assert.ok(formulierActiesStart < formulierActiesSubmit);
-  assert.ok(formulierActiesSubmit < formulierEinde);
-  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Ververs lokale aanbiedingen<\/button>/);
-  const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
-  assert.notEqual(voorbereidingStart, -1);
-  assert.match(html, /<details class="kaart instellingen" open>/);
-  assert.match(html, /<span id="voorbereiding-label" class="eyebrow">Voorbereiding<\/span>/);
-  assert.match(html, /<h2 id="voorbereiding-titel" class="voorbereiding-toggle__titel">Optimale route<\/h2>/);
-  const boodschappenlijstStart = html.indexOf('<section id="lijst"', voorbereidingStart);
-  const voorbereidingSectie = html.slice(voorbereidingStart, boodschappenlijstStart);
-  assert.doesNotMatch(voorbereidingSectie, /aanbiedingen-scannen/);
-  assert.match(html, /<summary class="voorbereiding-toggle">/);
-  assert.match(html, /<div id="voorbereiding-inhoud" class="voorbereiding-inhoud">/);
-  assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
-  assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
-  assert.match(html, /<button id="route-opslaan" type="button">Opslaan<\/button>/);
-  assert.match(html, /<button id="route-reset" type="button">Reset route<\/button>/);
-  assert.match(html, /<select id="thema"/);
-  assert.match(html, /<form id="supermarkt-formulier"/);
-  assert.match(html, /<ul id="supermarkt-lijst"/);
+  assert.doesNotMatch(html, removedFeature);
+  assert.doesNotMatch(html, /tab-paneel|tablist|data-tab-target/);
+  assert.doesNotMatch(html, /Voorbereiding|voorbereiding|Optimale route|route-editor|route-aanpassen/);
+  assert.match(html, /<main>[\s\S]*<section class="kaart formulier-kaart"/);
+  assert.match(html, /<section id="lijst" class="kaart lijst-kaart"/);
 });
 
-test("tabs scheiden aanbiedingen zoeken van boodschappenbeheer zonder routes", () => {
+test("supermarkt kiezen en toevoegen staan bij boodschap toevoegen", () => {
+  const html = read("frontend/index.html");
+  const formStart = html.indexOf('<form id="toevoeg-formulier"');
+  const filterStart = html.indexOf('<label for="supermarkt-filter">Kies supermarkt</label>', formStart);
+  const addSubmit = html.indexOf('<button type="submit">Toevoegen</button>', formStart);
+  const formEnd = html.indexOf("</form>", formStart);
+  const cardEnd = html.indexOf("</section>", formEnd);
+  const supermarketForm = html.indexOf('<form id="supermarkt-formulier"', formEnd);
+
+  assert.ok(formStart !== -1);
+  assert.ok(filterStart > formStart && filterStart < formEnd);
+  assert.ok(addSubmit > filterStart && addSubmit < formEnd);
+  assert.ok(supermarketForm > formEnd && supermarketForm < cardEnd);
+  assert.match(html, /<ul id="supermarkt-lijst" class="supermarkt-lijst" aria-label="Beschikbare supermarkten"><\/ul>/);
+});
+
+test("boodschappenlijst toont compacte supermarktkeuzes per bestaand item", () => {
   const js = read("frontend/app.js");
   const css = read("frontend/styles.css");
+  const removedFeature = new RegExp("aanbied", "i");
 
-  assert.match(js, /tabs: document\.querySelectorAll\("\[data-tab-target\]"\)/);
-  assert.match(js, /function activeerTab\(tab\)/);
-  assert.match(js, /paneel\.hidden = paneel\.id !== tab\.dataset\.tabTarget/);
-  assert.match(js, /skipLink: document\.querySelector\("\.skip-link"\)/);
-  assert.match(js, /const LIJST_TAB_ID = "paneel-lijst"/);
-  assert.match(js, /tab\.dataset\.tabTarget === LIJST_TAB_ID/);
-  assert.match(js, /document\.querySelector\("#lijst"\)\.focus\(\)/);
-  assert.match(js, /renderAanbiedingenOverzicht/);
-  assert.match(js, /function selecteerAanbiedingenOverzicht\(zoekterm, supermarkt, aanbiedingen, maximum = MAX_AANBIEDINGEN_OVERZICHT\)/);
-  assert.match(js, /function filterAanbiedingenOpSupermarkt\(aanbiedingen, supermarkt\)/);
-  assert.match(js, /matchAanbiedingen\(zoekterm, gefilterdeAanbiedingen, \{ maximum \}\)/);
-  assert.match(js, /formatteerAanbiedingenOverzichtStatus\(resultaten\.length, zoekterm, supermarkt, isAanbiedingenScanBezig\)/);
-  assert.match(css, /\.app-tabs/);
-  assert.match(css, /\.tab-paneel\[hidden\]/);
-  assert.match(css, /@media \(max-width: 520px\) \{[\s\S]*\.app-tabs \{[\s\S]*position: fixed;/);
-  assert.match(css, /\.aanbiedingen-overzicht/);
-});
-
-test("HTML bevat professionele dashboard-elementen", () => {
-  const html = read("frontend/index.html");
-  assert.match(html, /Professionele winkelplanning/);
-  assert.match(html, /class="held__paneel" aria-label="App kenmerken"/);
-  assert.match(html, /<span>supermarkten<\/span>/);
-  assert.match(html, /<span>PWA gereed<\/span>/);
+  assert.match(js, /boodschap__supermarkten/);
+  assert.match(js, /supermarktKeuzes\.className = "chips chips--compact"/);
+  assert.match(js, /supermarktLabel\.className = "chip chip--compact"/);
+  assert.match(js, /wijzigItemSupermarkten\(items, item\.id, gekozenSupermarkten, supermarkten\)/);
+  assert.match(js, /row\.append\(checkbox, tekst, verwijderKnop, supermarktVeldset\);/);
+  assert.doesNotMatch(js, removedFeature);
+  assert.match(css, /\.chip--compact \{[\s\S]*font-size: 0\.78rem;/);
+  assert.match(css, /\.boodschap__meta \{[\s\S]*font-size: 0\.78rem;/);
+  assert.match(css, /\.boodschap__verwijderen[\s\S]*font-size: 0\.84rem;/);
+  assert.doesNotMatch(css, removedFeature);
 });
 
 test("PWA bestanden bieden offline en commit-versie update ondersteuning", () => {
   const sw = read("frontend/service-worker.js");
   const manifest = JSON.parse(read("frontend/manifest.webmanifest"));
+  const removedFeature = new RegExp("aanbied", "i");
 
   assert.equal(manifest.display, "standalone");
   assert.equal(manifest.lang, "nl");
   assert.match(sw, /__COMMIT_SHA__/);
   assert.match(sw, /self\.skipWaiting\(\)/);
   assert.match(sw, /caches\.open\(CACHE_NAME\)/);
-  assert.doesNotMatch(sw, /\.\/data\/aanbiedingen\.json/);
-  assert.match(sw, /pathname\.endsWith\("\/data\/aanbiedingen\.json"\)/);
-  assert.match(sw, /fetch\(event\.request, \{ cache: "reload" \}\)/);
+  assert.doesNotMatch(sw, removedFeature);
 });
 
-test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
-  const workflow = read(".github/workflows/aanbiedingen.yml");
-  const data = JSON.parse(read("frontend/data/aanbiedingen.json"));
+test("documentatie en package scripts verwijzen alleen naar de boodschappenlijst-MVP", () => {
+  const packageJson = JSON.parse(read("package.json"));
+  const readme = read("README.md");
+  const architecture = read("docs/architecture.md");
+  const removedFeature = new RegExp("aanbied", "i");
 
-  assert.equal(data.bron, aanbiedingenUpdater.BRON);
-  assert.ok(Array.isArray(data.bronnen));
-  assert.ok(data.bronnen.every((bron) => bron.supermarkt && bron.url && bron.documentatie));
-  assert.equal(typeof data.waarschuwing, "string");
-  assert.ok(data.aanbiedingen.length > 0);
-  assert.ok(data.aanbiedingen.every((aanbieding) => aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null));
-  assert.ok(data.aanbiedingen.every((aanbieding) => aanbiedingenUpdater.TOEGESTANE_SUPERMARKTEN.includes(aanbieding.supermarkt)));
-  assert.match(workflow, /workflow_dispatch:/);
-  assert.match(workflow, /schedule:/);
-  assert.match(workflow, /node scripts\/update-aanbiedingen\.js/);
-  assert.match(workflow, /Aanbiedingen ophalen mislukt; bestaand JSON-bestand wordt niet overschreven\./);
-  assert.match(workflow, /git diff --quiet -- frontend\/data\/aanbiedingen\.json/);
+  assert.equal(packageJson.scripts.lint, "node --check frontend/app.js && node --check scripts/build.js && node --check test/mvp.test.js");
+  assert.doesNotMatch(readme, removedFeature);
+  assert.doesNotMatch(architecture, removedFeature);
 });
