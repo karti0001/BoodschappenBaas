@@ -410,7 +410,7 @@ test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als enige bron", () =
     .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
     .find(Boolean);
 
-  assert.ok(aanbiedingenUpdater.BRONNEN.includes("https://www.ah.nl/bonus/folder"));
+  assert.ok(aanbiedingenUpdater.BRONNEN.some((bron) => bron === "https://www.ah.nl/bonus/folder"));
   assert.equal(aanbieding.productnaam, "Kwark voordeelpak");
   assert.equal(aanbieding.supermarkt, "Lidl");
   assert.equal(aanbieding.prijs, 0.99);

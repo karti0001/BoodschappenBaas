@@ -255,10 +255,9 @@ function parseCatalogus(tekst, contentType = "") {
 
 function tekstZonderHtml(tekst) {
   return String(tekst || "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "\n")
-    .replace(/<style[\s\S]*?<\/style>/gi, "\n")
     .replace(/<[^>]+>/g, "\n")
     .replace(/&euro;|&#8364;/gi, "€")
+    .replace(/&amp;/gi, "&")
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+\n/g, "\n");
 }
@@ -277,7 +276,7 @@ function parseTekstAanbiedingen(tekst, adapter = {}, bron = {}) {
         supermarkt: adapter.supermarkt,
         prijs: match[2],
         oudePrijs: match[3] || "",
-        categorie: normaliseerCategorie(regel),
+        categorie: normaliseerCategorie(regel, match[1]),
         geldigheidsperiode: periode ? `${periode[1]} t/m ${periode[2]}` : "",
         geldigVan: periode ? periode[1] : "",
         geldigTot: periode ? periode[2] : "",
