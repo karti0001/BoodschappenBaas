@@ -13,7 +13,7 @@ const OUDE_PRIJS_VELDEN = ["oudePrijs", "oldPrice", "originalPrice", "original_p
 
 function vindVeldWaarde(object, delen) {
   if (object === undefined || object === null) return "";
-  if (!delen.length) return typeof object === "object" ? "" : object;
+  if (!delen.length) return Array.isArray(object) || (typeof object === "object" && object !== null) ? "" : object;
   if (Array.isArray(object)) {
     for (const item of object) {
       const waarde = vindVeldWaarde(item, delen);
