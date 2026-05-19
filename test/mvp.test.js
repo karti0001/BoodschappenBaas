@@ -417,6 +417,34 @@ test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als enige bron", () =
   assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/kwark");
 });
 
+test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
+  const flightData = `14:["$","$L1b",null,{"offersFromProps":[${JSON.stringify({
+    id: "68648909",
+    normalPrice: 109.95,
+    offerPrice: 65,
+    title: "Rode Bloemen Top",
+    type: "OFFER",
+    source: "reclamefolder",
+    validFrom: "2026-04-14T22:00:00.000Z",
+    permaname: "rode-bloemen-top",
+    retailer: { name: "Albert Heijn" },
+    image: { imageUrl: "https://example.test/rode-bloemen.png" }
+  })}]}]`;
+  const html = `<script>self.__next_f.push([1,${JSON.stringify(flightData)}])</script>`;
+  const catalogus = aanbiedingenUpdater.parseCatalogus(html, "text/html");
+  const aanbieding = aanbiedingenUpdater.vindObjecten(catalogus)
+    .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
+    .find(Boolean);
+
+  assert.equal(catalogus.length, 1);
+  assert.equal(aanbieding.productnaam, "Rode Bloemen Top");
+  assert.equal(aanbieding.supermarkt, "Albert Heijn");
+  assert.equal(aanbieding.prijs, 65);
+  assert.equal(aanbieding.oudePrijs, 109.95);
+  assert.equal(aanbieding.afbeelding, "https://example.test/rode-bloemen.png");
+  assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/rode-bloemen-top");
+});
+
 test("aanbiedingenupdate bewaart merk, categorie en afbeelding wanneer de bron die velden levert", () => {
   const aanbieding = aanbiedingenUpdater.normaliseer({
     name: "Biologische kwark",
@@ -603,7 +631,7 @@ test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
   assert.equal(data.bron, "https://www.reclamefolder.nl/aanbiedingen/");
   assert.deepEqual(data.bronnen, ["https://www.reclamefolder.nl/aanbiedingen/"]);
   assert.ok(data.aanbiedingen.length > 0);
-  assert.ok(data.aanbiedingen.some((aanbieding) => aanbieding.productnaam.toLowerCase().includes("kwark")));
+  assert.ok(data.aanbiedingen.every((aanbieding) => aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null));
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /node scripts\/update-aanbiedingen\.js/);
