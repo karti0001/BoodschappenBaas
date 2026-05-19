@@ -795,11 +795,11 @@ const BoodschappenBaas = (() => {
           });
           supermarktKeuzes.addEventListener("change", () => {
             const gekozenSupermarkten = [...supermarktKeuzes.querySelectorAll("input:checked")].map((input) => input.value);
-            const bijgewerktItem = normaliseerItem({ ...item, supermarkten: gekozenSupermarkten }, supermarkten);
+            const supermarktTekst = gekozenSupermarkten.length ? gekozenSupermarkten.join(", ") : "Geen supermarkt";
             items = wijzigItemSupermarkten(items, item.id, gekozenSupermarkten, supermarkten);
             bewaarItems(localStorage, items, supermarkten);
             render();
-            status(`${item.naam} is bijgewerkt voor ${formatteerSupermarkten(bijgewerktItem)}.`);
+            status(`${item.naam} is bijgewerkt voor ${supermarktTekst}.`);
           });
           supermarktVeldset.append(supermarktLegend, supermarktKeuzes);
           const cacheKey = [item.naam, ...item.supermarkten].join(CACHE_SCHEIDINGSTEKEN);
