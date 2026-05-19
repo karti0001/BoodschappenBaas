@@ -170,7 +170,7 @@ test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", (
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "AH"), "2 aanbiedingen getoond voor kwark bij AH.");
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "alle"), "2 aanbiedingen getoond voor kwark.");
   assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "", "AH"), "2 aanbiedingen getoond voor AH.");
-  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Bezig met live scannen...");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Aanbiedingen worden ververst...");
 });
 
 test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
@@ -279,7 +279,7 @@ test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
   assert.match(resultaat.fout, /status 503/);
 });
 
-test("live aanbiedingen-API wordt zonder browser-CORS direct via de eigen proxy opgehaald", async () => {
+test("live aanbiedingen laden op GitHub Pages standaard uit het statische bestand met no-store", async () => {
   const aanroepen = [];
   const resultaat = await app.laadLiveAanbiedingen(async (url, opties) => {
     aanroepen.push({ url, opties });
@@ -287,7 +287,6 @@ test("live aanbiedingen-API wordt zonder browser-CORS direct via de eigen proxy 
       ok: true,
       async json() {
         return {
-          bron: "live",
           bijgewerktOp: "2026-05-19T00:00:00.000Z",
           aanbiedingen: [{
             productnaam: "Voorbeeldproduct",
@@ -302,29 +301,29 @@ test("live aanbiedingen-API wordt zonder browser-CORS direct via de eigen proxy 
   });
 
   assert.equal(aanroepen.length, 1);
-  assert.match(aanroepen[0].url, /^api\/aanbiedingen\?t=\d+$/);
+  assert.match(aanroepen[0].url, /^data\/aanbiedingen\.json\?t=\d+$/);
   assert.equal(aanroepen[0].opties.cache, "no-store");
-  assert.equal(resultaat.bron, "live");
+  assert.equal(resultaat.bron, "https://www.reclamefolder.nl/aanbiedingen/");
   assert.equal(resultaat.aanbiedingen[0].prijs, 1.99);
   assert.equal(resultaat.aanbiedingen[0].prijsTekst, "€ 1,99");
   assert.equal(resultaat.fout, "");
 });
 
-test("live aanbiedingen halen valt toetsbaar terug wanneer de proxy faalt", async () => {
+test("aanbiedingen verversen meldt fout wanneer het statische bestand niet beschikbaar is", async () => {
   const resultaat = await app.laadLiveAanbiedingen(async () => ({
     ok: false,
     status: 502
   }));
 
   assert.equal(resultaat.aanbiedingen.length, 0);
-  assert.equal(resultaat.bron, "live");
+  assert.equal(resultaat.bron, "https://www.reclamefolder.nl/aanbiedingen/");
   assert.match(resultaat.fout, /status 502/);
 });
 
 test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw matchen", () => {
   const js = read("frontend/app.js");
 
-  assert.equal(app.formatteerAanbiedingenTitel(0, true), "Bezig met live scannen...");
+  assert.equal(app.formatteerAanbiedingenTitel(0, true), "Aanbiedingen worden ververst...");
   assert.equal(app.formatteerAanbiedingenTitel(0), "Geen actuele aanbieding gevonden");
   assert.equal(app.formatteerAanbiedingenTitel(1), "1 aanbieding gevonden");
   assert.equal(app.formatteerAanbiedingenTitel(2), "2 aanbiedingen gevonden");
@@ -337,14 +336,14 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
   assert.match(js, /if \(isAanbiedingenScanBezig\) return;/);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
   assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);/);
-  assert.match(js, /status\("Bezig met live scannen\.\.\."\);/);
+  assert.match(js, /status\("Aanbiedingen worden ververst\.\.\."\);/);
   assert.match(js, /async function laadAanbiedingenDataMetFallback\(\)/);
   assert.match(js, /const liveAanbiedingenData = await laadLiveAanbiedingen\(\);/);
   assert.match(js, /const fallbackNodig = liveAanbiedingenData\.fout \|\| !liveAanbiedingenData\.aanbiedingen\.length;/);
   assert.match(js, /const lokaleData = await laadAanbiedingenBestand\(\);/);
   assert.match(js, /return \{ aanbiedingenData: lokaleData, fallbackNodig, liveAanbiedingenData \};/);
-  assert.match(js, /Live ophalen mislukt; \$\{aantal\} lokale aanbiedingen geladen\./);
-  assert.match(js, /\$\{aantal\} live aanbiedingen geladen\./);
+  assert.match(js, /Live ophalen mislukt; \$\{aantal\} aanbiedingen uit data\/aanbiedingen\.json geladen\./);
+  assert.match(js, /\$\{aantal\} aanbiedingen ververst uit data\/aanbiedingen\.json\./);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
   assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
 });
@@ -521,7 +520,7 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<form id="aanbiedingen-zoek-formulier"/);
   assert.match(html, /<input id="aanbiedingen-zoekterm" name="aanbiedingen-zoekterm" type="search"/);
   assert.match(html, /<select id="aanbiedingen-supermarkt-filter" name="aanbiedingen-supermarkt-filter"><\/select>/);
-  assert.match(html, /Zoeken start met een live scan via de API/);
+  assert.match(html, /Zoeken en verversen gebruiken standaard <code>data\/aanbiedingen\.json<\/code> met een verse fetch/);
   assert.match(html, /<ul id="aanbiedingen-overzicht" class="aanbiedingen-overzicht" aria-label="Gevonden aanbiedingen"><\/ul>/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
   const toevoegFormulierStart = html.indexOf('<form id="toevoeg-formulier"');
@@ -533,7 +532,7 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.notEqual(formulierEinde, -1);
   assert.ok(formulierActiesStart < formulierActiesSubmit);
   assert.ok(formulierActiesSubmit < formulierEinde);
-  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>/);
+  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Ververs aanbiedingen<\/button>/);
   const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
   assert.notEqual(voorbereidingStart, -1);
   assert.match(html, /<details class="kaart instellingen" open>/);
