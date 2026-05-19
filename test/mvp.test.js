@@ -262,10 +262,10 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.ok(formulierActiesScan < formulierEinde);
   const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
   assert.notEqual(voorbereidingStart, -1);
-  assert.match(html, /<details\b[^>]*class="kaart instellingen"/);
-  assert.match(html, /<details\b[^>]*aria-labelledby="voorbereiding-label route-titel"/);
+  assert.match(html, /<details\b[^>]*aria-labelledby="voorbereiding-label voorbereiding-titel"/);
   assert.match(html, /<details\b[^>]*\sopen\b/);
   assert.match(html, /<span id="voorbereiding-label" class="eyebrow">Voorbereiding<\/span>/);
+  assert.match(html, /<span id="voorbereiding-titel" class="voorbereiding-toggle__titel">Optimale route<\/span>/);
   const boodschappenlijstStart = html.indexOf('<section id="lijst"', voorbereidingStart);
   const voorbereidingSectie = html.slice(voorbereidingStart, boodschappenlijstStart);
   assert.doesNotMatch(voorbereidingSectie, /aanbiedingen-scannen/);
