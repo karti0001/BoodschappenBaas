@@ -455,6 +455,14 @@ const BoodschappenBaas = (() => {
       routeOpslaan: document.querySelector("#route-opslaan"),
       routeReset: document.querySelector("#route-reset"),
       aanbiedingenScannen: document.querySelector("#aanbiedingen-scannen"),
+      aanbiedingZoekFormulier: document.querySelector("#aanbiedingen-zoek-formulier"),
+      aanbiedingZoekterm: document.querySelector("#aanbiedingen-zoekterm"),
+      aanbiedingFilter: document.querySelector("#aanbiedingen-supermarkt-filter"),
+      aanbiedingenOverzicht: document.querySelector("#aanbiedingen-overzicht"),
+      aanbiedingenOverzichtStatus: document.querySelector("#aanbiedingen-overzicht-status"),
+      tabs: document.querySelectorAll("[data-tab-target]"),
+      tabPanelen: document.querySelectorAll(".tab-paneel"),
+      skipLink: document.querySelector(".skip-link"),
       thema: document.querySelector("#thema")
     };
 
@@ -466,6 +474,7 @@ const BoodschappenBaas = (() => {
     renderSupermarktOpties();
     renderSupermarktKeuzes();
     renderSupermarktBeheer();
+    renderAanbiedingFilter();
 
     const response = await fetch("data/boodschappen.yml");
     const seedItems = parseYamlItems(await response.text());
@@ -483,8 +492,20 @@ const BoodschappenBaas = (() => {
     let aanbiedingZoeken = new Map();
     let isAanbiedingenScanBezig = false;
 
+    function activeerTab(tab) {
+      elementen.tabs.forEach((knop) => {
+        const isActief = knop === tab;
+        knop.classList.toggle("is-actief", isActief);
+        knop.setAttribute("aria-selected", String(isActief));
+      });
+      elementen.tabPanelen.forEach((paneel) => {
+        paneel.hidden = paneel.id !== tab.dataset.tabTarget;
+      });
+    }
+
     function status(bericht) {
       elementen.status.textContent = bericht;
+      elementen.aanbiedingenOverzichtStatus.textContent = bericht;
     }
 
     async function scanAanbiedingen() {
@@ -493,11 +514,13 @@ const BoodschappenBaas = (() => {
       elementen.aanbiedingenScannen.disabled = true;
       aanbiedingenData = maakLegeAanbiedingenData();
       render();
+      renderAanbiedingenOverzicht();
       status("Bezig met scannen...");
       aanbiedingenData = await laadAanbiedingenBestand();
       isAanbiedingenScanBezig = false;
       elementen.aanbiedingenScannen.disabled = false;
       render();
+      renderAanbiedingenOverzicht();
       const aantal = aanbiedingenData.aanbiedingen.length;
       status(aanbiedingenData.fout ? "Aanbiedingen konden niet worden bijgewerkt; de lijst blijft bruikbaar." : `${aantal} aanbiedingen opnieuw geladen uit het statische bestand.`);
     }
@@ -509,6 +532,54 @@ const BoodschappenBaas = (() => {
       if ([...elementen.filter.options].some((option) => option.value === gekozenFilter)) {
         elementen.filter.value = gekozenFilter;
       }
+    }
+
+    function renderAanbiedingFilter() {
+      const gekozenFilter = elementen.aanbiedingFilter.value;
+      elementen.aanbiedingFilter.replaceChildren(maakOptie("alle", "Alle supermarkten"));
+      supermarkten.forEach((supermarkt) => elementen.aanbiedingFilter.append(maakOptie(supermarkt)));
+      if ([...elementen.aanbiedingFilter.options].some((option) => option.value === gekozenFilter)) {
+        elementen.aanbiedingFilter.value = gekozenFilter;
+      }
+    }
+
+    function filterAanbiedingenVoorOverzicht(zoekterm, supermarkt) {
+      const geselecteerdeSupermarkten = supermarkt === "alle" ? [] : [supermarkt];
+      if (zoekterm) {
+        return matchAanbiedingen(zoekterm, aanbiedingenData.aanbiedingen, { supermarkten: geselecteerdeSupermarkten, maximum: 12 });
+      }
+      const filterSupermarkt = supermarkt === "alle" ? "" : normaliseerSupermarktZoeknaam(supermarkt);
+      return aanbiedingenData.aanbiedingen
+        .map(normaliseerAanbieding)
+        .filter((aanbieding) => aanbieding.productnaam && aanbieding.supermarkt)
+        .filter((aanbieding) => !filterSupermarkt || normaliseerSupermarktZoeknaam(aanbieding.supermarkt) === filterSupermarkt)
+        .sort((a, b) => (a.prijs ?? Infinity) - (b.prijs ?? Infinity))
+        .slice(0, 12);
+    }
+
+    function renderAanbiedingenOverzicht() {
+      elementen.aanbiedingenOverzicht.replaceChildren();
+      const zoekterm = elementen.aanbiedingZoekterm.value.trim();
+      const supermarkt = elementen.aanbiedingFilter.value || "alle";
+      const resultaten = isAanbiedingenScanBezig ? [] : filterAanbiedingenVoorOverzicht(zoekterm, supermarkt);
+      const filterTekst = supermarkt === "alle" ? "alle supermarkten" : supermarkt;
+      elementen.aanbiedingenOverzichtStatus.textContent = isAanbiedingenScanBezig
+        ? "Bezig met scannen..."
+        : `${resultaten.length} aanbiedingen getoond voor ${zoekterm || filterTekst}.`;
+
+      if (!resultaten.length) {
+        const leeg = document.createElement("li");
+        leeg.className = "leeg";
+        leeg.textContent = isAanbiedingenScanBezig ? "Aanbiedingen worden geladen." : "Geen aanbiedingen gevonden.";
+        elementen.aanbiedingenOverzicht.append(leeg);
+        return;
+      }
+
+      resultaten.forEach((aanbieding, index) => {
+        elementen.aanbiedingenOverzicht.append(maakAanbiedingRegel(aanbieding, {
+          badge: formatteerAanbiedingBadge(aanbieding, index)
+        }));
+      });
     }
 
     function renderSupermarktKeuzes() {
@@ -557,9 +628,11 @@ const BoodschappenBaas = (() => {
           bewaarItems(localStorage, items, supermarkten);
           if (elementen.filter.value === supermarkt) elementen.filter.value = "alle";
           renderSupermarktOpties();
+          renderAanbiedingFilter();
           renderSupermarktKeuzes();
           renderSupermarktBeheer();
           render();
+          renderAanbiedingenOverzicht();
           status(`${supermarkt} is verwijderd. Boodschappen blijven bestaan.`);
         });
         item.append(naam, knop);
@@ -1082,14 +1155,31 @@ const BoodschappenBaas = (() => {
       supermarkten = bewaarSupermarkten(localStorage, [...supermarkten, naam]);
       elementen.supermarktFormulier.reset();
       renderSupermarktOpties();
+      renderAanbiedingFilter();
       renderSupermarktKeuzes();
       renderSupermarktBeheer();
       render();
+      renderAanbiedingenOverzicht();
       status(`${naam} is toegevoegd.`);
     });
 
     elementen.filter.addEventListener("change", render);
+    elementen.aanbiedingZoekFormulier.addEventListener("submit", (event) => {
+      event.preventDefault();
+      renderAanbiedingenOverzicht();
+    });
+    elementen.aanbiedingFilter.addEventListener("change", renderAanbiedingenOverzicht);
     elementen.aanbiedingenScannen.addEventListener("click", scanAanbiedingen);
+    elementen.tabs.forEach((tab) => {
+      tab.addEventListener("click", () => activeerTab(tab));
+    });
+    elementen.skipLink.addEventListener("click", (event) => {
+      const lijstTab = [...elementen.tabs].find((tab) => tab.dataset.tabTarget === "paneel-lijst");
+      if (!lijstTab) return;
+      event.preventDefault();
+      activeerTab(lijstTab);
+      document.querySelector("#lijst").focus();
+    });
     elementen.thema.addEventListener("change", () => setTheme(elementen.thema.value));
     elementen.routeAanpassen.addEventListener("click", () => {
       const wordtZichtbaar = elementen.routeEditor.hidden;
@@ -1123,10 +1213,12 @@ const BoodschappenBaas = (() => {
     });
 
     renderSupermarktOpties();
+    renderAanbiedingFilter();
     renderSupermarktKeuzes();
     renderSupermarktBeheer();
     renderRouteEditor();
     render();
+    renderAanbiedingenOverzicht();
     registreerServiceWorker();
     if (aanbiedingenData.fout) status("Aanbiedingen zijn tijdelijk niet beschikbaar.");
   }
