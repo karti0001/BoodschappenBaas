@@ -298,7 +298,7 @@ function parseTekstAanbiedingen(tekst, adapter = {}, bron = {}) {
 function uniekeAanbiedingen(aanbiedingen) {
   const gezien = new Set();
   return aanbiedingen.filter((aanbieding) => {
-    // Issue-eis: uniek op productnaam + supermarkt + prijs + geldigheidsperiode.
+    // Uniekheidseis: productnaam + supermarkt + prijs + geldigheidsperiode.
     const sleutel = [
       aanbieding.productnaam,
       aanbieding.supermarkt,
