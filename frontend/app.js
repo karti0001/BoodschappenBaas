@@ -37,6 +37,8 @@ const BoodschappenBaas = (() => {
   const SUPERMARKT_ALIASSEN = {
     ah: "albert heijn"
   };
+  const DRANK_ZOEKTOKENS = ["bier", "frisdrank", "cola", "sap", "water", "wijn", "dranken"];
+  const CATEGORIEEN_OP_ZOEKTEKST = new Map(CATEGORIEEN.map((categorie) => [normaliseerZoektekst(categorie), categorie]));
 
   function slugify(value) {
     return value
@@ -288,16 +290,15 @@ const BoodschappenBaas = (() => {
   function categorieUitAanbieding(aanbiedingCategorie, categorieen = CATEGORIEEN) {
     const gewensteCategorie = normaliseerZoektekst(aanbiedingCategorie);
     if (!gewensteCategorie) return "";
-    const categoriePerNaam = new Map(categorieen.map((categorie) => [normaliseerZoektekst(categorie), categorie]));
-    return categoriePerNaam.get(gewensteCategorie) || "";
+    if (categorieen === CATEGORIEEN) return CATEGORIEEN_OP_ZOEKTEKST.get(gewensteCategorie) || "";
+    return new Map(categorieen.map((categorie) => [normaliseerZoektekst(categorie), categorie])).get(gewensteCategorie) || "";
   }
 
   function kiesCategorieVoorAanbieding(aanbieding, categorieen = CATEGORIEEN) {
     const overeenkomendeCategorie = categorieUitAanbieding(aanbieding.categorie, categorieen);
     if (overeenkomendeCategorie) return overeenkomendeCategorie;
-    const drankTokens = ["bier", "frisdrank", "cola", "sap", "water", "wijn", "dranken"];
     const tekst = normaliseerZoektekst(`${aanbieding.productnaam} ${aanbieding.merk} ${aanbieding.categorie}`);
-    return drankTokens.some((token) => tekst.includes(token)) ? "Dranken" : "Voorraadkast";
+    return DRANK_ZOEKTOKENS.some((token) => tekst.includes(token)) ? "Dranken" : "Voorraadkast";
   }
 
   function voegAanbiedingToeAanBoodschappenlijst(items, supermarkten, aanbieding) {
@@ -639,9 +640,11 @@ const BoodschappenBaas = (() => {
     }
 
     function supermarktenZijnGelijk(eersteSupermarkten, tweedeSupermarkten) {
-      const eerste = [...eersteSupermarkten].sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }));
-      const tweede = [...tweedeSupermarkten].sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }));
-      return eerste.length === tweede.length && eerste.every((supermarkt, index) => supermarkt === tweede[index]);
+      if (eersteSupermarkten === tweedeSupermarkten) return true;
+      if (eersteSupermarkten.length !== tweedeSupermarkten.length) return false;
+      const eersteSet = new Set(eersteSupermarkten.map(normaliseerSupermarktZoeknaam));
+      const tweedeSet = new Set(tweedeSupermarkten.map(normaliseerSupermarktZoeknaam));
+      return eersteSet.size === tweedeSet.size && [...eersteSet].every((supermarkt) => tweedeSet.has(supermarkt));
     }
 
     async function laadAanbiedingenDataMetFallback() {
@@ -714,7 +717,10 @@ const BoodschappenBaas = (() => {
       isAanbiedingenScanBezig = false;
       elementen.aanbiedingenScannen.disabled = false;
       renderAanbiedingenOverzicht();
-      if (!fallbackNodig) return;
+      if (!fallbackNodig) {
+        aanbiedingenStatus("Live aanbiedingen geladen voor je zoekopdracht.");
+        return;
+      }
       if (aanbiedingenData.fout) {
         aanbiedingenStatus("Live ophalen mislukt en lokale aanbiedingen zijn tijdelijk niet beschikbaar.");
         return;
