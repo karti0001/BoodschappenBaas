@@ -7,13 +7,13 @@ const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
 const collator = new Intl.Collator("nl", { sensitivity: "base" });
 const PRODUCTNAAM_VELDEN = ["productnaam", "productName", "name", "naam", "title", "description"];
-const SUPERMARKT_VELDEN = ["supermarket.name", "store.name", "shop.name", "retailer.name", "offers.seller.name", "supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant"];
-const PRIJS_VELDEN = ["prijs", "price", "currentPrice", "current_price", "offerPrice", "price.value", "pricing.price", "salesPrice", "offers.price", "offers.lowPrice"];
+const SUPERMARKT_VELDEN = ["supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name", "retailer.name", "offers.seller.name"];
+const PRIJS_VELDEN = ["prijs", "price", "currentPrice", "current_price", "offerPrice", "salesPrice", "price.value", "pricing.price", "offers.price", "offers.lowPrice"];
 const OUDE_PRIJS_VELDEN = ["oudePrijs", "oldPrice", "originalPrice", "original_price", "beforePrice", "normalPrice", "listPrice", "wasPrice", "offers.highPrice"];
 
 function vindVeldWaarde(object, delen) {
   if (object === undefined || object === null) return "";
-  if (!delen.length) return object;
+  if (!delen.length) return typeof object === "object" ? "" : object;
   if (Array.isArray(object)) {
     for (const item of object) {
       const waarde = vindVeldWaarde(item, delen);
@@ -101,12 +101,10 @@ function normaliseer(node, bron = BRON) {
   };
 }
 
-function haalJsonWaardeNaMarker(tekst, marker, vanaf = 0) {
-  const markerIndex = tekst.indexOf(marker, vanaf);
-  if (markerIndex === -1) return null;
-  const start = tekst.slice(markerIndex + marker.length).search(/[\[{]/);
+function haalJsonWaardeNaMarker(tekst, markerIndex, markerLengte) {
+  const start = tekst.slice(markerIndex + markerLengte).search(/[\[{]/);
   if (start === -1) return null;
-  const valueStart = markerIndex + marker.length + start;
+  const valueStart = markerIndex + markerLengte + start;
   let diepte = 0;
   let inString = false;
   let escape = false;
@@ -142,6 +140,7 @@ function haalJsonWaardeNaMarker(tekst, marker, vanaf = 0) {
 
 function parseNextFlightAanbiedingen(tekst) {
   const aanbiedingen = [];
+  const marker = "\"offersFromProps\":";
   const pushRegex = /self\.__next_f\.push\(\[1,"((?:\\.|[^"\\])*)"\]\)/g;
   for (const match of tekst.matchAll(pushRegex)) {
     let chunk;
@@ -150,9 +149,9 @@ function parseNextFlightAanbiedingen(tekst) {
     } catch {
       continue;
     }
-    let vanaf = 0;
-    while (chunk.indexOf("\"offersFromProps\":", vanaf) !== -1) {
-      const resultaat = haalJsonWaardeNaMarker(chunk, "\"offersFromProps\":", vanaf);
+    let markerIndex = chunk.indexOf(marker);
+    while (markerIndex !== -1) {
+      const resultaat = haalJsonWaardeNaMarker(chunk, markerIndex, marker.length);
       if (!resultaat) break;
       try {
         const parsed = JSON.parse(resultaat.waarde);
@@ -160,7 +159,7 @@ function parseNextFlightAanbiedingen(tekst) {
       } catch {
         // Negeer kapotte flight-fragmenten; andere chunks kunnen nog bruikbaar zijn.
       }
-      vanaf = resultaat.eindIndex;
+      markerIndex = chunk.indexOf(marker, resultaat.eindIndex);
     }
   }
   return aanbiedingen;
