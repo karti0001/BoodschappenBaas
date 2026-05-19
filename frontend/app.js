@@ -54,10 +54,10 @@ const BoodschappenBaas = (() => {
       return trimmed
         .slice(1, -1)
         .split(",")
-        .map((item) => item.trim().replace(/^[']|[']$/g, "").replace(/^[\"]|[\"]$/g, ""))
+        .map((item) => item.trim().replace(/^['"]|['"]$/g, ""))
         .filter(Boolean);
     }
-    return trimmed.replace(/^[']|[']$/g, "").replace(/^[\"]|[\"]$/g, "");
+    return trimmed.replace(/^['"]|['"]$/g, "");
   }
 
   function parseYamlItems(yaml) {
@@ -545,7 +545,7 @@ const BoodschappenBaas = (() => {
           const supermarktVeldset = document.createElement("fieldset");
           supermarktVeldset.className = "boodschap__supermarkten";
           const supermarktLegend = document.createElement("legend");
-          supermarktLegend.textContent = "Categorieën";
+          supermarktLegend.textContent = "Supermarkten";
           const supermarktKeuzes = document.createElement("div");
           supermarktKeuzes.className = "chips chips--compact";
           supermarkten.forEach((supermarkt) => {
