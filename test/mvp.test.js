@@ -249,6 +249,10 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<html lang="nl">/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
+  assert.match(html, /<form id="toevoeg-formulier" class="formulier">[\s\S]*<button type="submit">Toevoegen<\/button>[\s\S]*<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>[\s\S]*<\/form>/);
+  assert.match(html, /<details class="kaart instellingen" aria-labelledby="route-titel" open>/);
+  assert.match(html, /<summary class="voorbereiding-toggle" aria-controls="voorbereiding-inhoud">/);
+  assert.match(html, /<div id="voorbereiding-inhoud" class="voorbereiding-inhoud">/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
   assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
   assert.match(html, /<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>/);
