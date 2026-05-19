@@ -21,9 +21,9 @@
       </nav>
       <div class="held__layout">
         <div class="held__tekst">
-          <p class="eyebrow">Professionele winkelplanning</p>
+          <p class="eyebrow">Snelle boodschappenlijst</p>
           <h1>BoodschappenBaas</h1>
-          <p>Plan je boodschappen met een overzichtelijk dashboard, heldere route-indeling en lokale opslag op je apparaat.</p>
+          <p>Voeg boodschappen toe, kies je supermarkt of categorie en gebruik de lijst direct op desktop en mobiel.</p>
         </div>
         <div class="held__paneel" aria-label="App kenmerken">
           <div>
@@ -43,109 +43,56 @@
     </header>
 
     <main>
-      <nav class="app-tabs" role="tablist" aria-label="BoodschappenBaas onderdelen">
-        <button id="tab-aanbiedingen" class="app-tab is-actief" type="button" role="tab" aria-selected="true" aria-controls="paneel-aanbiedingen" data-tab-target="paneel-aanbiedingen">Aanbiedingen zoeken</button>
-        <button id="tab-lijst" class="app-tab" type="button" role="tab" aria-selected="false" aria-controls="paneel-lijst" data-tab-target="paneel-lijst">Boodschappenlijst</button>
-      </nav>
-
-      <section id="paneel-aanbiedingen" class="tab-paneel" role="tabpanel" aria-labelledby="tab-aanbiedingen">
-        <section class="kaart aanbiedingen-kaart" aria-labelledby="aanbiedingen-titel">
-          <div>
-            <p class="eyebrow">Actuele acties</p>
-            <h2 id="aanbiedingen-titel">Aanbiedingen zoeken</h2>
-            <p>Zoeken en verversen lezen alleen het lokale <code>data/aanbiedingen.json</code>-bestand opnieuw in. Op GitHub Pages haalt de knop dus geen live data bij supermarkten op; je kunt resultaten direct aan je boodschappenlijst toevoegen.</p>
+      <section class="kaart formulier-kaart" aria-labelledby="toevoegen-titel">
+        <div>
+          <p class="eyebrow">Nieuwe boodschap</p>
+          <h2 id="toevoegen-titel">Boodschap toevoegen</h2>
+        </div>
+        <form id="toevoeg-formulier" class="formulier">
+          <div class="veld">
+            <label for="naam">Naam</label>
+            <input id="naam" name="naam" type="text" autocomplete="off" required placeholder="Bijv. havermout">
           </div>
-          <form id="aanbiedingen-zoek-formulier" class="aanbiedingen-zoek-formulier">
-            <div class="veld">
-              <label for="aanbiedingen-zoekterm">Product, merk of categorie</label>
-              <input id="aanbiedingen-zoekterm" name="aanbiedingen-zoekterm" type="search" autocomplete="off" placeholder="Bijv. kwark of frisdrank">
-            </div>
-            <div class="veld">
-              <label for="aanbiedingen-supermarkt-filter">Supermarkt</label>
-              <select id="aanbiedingen-supermarkt-filter" name="aanbiedingen-supermarkt-filter"></select>
-            </div>
-            <div class="formulier-acties">
-              <button type="submit">Zoeken</button>
-              <button id="aanbiedingen-scannen" type="button">Ververs lokale aanbiedingen</button>
-            </div>
-          </form>
-          <p id="aanbiedingen-meta" class="aanbiedingen-meta" aria-live="polite"></p>
-          <p id="aanbiedingen-overzicht-status" class="status" role="status" aria-live="polite"></p>
-          <ul id="aanbiedingen-overzicht" class="aanbiedingen-overzicht" aria-label="Gevonden aanbiedingen"></ul>
-        </section>
-      </section>
-
-      <section id="paneel-lijst" class="tab-paneel" role="tabpanel" aria-labelledby="tab-lijst" hidden>
-        <section class="kaart formulier-kaart" aria-labelledby="toevoegen-titel">
-          <div>
-            <p class="eyebrow">Nieuwe entry</p>
-            <h2 id="toevoegen-titel">Boodschap toevoegen</h2>
+          <div class="veld">
+            <label for="categorie">Categorie</label>
+            <select id="categorie" name="categorie" required></select>
           </div>
-          <form id="toevoeg-formulier" class="formulier">
-            <div class="veld">
-              <label for="naam">Naam</label>
-              <input id="naam" name="naam" type="text" autocomplete="off" required placeholder="Bijv. havermout">
-            </div>
-            <div class="veld">
-              <label for="categorie">Categorie</label>
-              <select id="categorie" name="categorie" required></select>
-            </div>
-            <fieldset class="supermarkten">
-              <legend>Supermarkten</legend>
-              <div id="supermarkt-keuzes" class="chips"></div>
-            </fieldset>
-            <div class="formulier-acties">
+          <div class="veld">
+            <label for="supermarkt-filter">Kies supermarkt</label>
+            <select id="supermarkt-filter" name="supermarkt-filter"></select>
+          </div>
+          <fieldset class="supermarkten">
+            <legend>Supermarktcategorieën</legend>
+            <div id="supermarkt-keuzes" class="chips"></div>
+          </fieldset>
+          <div class="formulier-acties">
+            <button type="submit">Toevoegen</button>
+            <button id="alles-uitvinken" type="button">Alles uitvinken</button>
+          </div>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="supermarkt-beheer" aria-labelledby="supermarkt-beheer-titel">
+          <h3 id="supermarkt-beheer-titel">Supermarkt toevoegen</h3>
+          <form id="supermarkt-formulier" class="supermarkt-formulier">
+            <label for="supermarkt-naam">Nieuwe supermarkt</label>
+            <div class="supermarkt-formulier__rij">
+              <input id="supermarkt-naam" name="supermarkt-naam" type="text" autocomplete="off" placeholder="Bijv. Plus">
               <button type="submit">Toevoegen</button>
             </div>
           </form>
-        </section>
+          <ul id="supermarkt-lijst" class="supermarkt-lijst" aria-label="Beschikbare supermarkten"></ul>
+        </div>
+      </section>
 
-        <section class="route-grid">
-          <details class="kaart instellingen" open>
-            <summary class="voorbereiding-toggle">
-              <span id="voorbereiding-label" class="eyebrow">Voorbereiding</span>
-              <h2 id="voorbereiding-titel" class="voorbereiding-toggle__titel">Optimale route</h2>
-              <span class="voorbereiding-toggle__icoon" aria-hidden="true">⌄</span>
-            </summary>
-            <div id="voorbereiding-inhoud" class="voorbereiding-inhoud">
-              <label for="supermarkt-filter">Kies supermarkt</label>
-              <select id="supermarkt-filter" name="supermarkt-filter"></select>
-              <div class="supermarkt-beheer" aria-labelledby="supermarkt-beheer-titel">
-                <h3 id="supermarkt-beheer-titel">Supermarkten beheren</h3>
-                <form id="supermarkt-formulier" class="supermarkt-formulier">
-                  <label for="supermarkt-naam">Nieuwe supermarkt</label>
-                  <div class="supermarkt-formulier__rij">
-                    <input id="supermarkt-naam" name="supermarkt-naam" type="text" autocomplete="off" placeholder="Bijv. Plus">
-                    <button type="submit">Toevoegen</button>
-                  </div>
-                </form>
-                <ul id="supermarkt-lijst" class="supermarkt-lijst" aria-label="Beschikbare supermarkten"></ul>
-              </div>
-              <button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen</button>
-              <div id="route-editor" class="route-editor" hidden>
-                <p>Versleep de categorieën naar jouw supermarkt-looproute.</p>
-                <ol id="route-volgorde" class="route-volgorde" aria-label="Categorievolgorde"></ol>
-                <div class="route-acties">
-                  <button id="route-opslaan" type="button">Opslaan</button>
-                  <button id="route-reset" type="button">Reset route</button>
-                </div>
-              </div>
-              <button id="alles-uitvinken" type="button">Alles uitvinken</button>
-              <p id="status" class="status" role="status" aria-live="polite"></p>
-              <div class="mandje" aria-labelledby="mandje-titel">
-                <div class="mandje__icoon" aria-hidden="true">🧺</div>
-                <h3 id="mandje-titel">Winkelmandje</h3>
-                <ul id="mandje-lijst"></ul>
-              </div>
-            </div>
-          </details>
-
-          <section id="lijst" class="kaart lijst-kaart" aria-labelledby="lijst-titel" tabindex="-1">
-            <p class="eyebrow">Boodschappenlijst</p>
-            <h2 id="lijst-titel">Items per categorie</h2>
-            <div id="boodschappenlijst" class="lijst"></div>
-          </section>
-        </section>
+      <section id="lijst" class="kaart lijst-kaart" aria-labelledby="lijst-titel" tabindex="-1">
+        <p class="eyebrow">Boodschappenlijst</p>
+        <h2 id="lijst-titel">Items per categorie</h2>
+        <div id="boodschappenlijst" class="lijst"></div>
+        <div class="mandje" aria-labelledby="mandje-titel">
+          <div class="mandje__icoon" aria-hidden="true">🧺</div>
+          <h3 id="mandje-titel">Winkelmandje</h3>
+          <ul id="mandje-lijst"></ul>
+        </div>
       </section>
     </main>
 

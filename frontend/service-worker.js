@@ -26,21 +26,6 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
-  if (url.pathname.endsWith("/data/aanbiedingen.json")) {
-    const aanbiedingenRequest = new Request(`${url.origin}/data/aanbiedingen.json`);
-    event.respondWith(
-      fetch(event.request, { cache: "reload" })
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(aanbiedingenRequest, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }))
-    );
-    return;
-  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
