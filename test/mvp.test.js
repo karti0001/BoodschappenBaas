@@ -141,6 +141,9 @@ test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
 test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw matchen", () => {
   const js = read("frontend/app.js");
 
+  assert.equal(app.formatteerAanbiedingenTitel(0, true), "Bezig met scannen...");
+  assert.equal(app.formatteerAanbiedingenTitel(0), "Geen actuele aanbieding gevonden");
+  assert.equal(app.formatteerAanbiedingenTitel(2), "2 aanbiedingen gevonden");
   assert.deepEqual(app.maakLegeAanbiedingenData(), {
     aanbiedingen: [],
     bijgewerktOp: "",
@@ -149,9 +152,11 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
   });
   assert.match(js, /if \(isAanbiedingenScanBezig\) return;/);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
-  assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);[\s\S]*render\(\);[\s\S]*status\("Bezig met scannen\.\.\."\);[\s\S]*aanbiedingenData = await laadAanbiedingenBestand\(\);/);
+  assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);/);
+  assert.match(js, /status\("Bezig met scannen\.\.\."\);/);
+  assert.match(js, /aanbiedingenData = await laadAanbiedingenBestand\(\);/);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
-  assert.match(js, /isAanbiedingenScanBezig[\s\S]*\? "Bezig met scannen\.\.\."/);
+  assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
 });
 
 test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () => {

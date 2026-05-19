@@ -293,6 +293,11 @@ const BoodschappenBaas = (() => {
     return index === 0 ? `Goedkoopste bij ${aanbieding.supermarkt}` : `In de aanbieding bij ${aanbieding.supermarkt}`;
   }
 
+  function formatteerAanbiedingenTitel(aantal, isScanBezig = false) {
+    if (isScanBezig) return "Bezig met scannen...";
+    return aantal ? `${aantal} aanbieding${aantal === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden";
+  }
+
   function matchAanbiedingen(zoekterm, aanbiedingen, opties = {}) {
     const queryTokens = maakZoekTokens(zoekterm);
     if (!queryTokens.length) return [];
@@ -777,9 +782,7 @@ const BoodschappenBaas = (() => {
           const aanbiedingenBlok = document.createElement("div");
           aanbiedingenBlok.className = `aanbiedingen${itemAanbiedingen.length ? "" : " aanbiedingen--leeg"}`;
           const aanbiedingenTitel = document.createElement("strong");
-          aanbiedingenTitel.textContent = isAanbiedingenScanBezig
-            ? "Bezig met scannen..."
-            : (itemAanbiedingen.length ? `${itemAanbiedingen.length} aanbieding${itemAanbiedingen.length === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden");
+          aanbiedingenTitel.textContent = formatteerAanbiedingenTitel(itemAanbiedingen.length, isAanbiedingenScanBezig);
           aanbiedingenBlok.append(aanbiedingenTitel);
           if (!isAanbiedingenScanBezig && itemAanbiedingen.length) {
             const lijst = document.createElement("ul");
@@ -963,6 +966,7 @@ const BoodschappenBaas = (() => {
     normaliseerZoektekst,
     maakZoekTokens,
     normaliseerAanbieding,
+    formatteerAanbiedingenTitel,
     matchAanbiedingen,
     laadAanbiedingenBestand,
     maakLegeAanbiedingenData,
