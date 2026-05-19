@@ -392,18 +392,28 @@ const BoodschappenBaas = (() => {
       .slice(0, opties.maximum || 3);
   }
 
-  function selecteerAanbiedingenOverzicht(zoekterm, supermarkt, aanbiedingen, maximum = MAX_AANBIEDINGEN_OVERZICHT) {
-    const geselecteerdeSupermarkten = supermarkt === "alle" ? [] : [supermarkt];
-    if (zoekterm) {
-      return matchAanbiedingen(zoekterm, aanbiedingen, { supermarkten: geselecteerdeSupermarkten, maximum });
-    }
+  function filterAanbiedingenOpSupermarkt(aanbiedingen, supermarkt) {
     const filterSupermarkt = supermarkt === "alle" ? "" : normaliseerSupermarktZoeknaam(supermarkt);
     return (Array.isArray(aanbiedingen) ? aanbiedingen : [])
       .map(normaliseerAanbieding)
       .filter((aanbieding) => aanbieding.productnaam && aanbieding.supermarkt)
-      .filter((aanbieding) => !filterSupermarkt || normaliseerSupermarktZoeknaam(aanbieding.supermarkt) === filterSupermarkt)
+      .filter((aanbieding) => !filterSupermarkt || normaliseerSupermarktZoeknaam(aanbieding.supermarkt) === filterSupermarkt);
+  }
+
+  function selecteerAanbiedingenOverzicht(zoekterm, supermarkt, aanbiedingen, maximum = MAX_AANBIEDINGEN_OVERZICHT) {
+    const gefilterdeAanbiedingen = filterAanbiedingenOpSupermarkt(aanbiedingen, supermarkt);
+    if (zoekterm) {
+      return matchAanbiedingen(zoekterm, gefilterdeAanbiedingen, { maximum });
+    }
+    return gefilterdeAanbiedingen
       .sort((a, b) => (a.prijs ?? Infinity) - (b.prijs ?? Infinity))
       .slice(0, maximum);
+  }
+
+  function formatteerAanbiedingenOverzichtStatus(aantal, zoekterm, supermarkt, isBezig = false) {
+    if (isBezig) return "Bezig met scannen...";
+    if (zoekterm && supermarkt !== "alle") return `${aantal} aanbiedingen getoond voor ${zoekterm} bij ${supermarkt}.`;
+    return `${aantal} aanbiedingen getoond voor ${zoekterm || (supermarkt === "alle" ? "alle supermarkten" : supermarkt)}.`;
   }
 
   async function laadAanbiedingenBestand(fetcher = fetch) {
@@ -570,8 +580,7 @@ const BoodschappenBaas = (() => {
       const zoekterm = elementen.aanbiedingZoekterm.value.trim();
       const supermarkt = elementen.aanbiedingFilter.value || "alle";
       const resultaten = isAanbiedingenScanBezig ? [] : selecteerAanbiedingenOverzicht(zoekterm, supermarkt, aanbiedingenData.aanbiedingen);
-      const filterTekst = supermarkt === "alle" ? "alle supermarkten" : supermarkt;
-      aanbiedingenStatus(isAanbiedingenScanBezig ? "Bezig met scannen..." : `${resultaten.length} aanbiedingen getoond voor ${zoekterm || filterTekst}.`);
+      aanbiedingenStatus(formatteerAanbiedingenOverzichtStatus(resultaten.length, zoekterm, supermarkt, isAanbiedingenScanBezig));
 
       if (!resultaten.length) {
         const leeg = document.createElement("li");
@@ -1273,6 +1282,7 @@ const BoodschappenBaas = (() => {
     formatteerAanbiedingenTitel,
     matchAanbiedingen,
     selecteerAanbiedingenOverzicht,
+    formatteerAanbiedingenOverzichtStatus,
     laadAanbiedingenBestand,
     maakLegeAanbiedingenData,
     setTheme,

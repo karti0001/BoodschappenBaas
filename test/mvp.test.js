@@ -164,8 +164,11 @@ test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", (
   const geenResultaten = app.selecteerAanbiedingenOverzicht("kwark", "Lidl", aanbiedingen, 5);
 
   assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.productnaam), ["Volle kwark", "Magere kwark"]);
+  assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.prijs), [0.99, 1.09]);
   assert.deepEqual(ahZoekresultaten.map((aanbieding) => aanbieding.productnaam), ["Magere kwark", "Kwark dessert"]);
   assert.deepEqual(geenResultaten, []);
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "AH"), "2 aanbiedingen getoond voor kwark bij AH.");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Bezig met scannen...");
 });
 
 test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
@@ -411,7 +414,9 @@ test("tabs scheiden aanbiedingen zoeken van boodschappenbeheer zonder routes", (
   assert.match(js, /document\.querySelector\("#lijst"\)\.focus\(\)/);
   assert.match(js, /renderAanbiedingenOverzicht/);
   assert.match(js, /function selecteerAanbiedingenOverzicht\(zoekterm, supermarkt, aanbiedingen, maximum = MAX_AANBIEDINGEN_OVERZICHT\)/);
-  assert.match(js, /matchAanbiedingen\(zoekterm, aanbiedingen, \{ supermarkten: geselecteerdeSupermarkten, maximum \}\)/);
+  assert.match(js, /function filterAanbiedingenOpSupermarkt\(aanbiedingen, supermarkt\)/);
+  assert.match(js, /matchAanbiedingen\(zoekterm, gefilterdeAanbiedingen, \{ maximum \}\)/);
+  assert.match(js, /formatteerAanbiedingenOverzichtStatus\(resultaten\.length, zoekterm, supermarkt, isAanbiedingenScanBezig\)/);
   assert.match(css, /\.app-tabs/);
   assert.match(css, /\.tab-paneel\[hidden\]/);
   assert.match(css, /@media \(max-width: 520px\) \{[\s\S]*\.app-tabs \{[\s\S]*position: fixed;/);
