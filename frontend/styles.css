@@ -537,8 +537,8 @@ main {
 }
 
 .aanbiedingen__afbeelding {
-  width: 4rem;
-  max-width: 100%;
+  width: 100%;
+  max-width: 4rem;
   border: 1px solid var(--rand);
   border-radius: 0.6rem;
   background: var(--oppervlak);

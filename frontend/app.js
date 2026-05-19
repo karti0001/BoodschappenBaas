@@ -708,7 +708,7 @@ const BoodschappenBaas = (() => {
       const detail = document.createElement("span");
       detail.textContent = [
         aanbieding.productnaam,
-        aanbieding.merk ? `merk ${aanbieding.merk}` : "",
+        aanbieding.merk,
         aanbieding.categorie,
         aanbieding.oudePrijsTekst || (aanbieding.oudePrijs ? `was ${EURO_FORMATTER.format(aanbieding.oudePrijs)}` : ""),
         aanbieding.korting,
