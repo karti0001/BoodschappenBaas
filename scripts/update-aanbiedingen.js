@@ -164,7 +164,7 @@ function normaliseer(node, bron = BRON, opties = {}) {
     bronType: opties.bronType || normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bronType", "sourceType"])) || "scrape",
     betrouwbaarheid: opties.betrouwbaarheid || normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["betrouwbaarheid", "reliability"])) || "tekst",
     opgehaaldOp: opties.opgehaaldOp || "",
-    bijgewerktOp: opties.opgehaaldOp || normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt", "validFrom"])),
+    bijgewerktOp: normaliseerTekstWaarde(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt", "validFrom"])),
     afbeelding: absoluteUrl(vindEersteVeldWaarde(node, ["afbeelding", "image.url", "image.imageUrl", "imageUrl", "thumbnail", "thumbnailUrl", "image"]), bron),
     url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path", "permaname", "offers.url"]), bron)
   };
@@ -257,7 +257,6 @@ function tekstZonderHtml(tekst) {
   return String(tekst || "")
     .replace(/<[^>]+>/g, "\n")
     .replace(/&euro;|&#8364;/gi, "€")
-    .replace(/&amp;/gi, "&")
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+\n/g, "\n");
 }
@@ -294,7 +293,7 @@ function uniekeAanbiedingen(aanbiedingen) {
       aanbieding.productnaam,
       aanbieding.supermarkt,
       aanbieding.prijs,
-      aanbieding.geldigheidsperiode || `${aanbieding.geldigVan || ""} ${aanbieding.geldigTot || ""}`
+      aanbieding.geldigheidsperiode || [aanbieding.geldigVan, aanbieding.geldigTot].filter(Boolean).join(" t/m ")
     ].map((waarde) => String(waarde || "").toLocaleLowerCase("nl")).join("\u0000");
     if (gezien.has(sleutel)) return false;
     gezien.add(sleutel);
