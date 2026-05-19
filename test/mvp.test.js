@@ -427,7 +427,7 @@ test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
     source: "reclamefolder",
     validFrom: "2026-04-14T22:00:00.000Z",
     permaname: "rode-bloemen-top",
-    retailer: { name: "Albert Heijn" },
+    retailer: { name: "Test Retailer" },
     image: { imageUrl: "https://example.test/rode-bloemen.png" }
   })}]}]`;
   const html = `<script>self.__next_f.push([1,${JSON.stringify(flightData)}])</script>`;
@@ -438,7 +438,7 @@ test("aanbiedingenupdate ondersteunt Reclamefolder Next.js flight data", () => {
 
   assert.equal(catalogus.length, 1);
   assert.equal(aanbieding.productnaam, "Rode Bloemen Top");
-  assert.equal(aanbieding.supermarkt, "Albert Heijn");
+  assert.equal(aanbieding.supermarkt, "Test Retailer");
   assert.equal(aanbieding.prijs, 65);
   assert.equal(aanbieding.oudePrijs, 109.95);
   assert.equal(aanbieding.afbeelding, "https://example.test/rode-bloemen.png");
