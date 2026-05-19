@@ -56,6 +56,25 @@ test("supermarkt verwijderen behoudt items en koppelt die supermarkt los", () =>
   assert.deepEqual(Object.keys(groepenZonderSupermarkt), ["Brood"]);
 });
 
+test("supermarkt van bestaand item wijzigen bewaart overige itemgegevens", () => {
+  const items = [
+    app.normaliseerItem({ id: "melk", naam: "melk", categorie: "Zuivel", supermarkten: ["AH"], afgevinkt: true, eigenItem: true }),
+    app.normaliseerItem({ id: "brood", naam: "brood", categorie: "Brood", supermarkten: ["AH"] })
+  ];
+
+  const bijgewerkt = app.wijzigItemSupermarkten(items, "melk", ["Lidl"], ["AH", "Lidl"]);
+  const melk = bijgewerkt.find((item) => item.id === "melk");
+
+  assert.deepEqual(melk.supermarkten, ["Lidl"]);
+  assert.equal(melk.naam, "melk");
+  assert.equal(melk.categorie, "Zuivel");
+  assert.equal(melk.afgevinkt, true);
+  assert.equal(melk.eigenItem, true);
+  assert.deepEqual(bijgewerkt.find((item) => item.id === "brood").supermarkten, ["AH"]);
+  assert.deepEqual(Object.keys(app.groepeerVoorRoute(bijgewerkt, "Lidl")), ["Zuivel"]);
+  assert.deepEqual(Object.keys(app.groepeerVoorRoute(bijgewerkt, "AH")), ["Brood"]);
+});
+
 test("supermarkten worden uniek opgeslagen en geladen", () => {
   const storage = {
     waarde: "",
@@ -242,6 +261,18 @@ test("categorieblokken zijn direct versleepbaar zonder itembediening te blokkere
   assert.match(css, /\.categorie \{[\s\S]*cursor: grab;/);
   assert.match(css, /\.categorie ul \{[\s\S]*cursor: default;/);
   assert.match(css, /\.categorie__kop \{[\s\S]*touch-action: none;/);
+});
+
+test("boodschappenlijst toont supermarktkeuzes per bestaand item", () => {
+  const js = read("frontend/app.js");
+  const css = read("frontend/styles.css");
+
+  assert.match(js, /boodschap__supermarkten/);
+  assert.match(js, /Supermarkt aanpassen/);
+  assert.match(js, /wijzigItemSupermarkten\(items, item\.id, gekozenSupermarkten, supermarkten\)/);
+  assert.match(js, /bewaarItems\(localStorage, items, supermarkten\);/);
+  assert.match(js, /row\.append\(checkbox, tekst, verwijderKnop, supermarktVeldset, aanbiedingenBlok\);/);
+  assert.match(css, /\.boodschap__supermarkten/);
 });
 
 test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {

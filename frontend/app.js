@@ -227,6 +227,13 @@ const BoodschappenBaas = (() => {
     }, beschikbareSupermarkten));
   }
 
+  function wijzigItemSupermarkten(items, id, gekozenSupermarkten, beschikbareSupermarkten = SUPERMARKTEN) {
+    return items.map((item) => item.id === id ? normaliseerItem({
+      ...item,
+      supermarkten: gekozenSupermarkten
+    }, beschikbareSupermarkten) : item);
+  }
+
   function formatteerSupermarkten(item) {
     return item.supermarkten.length ? item.supermarkten.join(", ") : "Geen supermarkt";
   }
@@ -769,6 +776,31 @@ const BoodschappenBaas = (() => {
           meta.className = "boodschap__meta";
           meta.textContent = formatteerSupermarkten(item);
           tekst.append(naam, meta);
+          const supermarktVeldset = document.createElement("fieldset");
+          supermarktVeldset.className = "boodschap__supermarkten";
+          const supermarktLegend = document.createElement("legend");
+          supermarktLegend.textContent = "Supermarkt aanpassen";
+          const supermarktKeuzes = document.createElement("div");
+          supermarktKeuzes.className = "chips";
+          supermarkten.forEach((supermarkt) => {
+            const supermarktLabel = document.createElement("label");
+            supermarktLabel.className = "chip";
+            const supermarktCheckbox = document.createElement("input");
+            supermarktCheckbox.type = "checkbox";
+            supermarktCheckbox.name = `supermarkten-${item.id}`;
+            supermarktCheckbox.value = supermarkt;
+            supermarktCheckbox.checked = item.supermarkten.includes(supermarkt);
+            supermarktLabel.append(supermarktCheckbox, document.createTextNode(supermarkt));
+            supermarktKeuzes.append(supermarktLabel);
+          });
+          supermarktKeuzes.addEventListener("change", () => {
+            const gekozenSupermarkten = [...supermarktKeuzes.querySelectorAll("input:checked")].map((input) => input.value);
+            items = wijzigItemSupermarkten(items, item.id, gekozenSupermarkten, supermarkten);
+            bewaarItems(localStorage, items, supermarkten);
+            render();
+            status(`${item.naam} is bijgewerkt voor ${formatteerSupermarkten(items.find((boodschap) => boodschap.id === item.id))}.`);
+          });
+          supermarktVeldset.append(supermarktLegend, supermarktKeuzes);
           const cacheKey = [item.naam, ...item.supermarkten].join(CACHE_SCHEIDINGSTEKEN);
           if (!aanbiedingenCache.has(cacheKey)) {
             aanbiedingenCache.set(cacheKey, matchAanbiedingen(item.naam, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: 3 }));
@@ -825,7 +857,7 @@ const BoodschappenBaas = (() => {
             render();
             status(`${item.naam} is verwijderd.`);
           });
-          row.append(checkbox, tekst, verwijderKnop, aanbiedingenBlok);
+          row.append(checkbox, tekst, verwijderKnop, supermarktVeldset, aanbiedingenBlok);
           list.append(row);
         });
 
@@ -957,6 +989,7 @@ const BoodschappenBaas = (() => {
     nieuwEigenItem,
     verwijderItem,
     ontkoppelSupermarkt,
+    wijzigItemSupermarkten,
     formatteerSupermarkten,
     normaliseerZoektekst,
     maakZoekTokens,
