@@ -4,6 +4,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const app = require("../frontend/app.js");
+const aanbiedingenUpdater = require("../scripts/update-aanbiedingen.js");
 const root = path.resolve(__dirname, "..");
 
 function read(relativePath) {
@@ -137,6 +138,34 @@ test("aanbiedingenbestand geeft foutmelding bij niet-ok response", async () => {
   assert.match(resultaat.fout, /status 503/);
 });
 
+test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () => {
+  const html = `<script type="application/ld+json">${JSON.stringify({
+    "@type": "Product",
+    name: "Kwark voordeelpak",
+    supermarket: "Lidl",
+    offers: [{
+      price: "0.99",
+      highPrice: "1.49",
+      seller: { name: "Lidl" },
+      url: "/aanbiedingen/kwark"
+    }],
+    description: "Aanbieding"
+  })}</script>`;
+  const catalogus = aanbiedingenUpdater.parseCatalogus(html, "text/html");
+  const aanbieding = aanbiedingenUpdater.vindObjecten(catalogus)
+    .map((node) => aanbiedingenUpdater.normaliseer(node, "https://www.reclamefolder.nl/aanbiedingen/"))
+    .find(Boolean);
+
+  assert.deepEqual(aanbiedingenUpdater.BRONNEN, [
+    "https://allesupers.nl/catalog/all",
+    "https://www.reclamefolder.nl/aanbiedingen/"
+  ]);
+  assert.equal(aanbieding.productnaam, "Kwark voordeelpak");
+  assert.equal(aanbieding.supermarkt, "Lidl");
+  assert.equal(aanbieding.prijs, 0.99);
+  assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/kwark");
+});
+
 test("zoektokens vangen eenvoudige meervouden op zonder vaste woorden te beschadigen", () => {
   assert.deepEqual(app.maakZoekTokens("blauwe bessen"), ["blauwe", "bes"]);
   assert.deepEqual(app.maakZoekTokens("mannen"), ["man"]);
@@ -230,6 +259,12 @@ test("aanbiedingenworkflow kan handmatig en dagelijks draaien", () => {
   const data = JSON.parse(read("frontend/data/aanbiedingen.json"));
 
   assert.equal(data.bron, "https://allesupers.nl/catalog/all");
+  assert.deepEqual(data.bronnen, [
+    "https://allesupers.nl/catalog/all",
+    "https://www.reclamefolder.nl/aanbiedingen/"
+  ]);
+  assert.ok(data.aanbiedingen.length > 0);
+  assert.ok(data.aanbiedingen.some((aanbieding) => aanbieding.productnaam.toLowerCase().includes("kwark")));
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /node scripts\/update-aanbiedingen\.js/);

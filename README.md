@@ -29,7 +29,7 @@ De gebouwde site staat na `npm run build` in `dist/`.
 
 De repository-seed staat in [`frontend/data/boodschappen.yml`](frontend/data/boodschappen.yml). Nieuwe browser-items worden niet naar de repository geschreven, maar in `localStorage` bewaard zodat de app offline en privacyvriendelijk blijft.
 
-Aanbiedingen komen uit [`frontend/data/aanbiedingen.json`](frontend/data/aanbiedingen.json). De frontend leest alleen dit statische bestand, zodat GitHub Pages zonder server-side backend blijft werken. De workflow **Aanbiedingen bijwerken** haalt dagelijks en handmatig via `workflow_dispatch` data op uit `https://allesupers.nl/catalog/all` en commit alleen dit JSON-bestand wanneer de inhoud wijzigt. Als de bron tijdelijk niet bereikbaar is, blijft de app werken en toont zij subtiel dat er geen actuele aanbieding is gevonden.
+Aanbiedingen komen uit [`frontend/data/aanbiedingen.json`](frontend/data/aanbiedingen.json). De frontend leest alleen dit statische bestand, zodat GitHub Pages zonder server-side backend blijft werken. De workflow **Aanbiedingen bijwerken** haalt dagelijks en handmatig via `workflow_dispatch` data op uit `https://allesupers.nl/catalog/all` en `https://www.reclamefolder.nl/aanbiedingen/` en commit alleen dit JSON-bestand wanneer de inhoud wijzigt. Als de bronnen tijdelijk niet bereikbaar zijn, blijft de app werken en toont zij subtiel dat er geen actuele aanbieding is gevonden.
 
 ## Deployment
 
