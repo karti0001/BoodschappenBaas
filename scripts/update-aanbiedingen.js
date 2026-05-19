@@ -118,28 +118,7 @@ function zelfdeAanbiedingen(aanbiedingen) {
 }
 
 async function main() {
-  const gevonden = [];
-  const fouten = [];
-  for (const bron of BRONNEN) {
-    try {
-      const response = await fetch(bron, {
-        headers: {
-          "accept": "application/json,text/html;q=0.9",
-          "user-agent": "BoodschappenBaas GitHub Action (+https://github.com/karti0001/BoodschappenBaas)"
-        }
-      });
-      if (!response.ok) throw new Error(`${bron} gaf status ${response.status}`);
-
-      const catalogus = parseCatalogus(await response.text(), response.headers.get("content-type") || "");
-      gevonden.push(...vindObjecten(catalogus).map((node) => normaliseer(node, bron)));
-    } catch (fout) {
-      fouten.push(`${bron}: ${fout.message}`);
-    }
-  }
-
-  const aanbiedingen = gevonden
-    .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
-    .sort((a, b) => collator.compare(a.productnaam, b.productnaam) || collator.compare(a.supermarkt, b.supermarkt));
+  const { aanbiedingen, fouten } = await haalAanbiedingenVanBronnen();
 
   if (!aanbiedingen.length) {
     throw new Error(`Geen aanbiedingen gevonden; bestaand aanbiedingenbestand blijft behouden. ${fouten.join(" ")}`.trim());
@@ -161,6 +140,33 @@ async function main() {
   console.log(`${aanbiedingen.length} aanbiedingen opgeslagen in ${path.relative(root, doel)}.`);
 }
 
+async function haalAanbiedingenVanBronnen(fetcher = fetch, bronnen = BRONNEN) {
+  const gevonden = [];
+  const fouten = [];
+  for (const bron of bronnen) {
+    try {
+      const response = await fetcher(bron, {
+        headers: {
+          "accept": "application/json,text/html;q=0.9",
+          "user-agent": "BoodschappenBaas GitHub Action (+https://github.com/karti0001/BoodschappenBaas)"
+        }
+      });
+      if (!response.ok) throw new Error(`${bron} gaf status ${response.status}`);
+
+      const catalogus = parseCatalogus(await response.text(), response.headers.get("content-type") || "");
+      gevonden.push(...vindObjecten(catalogus).map((node) => normaliseer(node, bron)));
+    } catch (fout) {
+      fouten.push(`${bron}: ${fout.message}`);
+    }
+  }
+
+  const aanbiedingen = gevonden
+    .filter((aanbieding) => aanbieding && aanbieding.productnaam && aanbieding.supermarkt && aanbieding.prijs !== null)
+    .sort((a, b) => collator.compare(a.productnaam, b.productnaam) || collator.compare(a.supermarkt, b.supermarkt));
+
+  return { aanbiedingen, fouten };
+}
+
 if (require.main === module) {
   main().catch((fout) => {
     console.error(`Kon aanbiedingen niet bijwerken vanaf ${BRONNEN.join(", ")}: ${fout.message}`);
@@ -171,6 +177,7 @@ if (require.main === module) {
 module.exports = {
   BRON,
   BRONNEN,
+  haalAanbiedingenVanBronnen,
   parseCatalogus,
   vindObjecten,
   normaliseer

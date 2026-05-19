@@ -22,6 +22,7 @@ const BoodschappenBaas = (() => {
   const ANIMATION_DURATION_MS = 700;
   const NIET_SLEEPBARE_CATEGORIE_ELEMENTEN = ".boodschap, input, select, textarea, label, button";
   const AANBIEDINGEN_PAD = "data/aanbiedingen.json";
+  const LIVE_AANBIEDINGEN_API_PAD = "api/aanbiedingen";
   const STOPWOORDEN = new Set(["de", "het", "een", "en", "of", "met", "voor", "bij", "van", "per", "stuk", "stuks"]);
   const EXACTE_SUBSTRING_BONUS = 0.3;
   const MINIMALE_MATCH_SCORE = 0.66;
@@ -356,7 +357,7 @@ const BoodschappenBaas = (() => {
   }
 
   function formatteerAanbiedingenTitel(aantal, isAanbiedingenScanBezig = false) {
-    if (isAanbiedingenScanBezig) return "Bezig met scannen...";
+    if (isAanbiedingenScanBezig) return "Bezig met live scannen...";
     if (aantal === 1) return "1 aanbieding gevonden";
     return aantal > 1 ? `${aantal} aanbiedingen gevonden` : "Geen actuele aanbieding gevonden";
   }
@@ -411,7 +412,7 @@ const BoodschappenBaas = (() => {
   }
 
   function formatteerAanbiedingenOverzichtStatus(aantal, zoekterm, supermarkt, isBezig = false) {
-    if (isBezig) return "Bezig met scannen...";
+    if (isBezig) return "Bezig met live scannen...";
     const onderwerp = zoekterm && supermarkt !== "alle"
       ? `${zoekterm} bij ${supermarkt}`
       : zoekterm || (supermarkt === "alle" ? "alle supermarkten" : supermarkt);
@@ -435,6 +436,27 @@ const BoodschappenBaas = (() => {
         bijgewerktOp: "",
         bron: "https://www.reclamefolder.nl/aanbiedingen/",
         fout: fout.message || "Aanbiedingen konden niet worden geladen."
+      };
+    }
+  }
+
+  async function laadLiveAanbiedingen(fetcher = fetch) {
+    try {
+      const response = await fetcher(`${LIVE_AANBIEDINGEN_API_PAD}?t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Live aanbiedingen-API gaf status ${response.status}`);
+      const data = await response.json();
+      return {
+        aanbiedingen: Array.isArray(data.aanbiedingen) ? data.aanbiedingen.map(normaliseerAanbieding) : [],
+        bijgewerktOp: data.bijgewerktOp || "",
+        bron: data.bron || "live",
+        fout: ""
+      };
+    } catch (fout) {
+      return {
+        aanbiedingen: [],
+        bijgewerktOp: "",
+        bron: "live",
+        fout: fout.message || "Live aanbiedingen konden niet worden opgehaald."
       };
     }
   }
@@ -546,15 +568,21 @@ const BoodschappenBaas = (() => {
       aanbiedingenData = maakLegeAanbiedingenData();
       render();
       renderAanbiedingenOverzicht();
-      aanbiedingenStatus("Bezig met scannen...");
-      status("Bezig met scannen...");
-      aanbiedingenData = await laadAanbiedingenBestand();
+      aanbiedingenStatus("Bezig met live scannen...");
+      status("Bezig met live scannen...");
+      const liveAanbiedingenData = await laadLiveAanbiedingen();
+      const fallbackNodig = liveAanbiedingenData.fout || !liveAanbiedingenData.aanbiedingen.length;
+      aanbiedingenData = fallbackNodig ? await laadAanbiedingenBestand() : liveAanbiedingenData;
       isAanbiedingenScanBezig = false;
       elementen.aanbiedingenScannen.disabled = false;
       render();
       renderAanbiedingenOverzicht();
       const aantal = aanbiedingenData.aanbiedingen.length;
-      const bericht = aanbiedingenData.fout ? "Aanbiedingen konden niet worden bijgewerkt; de lijst blijft bruikbaar." : `${aantal} aanbiedingen opnieuw geladen uit het statische bestand.`;
+      const bericht = fallbackNodig
+        ? (aanbiedingenData.fout
+          ? "Live ophalen mislukt en lokale aanbiedingen zijn tijdelijk niet beschikbaar."
+          : `Live ophalen mislukt; ${aantal} lokale aanbiedingen geladen.`)
+        : `${aantal} live aanbiedingen geladen.`;
       aanbiedingenStatus(bericht);
       status(bericht);
     }
@@ -1286,6 +1314,7 @@ const BoodschappenBaas = (() => {
     selecteerAanbiedingenOverzicht,
     formatteerAanbiedingenOverzichtStatus,
     laadAanbiedingenBestand,
+    laadLiveAanbiedingen,
     maakLegeAanbiedingenData,
     setTheme,
     startApp
