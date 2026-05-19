@@ -230,6 +230,13 @@ main {
   gap: 1rem;
 }
 
+.formulier-acties {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .veld, .supermarkten, .instellingen {
   display: grid;
   gap: 0.5rem;
@@ -278,6 +285,42 @@ main {
   align-content: start;
   position: sticky;
   top: 1rem;
+}
+
+.voorbereiding-toggle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.voorbereiding-toggle::-webkit-details-marker,
+.voorbereiding-toggle::marker { display: none; }
+
+.voorbereiding-toggle__titel {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.voorbereiding-toggle__icoon {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  color: var(--accent);
+  font-size: 1.35rem;
+  font-weight: 900;
+  transition: transform 160ms ease;
+}
+
+.instellingen[open] .voorbereiding-toggle__icoon {
+  transform: rotate(180deg);
+}
+
+.voorbereiding-inhoud {
+  display: grid;
+  gap: 0.5rem;
 }
 
 .status {
