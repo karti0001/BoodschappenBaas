@@ -129,6 +129,46 @@ test("aanbiedingen matchen fuzzy op productnaam en gekozen supermarkt", () => {
   assert.ok(matches.every((aanbieding) => aanbieding.productnaam.includes("Cola")));
 });
 
+test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aan items", () => {
+  const aanbiedingen = [
+    { productnaam: "Magere yoghurt 1L", supermarkt: "Lidl", merk: "Milbona", categorie: { name: "Zuivel" }, prijs: 0.89, url: "https://example.test/yoghurt" },
+    { productnaam: "Appelsientje sinaasappel", supermarkt: "AH", merk: "Appelsientje", categorie: { name: "Dranken" }, prijs: 1.49 }
+  ];
+  const items = [
+    app.normaliseerItem({ id: "yoghurt", naam: "yoghurt", categorie: "Zuivel", supermarkten: ["Lidl"], gekoppeldeAanbiedingen: [app.maakAanbiedingSleutel(aanbiedingen[0])] })
+  ];
+
+  const merkMatches = app.matchAanbiedingen("Milbona", aanbiedingen, { supermarkten: ["Lidl"] });
+  const categorieMatches = app.matchAanbiedingen("Dranken", aanbiedingen, { supermarkten: ["AH"] });
+  const gekoppeld = app.selecteerGekoppeldeAanbiedingen(items[0], aanbiedingen);
+  const ontkoppeld = app.ontkoppelAanbiedingVanItem(items, "yoghurt", app.maakAanbiedingSleutel(aanbiedingen[0]));
+
+  assert.equal(merkMatches[0].productnaam, "Magere yoghurt 1L");
+  assert.equal(categorieMatches[0].productnaam, "Appelsientje sinaasappel");
+  assert.deepEqual(items[0].gekoppeldeAanbiedingen, [app.maakAanbiedingSleutel(aanbiedingen[0])]);
+  assert.equal(gekoppeld[0].merk, "Milbona");
+  assert.equal(gekoppeld[0].categorie, "Zuivel");
+  assert.deepEqual(ontkoppeld[0].gekoppeldeAanbiedingen, []);
+});
+
+test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
+  const items = [app.normaliseerItem({ id: "cola", naam: "Cola", categorie: "Dranken", supermarkten: ["Jumbo"] })];
+  const aanbiedingen = [
+    { productnaam: "Cola Zero", supermarkt: "Jumbo", prijs: 1.29 },
+    { productnaam: "Cola Regular", supermarkt: "Jumbo", prijs: 1.39 },
+    { productnaam: "Cola Max", supermarkt: "Jumbo", prijs: 0.99 }
+  ];
+
+  const eenKeer = app.koppelAanbiedingAanItem(items, "cola", aanbiedingen[0]);
+  const dubbel = app.koppelAanbiedingAanItem(eenKeer, "cola", aanbiedingen[0]);
+  const twee = app.koppelAanbiedingAanItem(dubbel, "cola", aanbiedingen[1]);
+  const nieuwste = app.koppelAanbiedingAanItem(twee, "cola", aanbiedingen[2], 1);
+
+  assert.equal(dubbel[0].gekoppeldeAanbiedingen.length, 1);
+  assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(twee[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Zero", "Cola Regular"]);
+  assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(nieuwste[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Max"]);
+});
+
 test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () => {
   const aanroepen = [];
   const resultaat = await app.laadAanbiedingenBestand(async (url, opties) => {
@@ -207,6 +247,23 @@ test("aanbiedingenupdate ondersteunt Reclamefolder JSON-LD als extra bron", () =
   assert.equal(aanbieding.url, "https://www.reclamefolder.nl/aanbiedingen/kwark");
 });
 
+test("aanbiedingenupdate bewaart merk, categorie en afbeelding wanneer de bron die velden levert", () => {
+  const aanbieding = aanbiedingenUpdater.normaliseer({
+    name: "Biologische kwark",
+    brand: "Zuivelhoeve",
+    category: { name: "Zuivel" },
+    supermarket: "Dirk",
+    price: 1.19,
+    oldPrice: 1.79,
+    image: "/images/kwark.png",
+    url: "/kwark"
+  }, "https://example.test/folder/");
+
+  assert.equal(aanbieding.merk, "Zuivelhoeve");
+  assert.equal(aanbieding.categorie, "Zuivel");
+  assert.equal(aanbieding.afbeelding, "https://example.test/images/kwark.png");
+});
+
 test("zoektokens vangen eenvoudige meervouden op zonder vaste woorden te beschadigen", () => {
   assert.deepEqual(app.maakZoekTokens("blauwe bessen"), ["blauwe", "bes"]);
   assert.deepEqual(app.maakZoekTokens("mannen"), ["man"]);
@@ -269,10 +326,16 @@ test("boodschappenlijst toont supermarktkeuzes per bestaand item", () => {
 
   assert.match(js, /boodschap__supermarkten/);
   assert.match(js, /Supermarkt aanpassen/);
+  assert.match(js, /Zoek artikel, merk of categorie/);
+  assert.match(js, /koppelAanbiedingAanItem\(items, item\.id, aanbieding\)/);
+  assert.match(js, /ontkoppelAanbiedingVanItem\(items, item\.id, sleutel\)/);
+  assert.match(js, /aanbiedingen__afbeelding/);
   assert.match(js, /wijzigItemSupermarkten\(items, item\.id, gekozenSupermarkten, supermarkten\)/);
   assert.match(js, /bewaarItems\(localStorage, items, supermarkten\);/);
   assert.match(js, /row\.append\(checkbox, tekst, verwijderKnop, supermarktVeldset, aanbiedingenBlok\);/);
   assert.match(css, /\.boodschap__supermarkten/);
+  assert.match(css, /\.aanbiedingen__zoeker/);
+  assert.match(css, /\.aanbiedingen__afbeelding/);
 });
 
 test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
