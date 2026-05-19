@@ -293,8 +293,8 @@ const BoodschappenBaas = (() => {
     return index === 0 ? `Goedkoopste bij ${aanbieding.supermarkt}` : `In de aanbieding bij ${aanbieding.supermarkt}`;
   }
 
-  function formatteerAanbiedingenTitel(aantal, isScanBezig = false) {
-    if (isScanBezig) return "Bezig met scannen...";
+  function formatteerAanbiedingenTitel(aantal, isAanbiedingenScanBezig = false) {
+    if (isAanbiedingenScanBezig) return "Bezig met scannen...";
     return aantal ? `${aantal} aanbieding${aantal === 1 ? "" : "en"} gevonden` : "Geen actuele aanbieding gevonden";
   }
 
