@@ -79,6 +79,8 @@ function normaliseer(node, bron = BRON) {
   return {
     productnaam: String(vindEersteVeldWaarde(node, ["productnaam", "productName", "name", "naam", "title", "description"])).trim(),
     supermarkt: String(vindEersteVeldWaarde(node, ["supermarkt", "supermarket", "store", "shop", "retailer", "chain", "merchant", "supermarket.name", "store.name", "shop.name", "offers.seller.name"])).trim(),
+    merk: String(vindEersteVeldWaarde(node, ["merk", "brand", "manufacturer", "brand.name"])).trim(),
+    categorie: String(vindEersteVeldWaarde(node, ["categorie.name", "category.name", "categorie", "category", "productCategory"])).trim(),
     prijs,
     prijsTekst: String(vindEersteVeldWaarde(node, ["prijsTekst", "priceText", "price.text"])).trim() || formatPrijs(prijs),
     oudePrijs,
@@ -86,6 +88,7 @@ function normaliseer(node, bron = BRON) {
     korting: String(vindEersteVeldWaarde(node, ["korting", "discount", "promotion", "offerText", "dealText"])).trim(),
     eenheidsprijs: String(vindEersteVeldWaarde(node, ["eenheidsprijs", "unitPrice", "unit_price", "unitPricing", "pricePerUnit"])).trim(),
     bijgewerktOp: String(vindEersteVeldWaarde(node, ["bijgewerktOp", "updatedAt", "updated_at", "lastUpdated", "modifiedAt"])).trim(),
+    afbeelding: absoluteUrl(vindEersteVeldWaarde(node, ["afbeelding", "image", "image.url", "imageUrl", "thumbnail", "thumbnailUrl"]), bron),
     url: absoluteUrl(vindEersteVeldWaarde(node, ["url", "link", "productUrl", "product_url", "slug", "path", "offers.url"]), bron)
   };
 }

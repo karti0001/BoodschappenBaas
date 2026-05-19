@@ -364,7 +364,7 @@ main {
   gap: 0.75rem;
 }
 
-.supermarkt-lijst button, .boodschap__verwijderen {
+.supermarkt-lijst button, .boodschap__verwijderen, .aanbiedingen button {
   padding: 0.55rem 0.7rem;
   font-size: 0.86rem;
 }
@@ -550,6 +550,28 @@ main {
   font-weight: 900;
 }
 
+.aanbiedingen__subtitel, .aanbiedingen__zoeker label {
+  color: var(--zacht);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.aanbiedingen__zoeker {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.aanbiedingen__zoekrij {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.aanbiedingen__verlopen {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
 .aanbiedingen a {
   color: var(--accent-2);
   font-weight: 800;
@@ -595,6 +617,6 @@ main {
 @media (max-width: 520px) {
   .route-volgorde__item { grid-template-columns: auto 1fr; }
   .route-volgorde__knoppen { grid-column: 1 / -1; }
-  .supermarkt-formulier__rij, .boodschap { grid-template-columns: 1fr; }
+  .supermarkt-formulier__rij, .boodschap, .aanbiedingen__zoekrij { grid-template-columns: 1fr; }
   .boodschap__supermarkten, .aanbiedingen { grid-column: 1 / -1; }
 }

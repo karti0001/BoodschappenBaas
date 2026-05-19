@@ -28,6 +28,8 @@ const BoodschappenBaas = (() => {
   const MIN_EN_MEERVOUD_LENGTE = 5;
   const MIN_S_MEERVOUD_LENGTE = 4;
   const CACHE_SCHEIDINGSTEKEN = "\u0000";
+  const MAX_GEKOOPPELDE_AANBIEDINGEN = 5;
+  const MAX_ZOEKRESULTATEN = 6;
   const EURO_FORMATTER = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" });
   const SUPERMARKT_ALIASSEN = {
     ah: "albert heijn"
@@ -113,6 +115,9 @@ const BoodschappenBaas = (() => {
     const supermarkten = Array.isArray(item.supermarkten)
       ? item.supermarkten.filter((markt) => toegestaneSupermarkten.includes(markt))
       : toegestaneSupermarkten;
+    const gekoppeldeAanbiedingen = Array.isArray(item.gekoppeldeAanbiedingen)
+      ? [...new Set(item.gekoppeldeAanbiedingen.map((aanbieding) => String(aanbieding || "").trim()).filter(Boolean))]
+      : [];
 
     return {
       id: item.id || slugify(`${naam}-${categorie}`),
@@ -120,7 +125,8 @@ const BoodschappenBaas = (() => {
       categorie,
       supermarkten,
       afgevinkt: Boolean(item.afgevinkt),
-      eigenItem: Boolean(item.eigenItem)
+      eigenItem: Boolean(item.eigenItem),
+      gekoppeldeAanbiedingen
     };
   }
 
@@ -281,15 +287,53 @@ const BoodschappenBaas = (() => {
     return {
       productnaam: String(aanbieding.productnaam || aanbieding.naam || "").trim(),
       supermarkt: String(aanbieding.supermarkt || "").trim(),
+      merk: String(aanbieding.merk || aanbieding.brand || "").trim(),
+      categorie: String(aanbieding.categorie || aanbieding.category || "").trim(),
       prijs,
       prijsTekst: aanbieding.prijsTekst || (prijs === null ? "" : EURO_FORMATTER.format(prijs)),
       oudePrijs: parsePrijs(aanbieding.oudePrijs),
       oudePrijsTekst: aanbieding.oudePrijsTekst || "",
       korting: aanbieding.korting || "",
       eenheidsprijs: aanbieding.eenheidsprijs || "",
+      afbeelding: aanbieding.afbeelding || aanbieding.image || aanbieding.imageUrl || "",
       url: aanbieding.url || "",
       bijgewerktOp: aanbieding.bijgewerktOp || ""
     };
+  }
+
+  function maakAanbiedingSleutel(aanbieding) {
+    const genormaliseerd = normaliseerAanbieding(aanbieding);
+    if (!genormaliseerd.productnaam || !genormaliseerd.supermarkt) return "";
+    return [
+      genormaliseerd.productnaam,
+      genormaliseerd.supermarkt,
+      genormaliseerd.prijsTekst || genormaliseerd.prijs,
+      genormaliseerd.url
+    ].map((waarde) => normaliseerZoektekst(waarde)).join(CACHE_SCHEIDINGSTEKEN);
+  }
+
+  function koppelAanbiedingAanItem(items, id, aanbieding, maximum = MAX_GEKOOPPELDE_AANBIEDINGEN) {
+    const sleutel = maakAanbiedingSleutel(aanbieding);
+    if (!sleutel) return items;
+    return items.map((item) => {
+      if (item.id !== id) return item;
+      const gekoppeldeAanbiedingen = [...new Set([...(item.gekoppeldeAanbiedingen || []), sleutel])].slice(-maximum);
+      return normaliseerItem({ ...item, gekoppeldeAanbiedingen });
+    });
+  }
+
+  function ontkoppelAanbiedingVanItem(items, id, aanbiedingSleutel) {
+    return items.map((item) => item.id === id
+      ? normaliseerItem({ ...item, gekoppeldeAanbiedingen: (item.gekoppeldeAanbiedingen || []).filter((sleutel) => sleutel !== aanbiedingSleutel) })
+      : item);
+  }
+
+  function selecteerGekoppeldeAanbiedingen(item, aanbiedingen) {
+    const gekoppeldeSleutels = new Set(item.gekoppeldeAanbiedingen || []);
+    if (!gekoppeldeSleutels.size) return [];
+    return (Array.isArray(aanbiedingen) ? aanbiedingen : [])
+      .map(normaliseerAanbieding)
+      .filter((aanbieding) => gekoppeldeSleutels.has(maakAanbiedingSleutel(aanbieding)));
   }
 
   function formatteerDatumTijd(value) {
@@ -317,11 +361,11 @@ const BoodschappenBaas = (() => {
       .filter((aanbieding) => aanbieding.productnaam && aanbieding.supermarkt)
       .filter((aanbieding) => !filterSupermarkten || filterSupermarkten.has(normaliseerSupermarktZoeknaam(aanbieding.supermarkt)))
       .map((aanbieding) => {
-        const tekst = normaliseerZoektekst(`${aanbieding.productnaam} ${aanbieding.supermarkt}`);
+        const tekst = normaliseerZoektekst(`${aanbieding.productnaam} ${aanbieding.merk} ${aanbieding.categorie} ${aanbieding.supermarkt}`);
         const tokens = new Set(maakZoekTokens(tekst));
         const treffers = queryTokens.filter((token) => tokens.has(token) || tekst.includes(token));
         const dekking = treffers.length / queryTokens.length;
-        const extraScore = normaliseerZoektekst(aanbieding.productnaam).includes(normaliseerZoektekst(zoekterm)) ? EXACTE_SUBSTRING_BONUS : 0;
+        const extraScore = normaliseerZoektekst(`${aanbieding.productnaam} ${aanbieding.merk} ${aanbieding.categorie}`).includes(normaliseerZoektekst(zoekterm)) ? EXACTE_SUBSTRING_BONUS : 0;
         return { ...aanbieding, score: dekking + extraScore };
       })
       .filter((aanbieding) => aanbieding.score >= MINIMALE_MATCH_SCORE)
@@ -427,6 +471,7 @@ const BoodschappenBaas = (() => {
     let touchCategorie = null;
     let touchDoelCategorie = null;
     let aanbiedingenData = await laadAanbiedingenBestand();
+    let aanbiedingZoeken = new Map();
     let isAanbiedingenScanBezig = false;
 
     function status(bericht) {
@@ -639,6 +684,44 @@ const BoodschappenBaas = (() => {
       });
     }
 
+    function maakAanbiedingRegel(aanbieding, opties = {}) {
+      const aanbiedingItem = document.createElement("li");
+      const badge = document.createElement("span");
+      badge.className = "aanbiedingen__badge";
+      badge.textContent = opties.badge || "Aanbieding";
+      const prijs = document.createElement("span");
+      prijs.className = "aanbiedingen__prijs";
+      prijs.textContent = aanbieding.prijsTekst || "Prijs onbekend";
+      const detail = document.createElement("span");
+      detail.textContent = [
+        aanbieding.productnaam,
+        aanbieding.merk ? `merk ${aanbieding.merk}` : "",
+        aanbieding.categorie,
+        aanbieding.oudePrijsTekst || (aanbieding.oudePrijs ? `was ${EURO_FORMATTER.format(aanbieding.oudePrijs)}` : ""),
+        aanbieding.korting,
+        aanbieding.eenheidsprijs,
+        aanbieding.bijgewerktOp ? `update ${formatteerDatumTijd(aanbieding.bijgewerktOp)}` : ""
+      ].filter(Boolean).join(" · ");
+      aanbiedingItem.append(badge, prijs, detail);
+      if (aanbieding.url) {
+        const link = document.createElement("a");
+        link.href = aanbieding.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Bron";
+        aanbiedingItem.append(link);
+      }
+      if (opties.actieTekst) {
+        const actie = document.createElement("button");
+        actie.type = "button";
+        actie.textContent = opties.actieTekst;
+        actie.disabled = Boolean(opties.actieDisabled);
+        if (opties.onActie) actie.addEventListener("click", opties.onActie);
+        aanbiedingItem.append(actie);
+      }
+      return aanbiedingItem;
+    }
+
     function render() {
       elementen.lijst.replaceChildren();
       elementen.mandje.replaceChildren();
@@ -807,42 +890,112 @@ const BoodschappenBaas = (() => {
             aanbiedingenCache.set(cacheKey, matchAanbiedingen(item.naam, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: 3 }));
           }
           const itemAanbiedingen = aanbiedingenCache.get(cacheKey);
+          const gekoppeldeAanbiedingen = selecteerGekoppeldeAanbiedingen(item, aanbiedingenData.aanbiedingen);
+          const gekoppeldeSleutels = new Set(item.gekoppeldeAanbiedingen || []);
+          const actieveGekoppeldeSleutels = new Set(gekoppeldeAanbiedingen.map(maakAanbiedingSleutel));
+          const zoekStatus = aanbiedingZoeken.get(item.id);
           const aanbiedingenBlok = document.createElement("div");
-          aanbiedingenBlok.className = `aanbiedingen${itemAanbiedingen.length ? "" : " aanbiedingen--leeg"}`;
+          aanbiedingenBlok.className = `aanbiedingen${itemAanbiedingen.length || gekoppeldeAanbiedingen.length || zoekStatus?.resultaten.length ? "" : " aanbiedingen--leeg"}`;
           const aanbiedingenTitel = document.createElement("strong");
           aanbiedingenTitel.textContent = formatteerAanbiedingenTitel(itemAanbiedingen.length, isAanbiedingenScanBezig);
           aanbiedingenBlok.append(aanbiedingenTitel);
+          if (!isAanbiedingenScanBezig && gekoppeldeAanbiedingen.length) {
+            const gekoppeldTitel = document.createElement("span");
+            gekoppeldTitel.className = "aanbiedingen__subtitel";
+            gekoppeldTitel.textContent = "Gekoppelde aanbiedingen";
+            const gekoppeldeLijst = document.createElement("ul");
+            gekoppeldeAanbiedingen.forEach((aanbieding) => {
+              const sleutel = maakAanbiedingSleutel(aanbieding);
+              gekoppeldeLijst.append(maakAanbiedingRegel(aanbieding, {
+                badge: `Gekoppeld bij ${aanbieding.supermarkt}`,
+                actieTekst: "Ontkoppelen",
+                onActie: () => {
+                  items = ontkoppelAanbiedingVanItem(items, item.id, sleutel);
+                  bewaarItems(localStorage, items, supermarkten);
+                  render();
+                  status(`${aanbieding.productnaam} is ontkoppeld van ${item.naam}.`);
+                }
+              }));
+            });
+            aanbiedingenBlok.append(gekoppeldTitel, gekoppeldeLijst);
+          }
+          const verlopenAantal = gekoppeldeSleutels.size - actieveGekoppeldeSleutels.size;
+          if (!isAanbiedingenScanBezig && verlopenAantal > 0) {
+            const verlopen = document.createElement("p");
+            verlopen.className = "aanbiedingen__verlopen";
+            verlopen.textContent = `${verlopenAantal} gekoppelde aanbieding ${verlopenAantal === 1 ? "is" : "zijn"} verlopen of niet meer beschikbaar.`;
+            aanbiedingenBlok.append(verlopen);
+          }
           if (!isAanbiedingenScanBezig && itemAanbiedingen.length) {
             const lijst = document.createElement("ul");
             itemAanbiedingen.forEach((aanbieding, index) => {
-              const aanbiedingItem = document.createElement("li");
-              const badge = document.createElement("span");
-              badge.className = "aanbiedingen__badge";
-              badge.textContent = formatteerAanbiedingBadge(aanbieding, index);
-              const prijs = document.createElement("span");
-              prijs.className = "aanbiedingen__prijs";
-              prijs.textContent = aanbieding.prijsTekst || "Prijs onbekend";
-              const detail = document.createElement("span");
-              detail.textContent = [
-                aanbieding.productnaam,
-                aanbieding.oudePrijsTekst || (aanbieding.oudePrijs ? `was ${EURO_FORMATTER.format(aanbieding.oudePrijs)}` : ""),
-                aanbieding.korting,
-                aanbieding.eenheidsprijs,
-                aanbieding.bijgewerktOp ? `update ${formatteerDatumTijd(aanbieding.bijgewerktOp)}` : ""
-              ].filter(Boolean).join(" · ");
-              if (aanbieding.url) {
-                const link = document.createElement("a");
-                link.href = aanbieding.url;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                link.textContent = "Bron";
-                aanbiedingItem.append(badge, prijs, detail, link);
-              } else {
-                aanbiedingItem.append(badge, prijs, detail);
-              }
-              lijst.append(aanbiedingItem);
+              const sleutel = maakAanbiedingSleutel(aanbieding);
+              lijst.append(maakAanbiedingRegel(aanbieding, {
+                badge: formatteerAanbiedingBadge(aanbieding, index),
+                actieTekst: gekoppeldeSleutels.has(sleutel) ? "Gekoppeld" : "Koppelen",
+                actieDisabled: gekoppeldeSleutels.has(sleutel),
+                onActie: () => {
+                  items = koppelAanbiedingAanItem(items, item.id, aanbieding);
+                  bewaarItems(localStorage, items, supermarkten);
+                  render();
+                  status(`${aanbieding.productnaam} is gekoppeld aan ${item.naam}.`);
+                }
+              }));
             });
             aanbiedingenBlok.append(lijst);
+          }
+          const zoekFormulier = document.createElement("form");
+          zoekFormulier.className = "aanbiedingen__zoeker";
+          const zoekLabel = document.createElement("label");
+          const zoekId = `aanbieding-zoek-${item.id}`;
+          zoekLabel.htmlFor = zoekId;
+          zoekLabel.textContent = "Zoek artikel, merk of categorie";
+          const zoekRij = document.createElement("div");
+          zoekRij.className = "aanbiedingen__zoekrij";
+          const zoekInput = document.createElement("input");
+          zoekInput.id = zoekId;
+          zoekInput.type = "search";
+          zoekInput.autocomplete = "off";
+          zoekInput.value = zoekStatus?.zoekterm || item.naam;
+          const zoekKnop = document.createElement("button");
+          zoekKnop.type = "submit";
+          zoekKnop.textContent = "Zoeken";
+          zoekRij.append(zoekInput, zoekKnop);
+          zoekFormulier.append(zoekLabel, zoekRij);
+          zoekFormulier.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const zoekterm = zoekInput.value.trim();
+            const resultaten = matchAanbiedingen(zoekterm, aanbiedingenData.aanbiedingen, { supermarkten: item.supermarkten, maximum: MAX_ZOEKRESULTATEN });
+            aanbiedingZoeken = new Map(aanbiedingZoeken).set(item.id, { zoekterm, resultaten });
+            render();
+            status(resultaten.length ? `${resultaten.length} aanbiedingen gevonden voor ${zoekterm}.` : `Geen aanbiedingen gevonden voor ${zoekterm}.`);
+          });
+          aanbiedingenBlok.append(zoekFormulier);
+          if (!isAanbiedingenScanBezig && zoekStatus) {
+            if (zoekStatus.resultaten.length) {
+              const zoekResultaten = document.createElement("ul");
+              zoekResultaten.className = "aanbiedingen__resultaten";
+              zoekStatus.resultaten.forEach((aanbieding) => {
+                const sleutel = maakAanbiedingSleutel(aanbieding);
+                zoekResultaten.append(maakAanbiedingRegel(aanbieding, {
+                  badge: `Zoekresultaat bij ${aanbieding.supermarkt}`,
+                  actieTekst: gekoppeldeSleutels.has(sleutel) ? "Gekoppeld" : "Koppelen",
+                  actieDisabled: gekoppeldeSleutels.has(sleutel),
+                  onActie: () => {
+                    items = koppelAanbiedingAanItem(items, item.id, aanbieding);
+                    bewaarItems(localStorage, items, supermarkten);
+                    render();
+                    status(`${aanbieding.productnaam} is gekoppeld aan ${item.naam}.`);
+                  }
+                }));
+              });
+              aanbiedingenBlok.append(zoekResultaten);
+            } else {
+              const leeg = document.createElement("p");
+              leeg.className = "aanbiedingen__verlopen";
+              leeg.textContent = "Geen aanbiedingen gevonden voor deze zoekopdracht.";
+              aanbiedingenBlok.append(leeg);
+            }
           }
           const verwijderKnop = document.createElement("button");
           verwijderKnop.type = "button";
@@ -995,6 +1148,10 @@ const BoodschappenBaas = (() => {
     normaliseerZoektekst,
     maakZoekTokens,
     normaliseerAanbieding,
+    maakAanbiedingSleutel,
+    koppelAanbiedingAanItem,
+    ontkoppelAanbiedingVanItem,
+    selecteerGekoppeldeAanbiedingen,
     formatteerAanbiedingenTitel,
     matchAanbiedingen,
     laadAanbiedingenBestand,
