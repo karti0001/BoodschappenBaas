@@ -209,6 +209,40 @@ main {
   margin: 0 auto 3rem;
 }
 
+.app-tabs {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.45rem;
+  border: 1px solid var(--rand);
+  border-radius: 1.3rem;
+  background: var(--kaart);
+  box-shadow: var(--schaduw-zacht);
+  backdrop-filter: blur(18px);
+}
+
+.app-tab {
+  color: var(--accent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-tab:hover {
+  box-shadow: none;
+}
+
+.app-tab.is-actief {
+  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 14px 28px rgba(15, 118, 110, 0.22);
+}
+
+.tab-paneel[hidden] { display: none; }
+
 .kaart {
   border: 1px solid var(--rand);
   border-radius: 1.5rem;
@@ -222,6 +256,23 @@ main {
   grid-template-columns: minmax(12rem, 0.7fr) minmax(16rem, 1.3fr);
   gap: 1.25rem;
   padding: 1.5rem;
+}
+
+.aanbiedingen-kaart {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+.aanbiedingen-kaart p {
+  margin-bottom: 0;
+}
+
+.aanbiedingen-zoek-formulier {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 0.55fr) auto;
+  gap: 1rem;
+  align-items: end;
 }
 
 .formulier {
@@ -585,6 +636,25 @@ main {
   font-weight: 800;
 }
 
+.aanbiedingen-overzicht {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aanbiedingen-overzicht li {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 0.9rem;
+  border: 1px solid var(--rand-sterk);
+  border-radius: 1rem;
+  background: rgba(15, 118, 110, 0.08);
+}
+
 .mandje {
   margin-top: 1rem;
   padding: 1rem;
@@ -617,12 +687,20 @@ main {
 }
 
 @media (max-width: 900px) {
-  .formulier-kaart, .formulier, .route-grid, .held__layout { grid-template-columns: 1fr; }
+  .formulier-kaart, .formulier, .route-grid, .held__layout, .aanbiedingen-zoek-formulier { grid-template-columns: 1fr; }
   .held__layout { margin-top: 2rem; }
   .instellingen { position: static; }
 }
 
 @media (max-width: 520px) {
+  main {
+    margin-bottom: 6rem;
+  }
+  .app-tabs {
+    position: fixed;
+    inset: auto 1rem 1rem;
+    margin: 0;
+  }
   .route-volgorde__item { grid-template-columns: auto 1fr; }
   .route-volgorde__knoppen { grid-column: 1 / -1; }
   .supermarkt-formulier__rij, .boodschap, .aanbiedingen__zoekrij { grid-template-columns: 1fr; }

@@ -151,6 +151,28 @@ test("aanbiedingen zoeken ondersteunt merk en categorie en koppelt resultaten aa
   assert.deepEqual(ontkoppeld[0].gekoppeldeAanbiedingen, []);
 });
 
+test("aanbiedingenoverzicht zoekt en filtert zonder productstaat te wijzigen", () => {
+  const aanbiedingen = [
+    { productnaam: "Magere kwark", supermarkt: "Albert Heijn", merk: "AH", prijs: 1.09 },
+    { productnaam: "Volle kwark", supermarkt: "Jumbo", prijs: 0.99 },
+    { productnaam: "Sinaasappelsap", supermarkt: "Lidl", prijs: 1.49 },
+    { productnaam: "Kwark dessert", supermarkt: "Albert Heijn", prijs: 1.29 }
+  ];
+
+  const goedkoopsteBijAlle = app.selecteerAanbiedingenOverzicht("", "alle", aanbiedingen, 2);
+  const ahZoekresultaten = app.selecteerAanbiedingenOverzicht("kwark", "AH", aanbiedingen, 5);
+  const geenResultaten = app.selecteerAanbiedingenOverzicht("kwark", "Lidl", aanbiedingen, 5);
+
+  assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.productnaam), ["Volle kwark", "Magere kwark"]);
+  assert.deepEqual(goedkoopsteBijAlle.map((aanbieding) => aanbieding.prijs), [0.99, 1.09]);
+  assert.deepEqual(ahZoekresultaten.map((aanbieding) => aanbieding.productnaam), ["Magere kwark", "Kwark dessert"]);
+  assert.deepEqual(geenResultaten, []);
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "AH"), "2 aanbiedingen getoond voor kwark bij AH.");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "kwark", "alle"), "2 aanbiedingen getoond voor kwark.");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(2, "", "AH"), "2 aanbiedingen getoond voor AH.");
+  assert.equal(app.formatteerAanbiedingenOverzichtStatus(0, "", "alle", true), "Bezig met scannen...");
+});
+
 test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item", () => {
   const items = [app.normaliseerItem({ id: "cola", naam: "Cola", categorie: "Dranken", supermarkten: ["Jumbo"] })];
   const aanbiedingen = [
@@ -342,18 +364,26 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   const html = read("frontend/index.html");
   assert.match(html, /<html lang="nl">/);
   assert.match(html, /aria-live="polite"/);
+  assert.match(html, /<nav class="app-tabs" role="tablist" aria-label="BoodschappenBaas onderdelen">/);
+  assert.match(html, /data-tab-target="paneel-aanbiedingen">Aanbiedingen zoeken<\/button>/);
+  assert.match(html, /data-tab-target="paneel-lijst">Boodschappenlijst<\/button>/);
+  assert.match(html, /<section id="paneel-aanbiedingen" class="tab-paneel" role="tabpanel" aria-labelledby="tab-aanbiedingen">/);
+  assert.match(html, /<section id="paneel-lijst" class="tab-paneel" role="tabpanel" aria-labelledby="tab-lijst" hidden>/);
+  assert.match(html, /<form id="aanbiedingen-zoek-formulier"/);
+  assert.match(html, /<input id="aanbiedingen-zoekterm" name="aanbiedingen-zoekterm" type="search"/);
+  assert.match(html, /<select id="aanbiedingen-supermarkt-filter" name="aanbiedingen-supermarkt-filter"><\/select>/);
+  assert.match(html, /<ul id="aanbiedingen-overzicht" class="aanbiedingen-overzicht" aria-label="Gevonden aanbiedingen"><\/ul>/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
-  const formulierActiesStart = html.indexOf('<div class="formulier-acties">');
+  const toevoegFormulierStart = html.indexOf('<form id="toevoeg-formulier"');
+  const formulierActiesStart = html.indexOf('<div class="formulier-acties">', toevoegFormulierStart);
   const formulierActiesSubmit = html.indexOf('<button type="submit">Toevoegen</button>', formulierActiesStart);
-  const formulierActiesScan = html.indexOf('<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen</button>', formulierActiesStart);
   const formulierEinde = html.indexOf("</form>", formulierActiesStart);
   assert.notEqual(formulierActiesStart, -1);
   assert.notEqual(formulierActiesSubmit, -1);
-  assert.notEqual(formulierActiesScan, -1);
   assert.notEqual(formulierEinde, -1);
   assert.ok(formulierActiesStart < formulierActiesSubmit);
-  assert.ok(formulierActiesSubmit < formulierActiesScan);
-  assert.ok(formulierActiesScan < formulierEinde);
+  assert.ok(formulierActiesSubmit < formulierEinde);
+  assert.match(html, /<button id="aanbiedingen-scannen" type="button">Scan aanbiedingen<\/button>/);
   const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
   assert.notEqual(voorbereidingStart, -1);
   assert.match(html, /<details class="kaart instellingen" open>/);
@@ -371,6 +401,28 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<select id="thema"/);
   assert.match(html, /<form id="supermarkt-formulier"/);
   assert.match(html, /<ul id="supermarkt-lijst"/);
+});
+
+test("tabs scheiden aanbiedingen zoeken van boodschappenbeheer zonder routes", () => {
+  const js = read("frontend/app.js");
+  const css = read("frontend/styles.css");
+
+  assert.match(js, /tabs: document\.querySelectorAll\("\[data-tab-target\]"\)/);
+  assert.match(js, /function activeerTab\(tab\)/);
+  assert.match(js, /paneel\.hidden = paneel\.id !== tab\.dataset\.tabTarget/);
+  assert.match(js, /skipLink: document\.querySelector\("\.skip-link"\)/);
+  assert.match(js, /const LIJST_TAB_ID = "paneel-lijst"/);
+  assert.match(js, /tab\.dataset\.tabTarget === LIJST_TAB_ID/);
+  assert.match(js, /document\.querySelector\("#lijst"\)\.focus\(\)/);
+  assert.match(js, /renderAanbiedingenOverzicht/);
+  assert.match(js, /function selecteerAanbiedingenOverzicht\(zoekterm, supermarkt, aanbiedingen, maximum = MAX_AANBIEDINGEN_OVERZICHT\)/);
+  assert.match(js, /function filterAanbiedingenOpSupermarkt\(aanbiedingen, supermarkt\)/);
+  assert.match(js, /matchAanbiedingen\(zoekterm, gefilterdeAanbiedingen, \{ maximum \}\)/);
+  assert.match(js, /formatteerAanbiedingenOverzichtStatus\(resultaten\.length, zoekterm, supermarkt, isAanbiedingenScanBezig\)/);
+  assert.match(css, /\.app-tabs/);
+  assert.match(css, /\.tab-paneel\[hidden\]/);
+  assert.match(css, /@media \(max-width: 520px\) \{[\s\S]*\.app-tabs \{[\s\S]*position: fixed;/);
+  assert.match(css, /\.aanbiedingen-overzicht/);
 });
 
 test("HTML bevat professionele dashboard-elementen", () => {
