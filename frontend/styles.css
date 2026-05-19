@@ -419,13 +419,6 @@ main {
   color: var(--accent);
 }
 
-.categorie__greep {
-  min-width: 2.75rem;
-  padding: 0.55rem 0.7rem;
-  cursor: grab;
-  touch-action: none;
-}
-
 .categorie ul, .mandje ul {
   display: grid;
   gap: 0.65rem;
