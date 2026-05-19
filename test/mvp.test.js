@@ -191,6 +191,66 @@ test("aanbieding koppelen bewaart maximaal unieke aanbieding-sleutels per item",
   assert.deepEqual(app.selecteerGekoppeldeAanbiedingen(nieuwste[0], aanbiedingen).map((aanbieding) => aanbieding.productnaam), ["Cola Max"]);
 });
 
+test("aanbieding uit overzicht wordt omgezet naar boodschappenitem met alias, categorie en koppeling", () => {
+  const resultaat = app.voegAanbiedingToeAanBoodschappenlijst([], ["AH", "Jumbo"], {
+    productnaam: "Speciaal bier",
+    supermarkt: "Albert Heijn",
+    categorie: "Dranken",
+    prijs: 1.99
+  });
+  const item = resultaat.items[0];
+  const gekoppeld = app.selecteerGekoppeldeAanbiedingen(item, [{
+    productnaam: "Speciaal bier",
+    supermarkt: "Albert Heijn",
+    categorie: "Dranken",
+    prijs: 1.99
+  }]);
+
+  assert.equal(resultaat.supermarkt, "AH");
+  assert.deepEqual(item.supermarkten, ["AH"]);
+  assert.equal(item.categorie, "Dranken");
+  assert.equal(item.eigenItem, true);
+  assert.equal(item.naam, "Speciaal bier");
+  assert.equal(item.gekoppeldeAanbiedingen.length, 1);
+  assert.equal(gekoppeld.length, 1);
+});
+
+test("onbekende supermarkt wordt automatisch toegevoegd bij aanbieding uit live zoekresultaat", () => {
+  const resultaat = app.voegAanbiedingToeAanBoodschappenlijst([], ["AH"], {
+    productnaam: "Tonic",
+    supermarkt: "Poiesz",
+    categorie: "Dranken",
+    prijs: 0.99
+  });
+
+  assert.ok(resultaat.supermarkten.includes("Poiesz"));
+  assert.deepEqual(resultaat.items[0].supermarkten, ["Poiesz"]);
+});
+
+test("dezelfde aanbieding of product+supermarkt maakt geen duplicaat item", () => {
+  const bestaandItem = app.normaliseerItem({
+    id: "eigen-speciaal-bier-1",
+    naam: "Speciaal bier",
+    categorie: "Dranken",
+    supermarkten: ["AH"],
+    eigenItem: true
+  }, ["AH"]);
+  const aanbod = {
+    productnaam: "Speciaal bier",
+    supermarkt: "Albert Heijn",
+    categorie: "Dranken",
+    prijs: 1.99
+  };
+
+  const resultaat = app.voegAanbiedingToeAanBoodschappenlijst([bestaandItem], ["AH"], aanbod);
+  const nogEenKeer = app.voegAanbiedingToeAanBoodschappenlijst(resultaat.items, resultaat.supermarkten, aanbod);
+
+  assert.equal(resultaat.items.length, 1);
+  assert.equal(resultaat.items[0].gekoppeldeAanbiedingen.length, 1);
+  assert.equal(nogEenKeer.items.length, 1);
+  assert.equal(nogEenKeer.items[0].gekoppeldeAanbiedingen.length, 1);
+});
+
 test("aanbiedingenbestand wordt met cache-buster en reload opgehaald", async () => {
   const aanroepen = [];
   const resultaat = await app.laadAanbiedingenBestand(async (url, opties) => {
@@ -278,12 +338,26 @@ test("scan aanbiedingen wist oude resultaten en toont laadstatus voor opnieuw ma
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = true;/);
   assert.match(js, /aanbiedingenData = maakLegeAanbiedingenData\(\);/);
   assert.match(js, /status\("Bezig met live scannen\.\.\."\);/);
+  assert.match(js, /async function laadAanbiedingenDataMetFallback\(\)/);
   assert.match(js, /const liveAanbiedingenData = await laadLiveAanbiedingen\(\);/);
-  assert.match(js, /fallbackNodig \? await laadAanbiedingenBestand\(\) : liveAanbiedingenData/);
+  assert.match(js, /const fallbackNodig = liveAanbiedingenData\.fout \|\| !liveAanbiedingenData\.aanbiedingen\.length;/);
+  assert.match(js, /const lokaleData = await laadAanbiedingenBestand\(\);/);
+  assert.match(js, /return \{ aanbiedingenData: lokaleData, fallbackNodig, liveAanbiedingenData \};/);
   assert.match(js, /Live ophalen mislukt; \$\{aantal\} lokale aanbiedingen geladen\./);
   assert.match(js, /\$\{aantal\} live aanbiedingen geladen\./);
   assert.match(js, /elementen\.aanbiedingenScannen\.disabled = false;/);
   assert.match(js, /formatteerAanbiedingenTitel\(itemAanbiedingen\.length, isAanbiedingenScanBezig\)/);
+});
+
+test("formulierzoekopdracht gebruikt live scanpad en resultaten hebben toevoegactie", () => {
+  const js = read("frontend/app.js");
+
+  assert.match(js, /elementen\.aanbiedingZoekFormulier\.addEventListener\("submit", async \(event\) =>/);
+  assert.match(js, /await zoekAanbiedingenOverzicht\(\);/);
+  assert.match(js, /const liveResultaat = await laadAanbiedingenDataMetFallback\(\);/);
+  assert.match(js, /actieTekst: "Toevoegen aan lijst"/);
+  assert.match(js, /onActie: \(\) => verwerkAanbiedingNaarLijst\(aanbieding\)/);
+  assert.match(js, /voegAanbiedingToeAanBoodschappenlijst\(items, supermarkten, aanbieding\)/);
 });
 
 test("serverless aanbiedingenproxy normaliseert live brondata naar frontendformaat", async () => {
@@ -447,6 +521,7 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.match(html, /<form id="aanbiedingen-zoek-formulier"/);
   assert.match(html, /<input id="aanbiedingen-zoekterm" name="aanbiedingen-zoekterm" type="search"/);
   assert.match(html, /<select id="aanbiedingen-supermarkt-filter" name="aanbiedingen-supermarkt-filter"><\/select>/);
+  assert.match(html, /Zoeken start met een live scan via de API/);
   assert.match(html, /<ul id="aanbiedingen-overzicht" class="aanbiedingen-overzicht" aria-label="Gevonden aanbiedingen"><\/ul>/);
   assert.match(html, /<label for="naam">Naam<\/label>/);
   const toevoegFormulierStart = html.indexOf('<form id="toevoeg-formulier"');

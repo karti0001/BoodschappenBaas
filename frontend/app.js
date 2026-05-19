@@ -37,6 +37,8 @@ const BoodschappenBaas = (() => {
   const SUPERMARKT_ALIASSEN = {
     ah: "albert heijn"
   };
+  const DRANK_ZOEKTOKENS = ["bier", "frisdrank", "cola", "sap", "water", "wijn", "dranken"];
+  const CATEGORIEEN_OP_ZOEKTEKST = new Map(CATEGORIEEN.map((categorie) => [normaliseerZoektekst(categorie), categorie]));
 
   function slugify(value) {
     return value
@@ -277,6 +279,82 @@ const BoodschappenBaas = (() => {
   function normaliseerSupermarktZoeknaam(supermarkt) {
     const naam = normaliseerZoektekst(supermarkt);
     return SUPERMARKT_ALIASSEN[naam] || naam;
+  }
+
+  function vindBestaandeSupermarktNaam(supermarkten, supermarkt) {
+    const doelNaam = normaliseerSupermarktZoeknaam(supermarkt);
+    return normaliseerSupermarkten(supermarkten)
+      .find((markt) => normaliseerSupermarktZoeknaam(markt) === doelNaam) || "";
+  }
+
+  function categorieUitAanbieding(aanbiedingCategorie, categorieen = CATEGORIEEN) {
+    const gewensteCategorie = normaliseerZoektekst(aanbiedingCategorie);
+    if (!gewensteCategorie) return "";
+    if (categorieen === CATEGORIEEN) return CATEGORIEEN_OP_ZOEKTEKST.get(gewensteCategorie) || "";
+    return new Map(categorieen.map((categorie) => [normaliseerZoektekst(categorie), categorie])).get(gewensteCategorie) || "";
+  }
+
+  function kiesCategorieVoorAanbieding(aanbieding, categorieen = CATEGORIEEN) {
+    const overeenkomendeCategorie = categorieUitAanbieding(aanbieding.categorie, categorieen);
+    if (overeenkomendeCategorie) return overeenkomendeCategorie;
+    const tekst = normaliseerZoektekst(`${aanbieding.productnaam} ${aanbieding.merk} ${aanbieding.categorie}`);
+    return DRANK_ZOEKTOKENS.some((token) => tekst.includes(token)) ? "Dranken" : "Voorraadkast";
+  }
+
+  function voegAanbiedingToeAanBoodschappenlijst(items, supermarkten, aanbieding) {
+    const genormaliseerd = normaliseerAanbieding(aanbieding);
+    const aanbiedingSleutel = maakAanbiedingSleutel(genormaliseerd);
+    if (!genormaliseerd.productnaam || !genormaliseerd.supermarkt || !aanbiedingSleutel) {
+      return { items, supermarkten, item: null, supermarkt: "", aanbiedingSleutel: "" };
+    }
+
+    const gekoppeldeItem = items.find((item) => (item.gekoppeldeAanbiedingen || []).includes(aanbiedingSleutel));
+    const gekozenSupermarkt = vindBestaandeSupermarktNaam(supermarkten, genormaliseerd.supermarkt) || genormaliseerd.supermarkt;
+    const beschikbareSupermarkten = normaliseerSupermarkten([...supermarkten, gekozenSupermarkt]);
+    const zelfdeProductEnSupermarkt = items.find((item) => (
+      normaliseerZoektekst(item.naam) === normaliseerZoektekst(genormaliseerd.productnaam)
+      && item.supermarkten.some((supermarkt) => normaliseerSupermarktZoeknaam(supermarkt) === normaliseerSupermarktZoeknaam(gekozenSupermarkt))
+    ));
+    const bestaandItem = gekoppeldeItem || zelfdeProductEnSupermarkt;
+    const categorie = kiesCategorieVoorAanbieding(genormaliseerd);
+
+    if (bestaandItem) {
+      const bijgewerkteItems = items.map((item) => {
+        if (item.id !== bestaandItem.id) return item;
+        const itemSupermarkten = item.supermarkten.some((supermarkt) => normaliseerSupermarktZoeknaam(supermarkt) === normaliseerSupermarktZoeknaam(gekozenSupermarkt))
+          ? item.supermarkten
+          : [...item.supermarkten, gekozenSupermarkt];
+        return normaliseerItem({
+          ...item,
+          supermarkten: itemSupermarkten,
+          gekoppeldeAanbiedingen: bewaarNieuwsteAanbiedingSleutels([...(item.gekoppeldeAanbiedingen || []), aanbiedingSleutel])
+        }, beschikbareSupermarkten);
+      });
+      const item = bijgewerkteItems.find((kandidaat) => kandidaat.id === bestaandItem.id) || null;
+      return {
+        items: bijgewerkteItems,
+        supermarkten: beschikbareSupermarkten,
+        item,
+        supermarkt: gekozenSupermarkt,
+        aanbiedingSleutel
+      };
+    }
+
+    const nieuwItem = normaliseerItem({
+      ...nieuwEigenItem({
+        naam: genormaliseerd.productnaam,
+        categorie,
+        supermarkten: [gekozenSupermarkt]
+      }, beschikbareSupermarkten),
+      gekoppeldeAanbiedingen: [aanbiedingSleutel]
+    }, beschikbareSupermarkten);
+    return {
+      items: [...items, nieuwItem],
+      supermarkten: beschikbareSupermarkten,
+      item: nieuwItem,
+      supermarkt: gekozenSupermarkt,
+      aanbiedingSleutel
+    };
   }
 
   function parsePrijs(value) {
@@ -561,6 +639,24 @@ const BoodschappenBaas = (() => {
       elementen.aanbiedingenOverzichtStatus.textContent = bericht;
     }
 
+    function supermarktenZijnGelijk(eersteSupermarkten, tweedeSupermarkten) {
+      if (eersteSupermarkten === tweedeSupermarkten) return true;
+      if (eersteSupermarkten.length !== tweedeSupermarkten.length) return false;
+      const eersteSet = new Set(eersteSupermarkten.map(normaliseerSupermarktZoeknaam));
+      const tweedeSet = new Set(tweedeSupermarkten.map(normaliseerSupermarktZoeknaam));
+      return eersteSet.size === tweedeSet.size && [...eersteSet].every((supermarkt) => tweedeSet.has(supermarkt));
+    }
+
+    async function laadAanbiedingenDataMetFallback() {
+      const liveAanbiedingenData = await laadLiveAanbiedingen();
+      const fallbackNodig = liveAanbiedingenData.fout || !liveAanbiedingenData.aanbiedingen.length;
+      if (!fallbackNodig) {
+        return { aanbiedingenData: liveAanbiedingenData, fallbackNodig, liveAanbiedingenData };
+      }
+      const lokaleData = await laadAanbiedingenBestand();
+      return { aanbiedingenData: lokaleData, fallbackNodig, liveAanbiedingenData };
+    }
+
     async function scanAanbiedingen() {
       if (isAanbiedingenScanBezig) return;
       isAanbiedingenScanBezig = true;
@@ -570,9 +666,10 @@ const BoodschappenBaas = (() => {
       renderAanbiedingenOverzicht();
       aanbiedingenStatus("Bezig met live scannen...");
       status("Bezig met live scannen...");
-      const liveAanbiedingenData = await laadLiveAanbiedingen();
-      const fallbackNodig = liveAanbiedingenData.fout || !liveAanbiedingenData.aanbiedingen.length;
-      aanbiedingenData = fallbackNodig ? await laadAanbiedingenBestand() : liveAanbiedingenData;
+      const liveResultaat = await laadAanbiedingenDataMetFallback();
+      const { fallbackNodig } = liveResultaat;
+      const liveAanbiedingenData = liveResultaat.liveAanbiedingenData;
+      aanbiedingenData = liveResultaat.aanbiedingenData;
       isAanbiedingenScanBezig = false;
       elementen.aanbiedingenScannen.disabled = false;
       render();
@@ -585,6 +682,50 @@ const BoodschappenBaas = (() => {
         : `${aantal} live aanbiedingen geladen.`;
       aanbiedingenStatus(bericht);
       status(bericht);
+    }
+
+    function verwerkAanbiedingNaarLijst(aanbieding) {
+      const resultaat = voegAanbiedingToeAanBoodschappenlijst(items, supermarkten, aanbieding);
+      if (!resultaat.item) {
+        status("Deze aanbieding kon niet aan je boodschappenlijst worden toegevoegd.");
+        return;
+      }
+      const supermarktenGewijzigd = !supermarktenZijnGelijk(resultaat.supermarkten, supermarkten);
+      supermarkten = supermarktenGewijzigd ? bewaarSupermarkten(localStorage, resultaat.supermarkten) : resultaat.supermarkten;
+      items = resultaat.items;
+      bewaarItems(localStorage, items, supermarkten);
+      if (supermarktenGewijzigd) {
+        renderSupermarktOpties();
+        renderAanbiedingFilter();
+        renderSupermarktKeuzes();
+        renderSupermarktBeheer();
+      }
+      render();
+      renderAanbiedingenOverzicht();
+      status(`${resultaat.item.naam} is toegevoegd aan je boodschappenlijst bij ${resultaat.supermarkt}.`);
+    }
+
+    async function zoekAanbiedingenOverzicht() {
+      if (isAanbiedingenScanBezig) return;
+      isAanbiedingenScanBezig = true;
+      elementen.aanbiedingenScannen.disabled = true;
+      renderAanbiedingenOverzicht();
+      aanbiedingenStatus("Bezig met live scannen...");
+      const liveResultaat = await laadAanbiedingenDataMetFallback();
+      const { fallbackNodig } = liveResultaat;
+      aanbiedingenData = liveResultaat.aanbiedingenData;
+      isAanbiedingenScanBezig = false;
+      elementen.aanbiedingenScannen.disabled = false;
+      renderAanbiedingenOverzicht();
+      if (!fallbackNodig) {
+        aanbiedingenStatus("Live aanbiedingen geladen voor je zoekopdracht.");
+        return;
+      }
+      if (aanbiedingenData.fout) {
+        aanbiedingenStatus("Live ophalen mislukt en lokale aanbiedingen zijn tijdelijk niet beschikbaar.");
+        return;
+      }
+      aanbiedingenStatus("Live ophalen gaf geen resultaten; lokale aanbiedingen worden gebruikt.");
     }
 
     function renderSupermarktOpties() {
@@ -622,7 +763,9 @@ const BoodschappenBaas = (() => {
 
       resultaten.forEach((aanbieding, index) => {
         elementen.aanbiedingenOverzicht.append(maakAanbiedingRegel(aanbieding, {
-          badge: formatteerAanbiedingBadge(aanbieding, index)
+          badge: formatteerAanbiedingBadge(aanbieding, index),
+          actieTekst: "Toevoegen aan lijst",
+          onActie: () => verwerkAanbiedingNaarLijst(aanbieding)
         }));
       });
     }
@@ -1209,9 +1352,9 @@ const BoodschappenBaas = (() => {
     });
 
     elementen.filter.addEventListener("change", render);
-    elementen.aanbiedingZoekFormulier.addEventListener("submit", (event) => {
+    elementen.aanbiedingZoekFormulier.addEventListener("submit", async (event) => {
       event.preventDefault();
-      renderAanbiedingenOverzicht();
+      await zoekAanbiedingenOverzicht();
     });
     elementen.aanbiedingFilter.addEventListener("change", renderAanbiedingenOverzicht);
     elementen.aanbiedingenScannen.addEventListener("click", scanAanbiedingen);
@@ -1316,6 +1459,8 @@ const BoodschappenBaas = (() => {
     laadAanbiedingenBestand,
     laadLiveAanbiedingen,
     maakLegeAanbiedingenData,
+    kiesCategorieVoorAanbieding,
+    voegAanbiedingToeAanBoodschappenlijst,
     setTheme,
     startApp
   };
