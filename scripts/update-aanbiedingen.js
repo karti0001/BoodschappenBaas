@@ -1,10 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const BRONNEN = [
-  "https://allesupers.nl/catalog/all",
-  "https://www.reclamefolder.nl/aanbiedingen/"
-];
+const BRONNEN = ["https://www.reclamefolder.nl/aanbiedingen/"];
 const BRON = BRONNEN[0];
 const root = path.resolve(__dirname, "..");
 const doel = path.join(root, "frontend", "data", "aanbiedingen.json");
@@ -95,7 +92,7 @@ function normaliseer(node, bron = BRON) {
 
 function parseCatalogus(tekst, contentType = "") {
   if (contentType.includes("json")) return JSON.parse(tekst);
-  // Allesupers draait als Next.js-site; bij HTML-responses staat de catalogusdata in __NEXT_DATA__.
+  // Bij Next.js-sites staat catalogusdata soms in __NEXT_DATA__.
   const nextData = tekst.match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
   if (nextData) return JSON.parse(nextData[1]);
   const jsonLd = [...tekst.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]

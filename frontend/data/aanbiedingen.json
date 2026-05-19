@@ -1,7 +1,6 @@
 {
-  "bron": "https://allesupers.nl/catalog/all",
+  "bron": "https://www.reclamefolder.nl/aanbiedingen/",
   "bronnen": [
-    "https://allesupers.nl/catalog/all",
     "https://www.reclamefolder.nl/aanbiedingen/"
   ],
   "bijgewerktOp": "2026-05-18T20:51:53.884Z",
@@ -16,7 +15,7 @@
       "korting": "Bonus",
       "eenheidsprijs": "€ 1,98/kg",
       "bijgewerktOp": "2026-05-18T20:51:53.884Z",
-      "url": "https://allesupers.nl/catalog/all"
+      "url": "https://www.reclamefolder.nl/aanbiedingen/"
     },
     {
       "productnaam": "Sprite Zero 1,5 liter",
@@ -28,7 +27,7 @@
       "korting": "Actieprijs",
       "eenheidsprijs": "€ 0,99/l",
       "bijgewerktOp": "2026-05-18T20:51:53.884Z",
-      "url": "https://allesupers.nl/catalog/all"
+      "url": "https://www.reclamefolder.nl/aanbiedingen/"
     },
     {
       "productnaam": "Aardbeien bak 400 g",
@@ -40,7 +39,7 @@
       "korting": "Weekactie",
       "eenheidsprijs": "€ 6,23/kg",
       "bijgewerktOp": "2026-05-18T20:51:53.884Z",
-      "url": "https://allesupers.nl/catalog/all"
+      "url": "https://www.reclamefolder.nl/aanbiedingen/"
     },
     {
       "productnaam": "Blauwe bessen 300 g",
@@ -52,7 +51,7 @@
       "korting": "Aanbieding",
       "eenheidsprijs": "€ 6,63/kg",
       "bijgewerktOp": "2026-05-18T20:51:53.884Z",
-      "url": "https://allesupers.nl/catalog/all"
+      "url": "https://www.reclamefolder.nl/aanbiedingen/"
     }
   ]
 }
