@@ -18,6 +18,7 @@ const GELDIGHEID_VELDEN = ["geldigheidsperiode", "validityPeriod", "validity.per
 const TEKST_AANBIEDING_REGEX = /^(.{2,}?)\s*(?:[-|:]\s*)?€?\s*(\d+[\.,]\d{1,2})(?:\s*(?:van|was|oude prijs)\s*€?\s*(\d+[\.,]\d{1,2}))?/i;
 // Geldigheid uit foldertekst, bijvoorbeeld "geldig 20-05 t/m 26-05".
 const TEKST_GELDIGHEID_REGEX = /(?:geldig|van)\s+(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)\s*(?:t\/m|tot|-)\s*(\d{1,2}[-/]\d{1,2}(?:[-/]\d{2,4})?)/i;
+const MIN_TEKST_REGEL_LENGTE = 6;
 const APP_CATEGORIEEN = [
   "AGF",
   "Bier",
@@ -273,7 +274,7 @@ function parseTekstAanbiedingen(tekst, adapter = {}, bron = {}) {
   return tekstZonderHtml(tekst)
     .split(/\r?\n/)
     .map((regel) => regel.replace(/\s+/g, " ").trim())
-    .filter((regel) => regel.length > 5)
+    .filter((regel) => regel.length >= MIN_TEKST_REGEL_LENGTE)
     .flatMap((regel) => {
       const match = regel.match(TEKST_AANBIEDING_REGEX);
       if (!match) return [];
@@ -297,6 +298,7 @@ function parseTekstAanbiedingen(tekst, adapter = {}, bron = {}) {
 function uniekeAanbiedingen(aanbiedingen) {
   const gezien = new Set();
   return aanbiedingen.filter((aanbieding) => {
+    // Issue-eis: uniek op productnaam + supermarkt + prijs + geldigheidsperiode.
     const sleutel = [
       aanbieding.productnaam,
       aanbieding.supermarkt,
@@ -373,9 +375,11 @@ async function haalAanbiedingenVanBronnen(fetcher = fetch, bronnen = ADAPTERS) {
         const tekst = await response.text();
         const contentType = response.headers.get("content-type") || "";
         let catalogus;
+        let parseFout = null;
         try {
           catalogus = parseCatalogus(tekst, contentType);
-        } catch {
+        } catch (fout) {
+          parseFout = fout;
           catalogus = [];
         }
         const opties = {
@@ -388,7 +392,11 @@ async function haalAanbiedingenVanBronnen(fetcher = fetch, bronnen = ADAPTERS) {
         const objecten = vindObjecten(catalogus, [], opties);
         gevonden.push(...objecten.map((node) => normaliseer(node, bron.url, opties)));
         if (!objecten.length) {
-          gevonden.push(...parseTekstAanbiedingen(tekst, adapter, bron).map((node) => normaliseer(node, bron.url, opties)));
+          const tekstAanbiedingen = parseTekstAanbiedingen(tekst, adapter, bron);
+          if (!tekstAanbiedingen.length && parseFout) {
+            fouten.push(`${bron.url}: catalogusdata kon niet worden gelezen (${parseFout.message})`);
+          }
+          gevonden.push(...tekstAanbiedingen.map((node) => normaliseer(node, bron.url, opties)));
         }
       } catch (fout) {
         fouten.push(`${bron.url}: ${fout.message}`);
