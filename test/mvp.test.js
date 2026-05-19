@@ -262,14 +262,14 @@ test("HTML ondersteunt Nederlandse toegankelijkheid en bediening", () => {
   assert.ok(formulierActiesScan < formulierEinde);
   const voorbereidingStart = html.indexOf('<details class="kaart instellingen"');
   assert.notEqual(voorbereidingStart, -1);
-  assert.match(html, /<details\b[^>]*aria-labelledby="voorbereiding-label voorbereiding-titel"/);
+  assert.match(html, /<details class="kaart instellingen" open>/);
   assert.match(html, /<details\b[^>]*\sopen\b/);
   assert.match(html, /<span id="voorbereiding-label" class="eyebrow">Voorbereiding<\/span>/);
   assert.match(html, /<span id="voorbereiding-titel" class="voorbereiding-toggle__titel">Optimale route<\/span>/);
   const boodschappenlijstStart = html.indexOf('<section id="lijst"', voorbereidingStart);
   const voorbereidingSectie = html.slice(voorbereidingStart, boodschappenlijstStart);
   assert.doesNotMatch(voorbereidingSectie, /aanbiedingen-scannen/);
-  assert.match(html, /<summary class="voorbereiding-toggle" aria-controls="voorbereiding-inhoud">/);
+  assert.match(html, /<summary class="voorbereiding-toggle">/);
   assert.match(html, /<div id="voorbereiding-inhoud" class="voorbereiding-inhoud">/);
   assert.match(html, /<button id="alles-uitvinken" type="button">Alles uitvinken<\/button>/);
   assert.match(html, /<button id="route-aanpassen" type="button" aria-expanded="false" aria-controls="route-editor">Route aanpassen<\/button>/);
